@@ -1,0 +1,2 @@
+shot_id,scene,duration_seconds,storyboard_reference_role,prompt_status,image_status,video_status,best_take,issue,next_action
+SHOT_001,,,"keyframe_reference",pending,pending,pending,,,

@@ -1,0 +1,31 @@
+{
+  "project": "ai_short_film_pipeline",
+  "schema_version": "1.0",
+  "last_updated": "YYYY-MM-DDTHH:MM:SSZ",
+  "current_phase": "initialized",
+  "phase_index": 0,
+  "total_phases": 9,
+  "completed_phases": [],
+  "generation_modes": {
+    "image_generation": "ask_user",
+    "video_generation": "external_manual",
+    "editing": "external_manual"
+  },
+  "artifacts": {},
+  "production_status": {
+    "file": "./production_status.csv",
+    "notes": "Local run status table. Do not commit real project status to repository."
+  },
+  "asset_registry": {
+    "characters": [],
+    "scenes": [],
+    "props": [],
+    "audio": []
+  },
+  "next_phase": {
+    "skill": "story_generation",
+    "input_from": "./inputs/idea_brief.md",
+    "notes": "Copy this file to checkpoint.json for local runtime state."
+  },
+  "status": "in_progress"
+}

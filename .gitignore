@@ -1,0 +1,67 @@
+# Runtime state
+checkpoint.json
+production_status.csv
+
+# Local daily creative runs
+local_runs/
+creative_runs/
+runs/
+
+# Generated production outputs
+outputs/01_story/
+outputs/02_art_direction/
+outputs/03_storyboard/
+outputs/04_assets/characters/
+outputs/04_assets/scenes/
+outputs/04_assets/props/
+outputs/04_assets/final_images/
+outputs/05_video_prompts/
+outputs/06_external_results/
+external_results/
+outputs/07_final_delivery/
+
+# Keep tracked documentation placeholders if needed
+!outputs/README.md
+!outputs/**/.gitkeep
+
+# User inputs and private references
+inputs/*.md
+!inputs/idea_brief.template.md
+references/
+media_references/
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+config/config.local.yaml
+config/secrets.yaml
+
+# Logs and temp files
+logs/
+tmp/
+temp/
+*.log
+
+# Large generated media
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.webm
+*.mp3
+*.wav
+*.flac
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.psd
+*.aep
+*.prproj
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,130 @@
+project:
+  name: "ai_short_film_pipeline"
+  version: "0.2.0"
+  description: "将想法转化为 AI 短片生产包的 Skill-Oriented 工作流"
+
+runtime:
+  mode: "draft"
+  max_retries: 2
+  timeout_seconds: 120
+  log_level: "info"
+  require_user_confirmation_between_major_phases: true
+  image_generation_mode_default: "ask_user"
+  allowed_image_generation_modes:
+    - "external_manual"
+    - "internal_codex"
+  video_generation_mode_default: "external_manual"
+  editing_mode_default: "external_manual"
+
+model_defaults:
+  text_provider: "to_be_configured"
+  text_model_name: "to_be_configured"
+  image_provider: "to_be_configured"
+  image_model_name: "to_be_configured"
+  video_provider: "jimeng_seedance_2_0"
+  video_model_name: "Seedance 2.0"
+  temperature:
+    story_generation: 0.7
+    art_direction: 0.45
+    storyboard_director: 0.55
+    asset_prompt_generation: 0.45
+    video_prompt_generation: 0.35
+    continuity_review: 0.2
+  max_tokens: 8000
+
+skill_versions:
+  story_generation: "1.0.0"
+  art_direction: "1.0.0"
+  storyboard_director: "1.0.0"
+  storyboard_static_frame_variant: "1.0.0"
+  asset_manifest_builder: "0.1.0"
+  character_prompt_generator: "1.0.0"
+  scene_prompt_generator: "1.0.0"
+  prop_prompt_generator: "0.1.0"
+  shot_video_prompt_generator: "1.1.0"
+  external_generation_handoff: "0.2.0"
+  continuity_review: "0.2.0"
+  production_package_builder: "0.1.0"
+
+paths:
+  active_run_dir: "./local_runs/YYYY-MM-DD/project_slug"
+  input_dir: "./local_runs/YYYY-MM-DD/project_slug/inputs"
+  local_runs_dir: "./local_runs"
+  raw_prompt_dir: "./skills/raw_prompts"
+  output_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs"
+  reference_dir: "./local_runs/YYYY-MM-DD/project_slug/references"
+  log_dir: "./local_runs/YYYY-MM-DD/project_slug/logs"
+  checkpoint_template_file: "./checkpoint.template.json"
+  checkpoint_file: "./local_runs/YYYY-MM-DD/project_slug/checkpoint.json"
+  story_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/01_story"
+  art_direction_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/02_art_direction"
+  storyboard_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/03_storyboard"
+  asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets"
+  video_prompt_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/05_video_prompts"
+  external_results_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/06_external_results"
+  final_delivery_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/07_final_delivery"
+
+prompt_sources:
+  story_generation: "./skills/raw_prompts/story_generation.source.md"
+  art_direction: "./skills/raw_prompts/art_direction.source.md"
+  storyboard_director: "./skills/raw_prompts/storyboard_director.source.md"
+  storyboard_static_frame_variant: "./skills/raw_prompts/storyboard_static_frame_variant.source.md"
+  character_prompt_generator: "./skills/raw_prompts/character_prompt_generator.source.md"
+  scene_prompt_generator: "./skills/raw_prompts/scene_prompt_generator.source.md"
+  shot_video_prompt_generator: "./skills/raw_prompts/seedance_video_prompt.source.md"
+
+asset_id_policy:
+  character_prefix: "CHAR"
+  scene_prefix: "ENV"
+  prop_prefix: "PROP"
+  audio_prefix: "AUDIO"
+  style_prefix: "STYLE"
+  numbering: "001"
+  variant_suffix: "A, B, C"
+
+output_formats:
+  human_readable: "markdown"
+  machine_readable: "json"
+  video_prompt_language: "zh"
+  asset_prompt_language: "zh"
+
+external_services:
+  seedance:
+    enabled: false
+    execution_mode: "manual_web"
+    api_key_env: "SEEDANCE_API_KEY"
+    base_url: ""
+    output_resolution: "to_be_configured"
+    duration_seconds_default: 5
+  image_generation:
+    enabled: false
+    execution_mode: "manual_web"
+    api_key_env: "IMAGE_API_KEY"
+    base_url: ""
+
+external_workflow:
+  image_generation:
+    mode_selection_required: true
+    supported_modes:
+      external_manual: "Codex outputs image prompts and handoff instructions; user generates images in external web tools."
+      internal_codex: "Codex uses the same prompts to generate images and saves results to the local run."
+    suggested_tools:
+      - "CodeX/ChatGPT web image generation"
+      - "other external image tools"
+    codex_output: "asset prompts; optionally generated local images when user selects internal_codex"
+  video_generation:
+    executed_outside_codex: true
+    suggested_tools:
+      - "Jimeng / Seedance web"
+    codex_output: "shot-level Chinese video prompts and reference declarations only"
+  editing:
+    executed_outside_codex: true
+    suggested_tools:
+      - "Jianying / CapCut"
+    codex_output: "edit decision notes and shot manifest only"
+
+quality_gates:
+  require_asset_id_resolution: true
+  require_style_bible_before_storyboard: true
+  require_storyboard_before_video_prompts: true
+  require_continuity_review_before_final_delivery: true
