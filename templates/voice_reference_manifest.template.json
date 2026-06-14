@@ -1,0 +1,17 @@
+{
+  "schema_version": "0.1",
+  "project_title": "",
+  "voice_references": [
+    {
+      "id": "AUDIO_001",
+      "name": "",
+      "speaker_asset_id": "CHAR_001",
+      "reference_file": "",
+      "status": "needed",
+      "voice_direction": "",
+      "required_for_shots": []
+    }
+  ],
+  "status_values": ["provided", "needed", "missing", "placeholder"],
+  "notes": "Any shot with dialogue, voiceover, recorded message, broadcast, or audible human speech must reference an AUDIO asset or be marked missing."
+}

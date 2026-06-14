@@ -14,6 +14,7 @@ outputs/03_storyboard/
 outputs/04_assets/characters/
 outputs/04_assets/scenes/
 outputs/04_assets/props/
+outputs/04_assets/audio/
 outputs/04_assets/final_images/
 outputs/05_video_prompts/
 outputs/06_external_results/
@@ -28,6 +29,7 @@ outputs/07_final_delivery/
 inputs/*.md
 !inputs/idea_brief.template.md
 references/
+references/audio/
 media_references/
 
 # Secrets and local config
@@ -42,6 +44,8 @@ logs/
 tmp/
 temp/
 *.log
+__pycache__/
+*.pyc
 
 # Large generated media
 *.mp4

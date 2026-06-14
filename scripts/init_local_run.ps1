@@ -22,7 +22,9 @@ $dirs = @(
   "outputs\04_assets\characters",
   "outputs\04_assets\scenes",
   "outputs\04_assets\props",
+  "outputs\04_assets\audio",
   "outputs\05_video_prompts",
+  "outputs\05_video_prompts\shots",
   "outputs\06_external_results",
   "outputs\07_final_delivery",
   "references",
@@ -38,5 +40,6 @@ Copy-Item -LiteralPath (Join-Path $repoRoot "inputs\idea_brief.template.md") -De
 Copy-Item -LiteralPath (Join-Path $repoRoot "checkpoint.template.json") -Destination (Join-Path $runRoot "checkpoint.json") -Force
 Copy-Item -LiteralPath (Join-Path $repoRoot "docs\local_run_template.md") -Destination (Join-Path $runRoot "notes.md") -Force
 Copy-Item -LiteralPath (Join-Path $repoRoot "templates\production_status.template.csv") -Destination (Join-Path $runRoot "production_status.csv") -Force
+Copy-Item -LiteralPath (Join-Path $repoRoot "templates\voice_reference_manifest.template.json") -Destination (Join-Path $runRoot "outputs\04_assets\audio\voice_reference_manifest.json") -Force
 
 Write-Output "Created local run: $runRoot"

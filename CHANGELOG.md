@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-06-14 - v0.3.0
+
+### Changed
+- [process] 视频提示词生成改为逐 shot 循环：先生成 `shots/SHOT_XXX.md`，自检后再汇总 `shot_video_prompts.md`。
+- [prompt_output_contract] 视频提示词资产声明改为：必 `@SHOT`、必 `@CHAR`、有声才 `@AUDIO`、条件 `@ENV`、默认不 `@PROP`。
+- [prompt_output_contract] `@ENV` 只在镜头运动需要扩展分镜图外空间时使用，并必须写明原因。
+- [audio_reference] 新增音色参考协议和 `voice_reference_manifest_builder` Skill；有台词、旁白、留言或人声的 shot 必须绑定音色参考。
+- [character_view] 主要人物每个状态变体必须生成三视图：正视图、侧视图、后视图。
+- [template] 升级 `production_status.template.csv`，新增音色状态、场景引用决策、单 shot 提示词文件、三视图状态字段。
+- [check] 升级 `validate_project.py`，检查单 shot 文件、引用决策、音色、中文-only、无 `@PROP`。
+- [config] 升级项目版本到 v0.3.0，并新增 per-shot loop、音色、三视图质量门。
+
+### Reason
+- 批量一次性生成视频提示词容易变成静态画面描述，缺少逐镜头动作、声音和引用决策。
+- Seedance 支持音频作为声音参考，有台词镜头必须管理音色。
+- 人物单张图不足以稳定视频生成中的转身、侧身、背影和多镜头连续性。
+- 场景引用不应默认出现，应根据分镜图覆盖范围和镜头运动决定。
+
+### Compatibility
+- v0.2.0 的 `shot_video_prompts.md` 可作为草稿，但不满足 v0.3.0 的逐 shot 文件要求。
+- 旧项目需要补 `outputs/05_video_prompts/shots/`、`outputs/04_assets/audio/voice_reference_manifest.json` 和升级版 `production_status.csv`。
+
+### Validation
+- 已对项目文件做静态检查；v0.3.0 规则需要在下一个新 local run 中完整验证。
+
 ## 2026-06-14 - v0.2.0
 
 ### Changed

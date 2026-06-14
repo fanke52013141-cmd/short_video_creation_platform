@@ -34,12 +34,22 @@ local_runs/YYYY-MM-DD/project_slug/notes.md
 | asset_manifest_builder | pending |  |  |
 | asset_prompt_generation | pending |  |  |
 | image_generation_or_handoff | pending |  |  |
+| voice_reference_manifest_builder | pending |  |  |
 | shot_video_prompt_generation | pending |  |  |
 | external_generation_handoff | pending |  |  |
 | continuity_review | pending |  |  |
 
 ## Production Status
-用 `production_status.csv` 跟踪每个 shot 的提示词、图片、视频、最佳版本和返修问题。
+用 `production_status.csv` 跟踪每个 shot 的音色、场景引用决策、提示词、图片、视频、最佳版本和返修问题。
+
+## Video Prompt Loop
+- Single shot prompt dir: `outputs/05_video_prompts/shots/`
+- Aggregate prompt file: `outputs/05_video_prompts/shot_video_prompts.md`
+- 每个 shot 必须先生成单条文件，通过自检后再汇总。
+
+## Audio References
+- Manifest: `outputs/04_assets/audio/voice_reference_manifest.json`
+- 有台词、旁白、录音留言或可听见人声的 shot 必须绑定音色参考。
 
 ## Problems Found
 - 

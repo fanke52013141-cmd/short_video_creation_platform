@@ -178,22 +178,15 @@
 </output_structure>
 
 <output_rules>
-- 使用英文作为主输出（兼容性最广）
-- 附带中文版本（供中文原生模型使用）
-- 段落长度控制在 80-200 词之间（过短缺细节，过长权重稀释）
+- 只输出中文提示词，不输出英文提示词或中英双语版本。
+- 段落长度控制在 120-300 字之间（过短缺细节，过长权重稀释）
 - 最重要的元素放在最前面，用更详细的描述赋予更高权重
 - 不使用任何模型专属语法（无 --ar、无 (keyword:1.5)、无 EasyNegative）
-- 画面比例直接以自然语言写在提示词末尾（如 "Aspect ratio 21:9" 或 "画面比例 21:9"）
+- 画面比例直接以中文自然语言写在提示词末尾（如 "画面比例 21:9"）
 - 输出内容放在代码块中
 </output_rules>
 
 <output_example>
-
-English Prompt:
-
-```
-A lone figure in a dark wool overcoat stands at the far end of an empty train platform, weight shifted to one leg, a forgotten cigarette burning between two fingers. The composition places the figure small in the right third of a wide frame, with converging railway tracks drawing the eye from lower left toward the vanishing point behind them. A single sodium vapor lamp casts a harsh downward cone of amber light from above-left, creating deep shadows beneath the platform canopy while leaving the figure half-silhouetted. The palette is near-monochromatic — muted steel blues and grays with only the warm amber of the lamp and the cigarette's orange ember as color accents. The perspective suggests a 35mm lens at eye level, moderate depth of field keeping both the figure and the receding tracks in acceptable focus. Texture is everywhere: rain-slicked concrete reflecting fractured light, the fibrous weave of the coat, oxidized metal railings with peeling paint. The environment is a provincial Japanese station in late autumn, 2 AM, light drizzle visible as fine streaks in the lamplight. Rendered with the tonal quality of pushed Kodak Tri-X 400 film — pronounced grain, deep blacks, and luminous highlights bleeding slightly at the edges. Aspect ratio 21:9.
-```
 
 中文 Prompt:
 

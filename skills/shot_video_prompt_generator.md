@@ -1,11 +1,11 @@
 # Skill: shot_video_prompt_generator
-**Version**: 1.1.0
+**Version**: 1.2.0
 
 ## Source Prompt
 `skills/raw_prompts/seedance_video_prompt.source.md`
 
 ## Purpose
-把每个分镜、资产提示词、分镜图和参考素材转译为可直接交付 Seedance 2.0 多模态多参考能力的中文视频生成提示词。
+逐 shot 循环生成可直接交付 Seedance 2.0 多模态多参考能力的中文视频提示词。每条 shot 必须独立生成、独立自检、独立保存，最后再汇总。
 
 ## Inputs
 ```json
@@ -15,6 +15,7 @@
   "style_bible_path": "./outputs/02_art_direction/style_bible.md",
   "asset_prompt_dir": "./outputs/04_assets",
   "storyboard_keyframe_dir": "./outputs/03_storyboard/keyframes",
+  "voice_reference_manifest_path": "./outputs/04_assets/audio/voice_reference_manifest.json",
   "reference_media": [],
   "shot_id": "SHOT_001 | all"
 }
@@ -23,25 +24,36 @@
 ## Outputs
 ```json
 {
+  "single_shot_prompt_dir": "./outputs/05_video_prompts/shots",
+  "shot_video_prompt_index_path": "./outputs/05_video_prompts/shot_video_prompt_index.md",
   "shot_video_prompts_markdown_path": "./outputs/05_video_prompts/shot_video_prompts.md",
   "video_prompt_asset_reference_path": "./outputs/05_video_prompts/video_prompt_asset_reference.md"
 }
 ```
 
 ## Procedure
-1. 读取 Seedance 视频提示词源文件。
-2. 对每个镜头读取分镜参数、资产 ID、资产提示词、风格圣经和参考素材。
-3. 先进行输入素材分类：文本、图像、音频、视频分别承担什么锁定作用。
-4. 对已锁定维度不重复发明，只补全未锁定维度。
-5. 为每个镜头写入建议时长，使用 `storyboard.json.duration_seconds`。
-6. 如果存在对应分镜图，声明为 `@SHOT_XXX_STORYBOARD`，并标注首帧参考、尾帧参考或关键帧参考。
-7. 资产声明默认只包含分镜图、人物资产和场景资产；道具资产只写入画面描述，不写 `@PROP`。
-8. 输出中文视频提示词，不输出英文对照。
+1. 读取 Seedance 视频提示词源文件和 `docs/video_prompt_loop_protocol.md`。
+2. 构建 shot queue。不得跳过 shot，不得只一次性生成总文件。
+3. 对每个 shot 循环执行：
+   - 读取当前 shot 的叙事功能、时长、镜头运动、台词、人物、场景、道具。
+   - 声明 `@SHOT_XXX_STORYBOARD`，并标注首帧参考、尾帧参考或关键帧参考。
+   - 声明主要人物 `@CHAR`，人物应来自三视图资产或三视图映射。
+   - 判断是否有人声；有台词、旁白、录音留言或可听见人声时，必须声明对应 `@AUDIO`。
+   - 根据镜头运动和分镜图覆盖范围判断是否声明 `@ENV`；必须写明使用或不使用理由。
+   - 道具只写入正文画面描述，不写 `@PROP`。
+   - 生成单条中文视频提示词，保存为 `outputs/05_video_prompts/shots/SHOT_XXX.md`。
+   - 对该 shot 自检，不合格则重写该 shot。
+4. 全部单 shot 文件通过后，生成 `shot_video_prompt_index.md`。
+5. 按镜头顺序汇总所有单 shot 文件，生成 `shot_video_prompts.md`。
 
 ## Quality Gate
-- [ ] 每条视频提示词引用的分镜图、角色和场景均存在。
+- [ ] 每个 storyboard shot 都有一个 `shots/SHOT_XXX.md`。
+- [ ] 汇总文件由单 shot 文件按顺序汇总而来。
+- [ ] 每条视频提示词引用的分镜图和主要角色均存在。
 - [ ] 每条视频提示词包含建议时长。
-- [ ] 清楚声明参考素材的角色：首帧、尾帧、关键帧、人物资产、场景资产、风格参考、动作参考等。
+- [ ] 清楚声明参考素材的角色：首帧、尾帧、关键帧、人物资产、条件场景资产、声音参考等。
+- [ ] 有人声的 shot 必须声明 `@AUDIO`；无人声的 shot 不声明 `@AUDIO`。
+- [ ] 每条 shot 都有 `@ENV` 使用或不使用的引用决策说明。
 - [ ] 默认不出现 `@PROP`；道具写入正文画面描述。
 - [ ] 不把风格参考图误当内容参考。
 - [ ] 台词、动作、镜头运动和情绪可被视频模型执行。
@@ -52,12 +64,15 @@
 通过质量门后更新：
 - `current_phase`: `shot_video_prompt_generator`
 - `completed_phases`: 追加 `shot_video_prompt_generator`
+- `artifacts.single_shot_video_prompt_dir`: `./outputs/05_video_prompts/shots`
+- `artifacts.shot_video_prompt_index`: `./outputs/05_video_prompts/shot_video_prompt_index.md`
 - `artifacts.shot_video_prompts`: `./outputs/05_video_prompts/shot_video_prompts.md`
 - `artifacts.video_prompt_asset_reference`: `./outputs/05_video_prompts/video_prompt_asset_reference.md`
 - `next_phase.skill`: `continuity_review`
 
 ## Failure Handling
 - 资产引用缺失：停止生成该镜头，返回资产清单阶段。
+- 有人声但缺少音色参考：停止该 shot，要求用户提供音频，或按用户确认标记 `missing` 占位。
 - 参考素材角色不明：要求用户标注参考素材用途。
 - 提示词过度抽象：按源提示词执行具象化转换。
 - 道具需要稳定出现但不适合 `@`：保留道具图片作为人工参考，在正文中写清道具位置、动作和视觉细节。

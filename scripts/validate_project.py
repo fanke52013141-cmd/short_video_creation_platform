@@ -37,6 +37,7 @@ def main() -> None:
     checkpoint_path = run_dir / "checkpoint.json"
     storyboard_path = run_dir / "outputs" / "03_storyboard" / "storyboard.json"
     video_prompt_path = run_dir / "outputs" / "05_video_prompts" / "shot_video_prompts.md"
+    single_shot_dir = run_dir / "outputs" / "05_video_prompts" / "shots"
     reference_path = run_dir / "outputs" / "05_video_prompts" / "video_prompt_asset_reference.md"
     production_status_path = run_dir / "production_status.csv"
 
@@ -88,6 +89,57 @@ def main() -> None:
     if prop_at_count:
         fail(f"@PROP references are not allowed by default: {prop_at_count}")
     ok("no @PROP references")
+
+    if not single_shot_dir.exists():
+        fail(f"Single-shot prompt directory missing: {single_shot_dir}")
+
+    single_shot_files = sorted(single_shot_dir.glob("SHOT_*.md"))
+    if len(single_shot_files) != shot_count:
+        fail(f"single shot file count {len(single_shot_files)} does not match shot count {shot_count}")
+    ok(f"single shot files: {len(single_shot_files)}")
+
+    voice_manifest_path = run_dir / "outputs" / "04_assets" / "audio" / "voice_reference_manifest.json"
+    voice_ids: set[str] = set()
+    if voice_manifest_path.exists():
+        voice_manifest = json.loads(voice_manifest_path.read_text(encoding="utf-8-sig"))
+        for item in voice_manifest.get("voice_references", []):
+            if item.get("id"):
+                voice_ids.add(item["id"])
+        ok(f"voice references: {len(voice_ids)}")
+    else:
+        warn(f"voice reference manifest missing: {voice_manifest_path}")
+
+    dialogue_patterns = re.compile(
+        r"对白|旁白|台词|留言|录音|电话|新闻|播报|宣誓|祝福|低声|问：|说：|回答|“[^”]+”"
+    )
+    for shot in shots:
+        shot_id = shot.get("id")
+        if not shot_id:
+            fail("shot missing id")
+        shot_file = single_shot_dir / f"{shot_id}.md"
+        if not shot_file.exists():
+            fail(f"single shot prompt missing: {shot_file}")
+        shot_text = shot_file.read_text(encoding="utf-8")
+
+        required_snippets = ["【引用决策】", "【资产声明】", "【中文提示词】", f"@{shot_id}_STORYBOARD"]
+        for snippet in required_snippets:
+            if snippet not in shot_text:
+                fail(f"{shot_id} missing required snippet: {snippet}")
+        if "【English Prompt】" in shot_text:
+            fail(f"{shot_id} contains English Prompt block")
+        if "@PROP_" in shot_text:
+            fail(f"{shot_id} contains @PROP reference")
+        if "场景：" not in shot_text:
+            fail(f"{shot_id} missing scene reference decision")
+        if "音色：" not in shot_text:
+            fail(f"{shot_id} missing audio reference decision")
+
+        shot_audio_hint = " ".join(
+            str(shot.get(key, "")) for key in ("audio_emotion", "prompt_cn", "narrative_function")
+        )
+        has_dialogue = bool(dialogue_patterns.search(shot_audio_hint))
+        if has_dialogue and "@AUDIO_" not in shot_text:
+            fail(f"{shot_id} appears to contain voice/dialogue but has no @AUDIO reference")
 
     reference_shot_map_count = len(re.findall(r"^\| `@SHOT_\d{3}_STORYBOARD`", reference_text, flags=re.MULTILINE))
     if reference_shot_map_count != shot_count:

@@ -11,6 +11,15 @@
     "video_generation": "external_manual",
     "editing": "external_manual"
   },
+  "video_prompt_generation": {
+    "mode": "per_shot_loop",
+    "single_shot_dir": "./outputs/05_video_prompts/shots",
+    "aggregate_file": "./outputs/05_video_prompts/shot_video_prompts.md",
+    "asset_reference_file": "./outputs/05_video_prompts/video_prompt_asset_reference.md",
+    "requires_audio_for_dialogue": true,
+    "env_reference_policy": "conditional_by_camera_motion",
+    "prop_reference_policy": "describe_only_no_at_prop"
+  },
   "artifacts": {},
   "production_status": {
     "file": "./production_status.csv",

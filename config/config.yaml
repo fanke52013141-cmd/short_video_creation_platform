@@ -1,6 +1,6 @@
 project:
   name: "ai_short_film_pipeline"
-  version: "0.2.0"
+  version: "0.3.0"
   description: "将想法转化为 AI 短片生产包的 Skill-Oriented 工作流"
 
 runtime:
@@ -38,12 +38,13 @@ skill_versions:
   storyboard_director: "1.0.0"
   storyboard_static_frame_variant: "1.0.0"
   asset_manifest_builder: "0.1.0"
-  character_prompt_generator: "1.0.0"
+  character_prompt_generator: "1.1.0"
   scene_prompt_generator: "1.0.0"
   prop_prompt_generator: "0.1.0"
-  shot_video_prompt_generator: "1.1.0"
-  external_generation_handoff: "0.2.0"
-  continuity_review: "0.2.0"
+  voice_reference_manifest_builder: "0.1.0"
+  shot_video_prompt_generator: "1.2.0"
+  external_generation_handoff: "0.3.0"
+  continuity_review: "0.3.0"
   production_package_builder: "0.1.0"
 
 paths:
@@ -60,7 +61,9 @@ paths:
   art_direction_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/02_art_direction"
   storyboard_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/03_storyboard"
   asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets"
+  audio_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets/audio"
   video_prompt_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/05_video_prompts"
+  shot_prompt_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/05_video_prompts/shots"
   external_results_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/06_external_results"
   final_delivery_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/07_final_delivery"
 
@@ -87,6 +90,7 @@ output_formats:
   machine_readable: "json"
   video_prompt_language: "zh"
   asset_prompt_language: "zh"
+  video_prompt_generation_mode: "per_shot_loop"
 
 external_services:
   seedance:
@@ -127,4 +131,9 @@ quality_gates:
   require_asset_id_resolution: true
   require_style_bible_before_storyboard: true
   require_storyboard_before_video_prompts: true
+  require_character_three_view_for_main_characters: true
+  require_audio_reference_for_dialogue_shots: true
+  require_per_shot_video_prompt_files: true
+  allow_env_reference_only_when_spatial_expansion_needed: true
+  forbid_prop_reference_in_video_prompts_by_default: true
   require_continuity_review_before_final_delivery: true

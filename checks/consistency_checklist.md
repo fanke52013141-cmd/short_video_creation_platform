@@ -20,13 +20,19 @@
 - [ ] 状态变体按 A/B/C 标记。
 - [ ] 母题资产在叙事骨架、资产表、分镜中一致。
 - [ ] 人物不同年龄、服装、状态拆成独立资产图，不放进同一张最终资产图。
+- [ ] 主要人物每个状态变体具备三视图：正视图、侧视图、后视图。
 - [ ] 文字类道具仍有图片提示词或图片资产，不被跳过。
 
 ## 视频提示词一致
 - [ ] 每个 shot 都有建议时长。
+- [ ] 每个 shot 都有独立 `outputs/05_video_prompts/shots/SHOT_XXX.md`。
+- [ ] 总文件 `shot_video_prompts.md` 由单 shot 文件汇总。
 - [ ] 每个 shot 都声明对应 `@SHOT_XXX_STORYBOARD`。
 - [ ] `@SHOT_XXX_STORYBOARD` 被标注为首帧参考、尾帧参考或关键帧参考。
-- [ ] 视频提示词默认只 `@` 分镜图、人物和场景。
+- [ ] 视频提示词默认必须 `@` 分镜图和主要人物。
+- [ ] 有台词、旁白、录音留言或可听见人声的 shot 必须 `@AUDIO`。
+- [ ] 没有人声的 shot 不应 `@AUDIO`。
+- [ ] `@ENV` 只在镜头运动需要扩展分镜图外空间时出现，并有引用决策说明。
 - [ ] 视频提示词中默认没有 `@PROP`。
 - [ ] 视频提示词只输出中文，不包含 `【English Prompt】`。
 - [ ] 道具在正文中有清晰画面描述。
@@ -41,6 +47,7 @@
 - [ ] `outputs/02_art_direction/` 有视觉风格产物。
 - [ ] `outputs/03_storyboard/` 有分镜产物。
 - [ ] `outputs/04_assets/` 有资产注册表和资产提示词。
+- [ ] `outputs/04_assets/audio/` 有音色参考清单或缺失说明。
 - [ ] `outputs/05_video_prompts/` 有逐镜头视频提示词。
 - [ ] `production_status.csv` 存在，用于记录外部生成或内部生成状态。
 - [ ] `outputs/07_final_delivery/` 有最终清单和审查报告。

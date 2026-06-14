@@ -15,6 +15,9 @@
 | `external_handoff` | 外部生成和剪映交接说明模板 | 是 |
 | `generation_mode` | 内部/外部图片生成分支规则、状态字段、交接模板 | 是 |
 | `prompt_output_contract` | 提示词输出语言、资产声明规则、复制格式 | 是 |
+| `video_prompt_loop` | 逐 shot 循环生成、单文件保存、汇总规则 | 是 |
+| `audio_reference` | 音色参考清单、台词镜头音频绑定规则 | 是 |
+| `character_view` | 人物三视图资产要求 | 是 |
 | `secret` | token、API key、cookie、本地账号信息 | 否 |
 
 ## 每日创作迭代
@@ -55,6 +58,9 @@ project_slug/
 - 某个提示词经过多次验证后变成稳定版本，需要升级源提示词。
 - 内部/外部生成模式的分支规则需要更新。
 - 视频提示词资产声明规则需要更新，例如是否允许 `@PROP`。
+- 视频提示词生成方式需要从一次性批量改成逐 shot 循环。
+- 有台词镜头需要新增音色参考规则。
+- 人物资产稳定性不足，需要升级三视图规则。
 - 单次项目中暴露出的年代准确性、文字生成、镜头秒数等通用问题。
 
 不可反哺内容：
@@ -73,6 +79,9 @@ project_slug/
 |---|---|
 | 阶段顺序、分支选择、人工确认点 | `Agent.md`, `docs/flow.md`, `docs/generation_mode_protocol.md` |
 | 视频提示词格式、只输出中文、资产声明规则 | `skills/shot_video_prompt_generator.md`, `skills/raw_prompts/seedance_video_prompt.source.md`, `docs/asset_reference_rules.md` |
+| 视频提示词逐 shot 循环 | `docs/video_prompt_loop_protocol.md`, `skills/shot_video_prompt_generator.md`, `scripts/validate_project.py` |
+| 音色参考规则 | `docs/audio_reference_protocol.md`, `skills/voice_reference_manifest_builder.md`, `templates/voice_reference_manifest.template.json` |
+| 人物三视图规则 | `docs/character_three_view_protocol.md`, `skills/character_prompt_generator.md`, `checks/consistency_checklist.md` |
 | 内部/外部图片生成分支 | `docs/generation_mode_protocol.md`, `config/config.yaml`, `checkpoint.template.json` |
 | 仓库提交边界 | `docs/repository_policy.md`, `.gitignore` |
 | 质量检查 | `checks/consistency_checklist.md`, `scripts/validate_project.py` |
