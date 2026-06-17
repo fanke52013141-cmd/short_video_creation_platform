@@ -1,2 +1,2 @@
-shot_id,scene,duration_seconds,storyboard_reference_role,scene_reference_required,scene_reference_reason,dialogue_required,audio_reference_status,audio_reference_id,character_view_status,prompt_file,prompt_status,prompt_review_status,image_status,video_status,best_take,issue,next_action
-SHOT_001,,,keyframe_reference,false,,false,none,,pending,outputs/05_video_prompts/shots/SHOT_001.md,pending,pending,pending,pending,,,
+shot_id,scene,duration_seconds,storyboard_sequence_status,storyboard_sequence_issue,storyboard_reference_role,scene_reference_required,scene_reference_reason,dialogue_required,audio_reference_status,audio_reference_id,character_view_status,prompt_file,prompt_status,prompt_review_status,image_status,video_status,best_take,issue,next_action
+SHOT_001,,,pending,,keyframe_reference,false,,false,none,,pending,outputs/05_video_prompts/shots/SHOT_001.md,pending,pending,pending,pending,,,

@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-06-17 - v0.4.0
+
+### Changed
+- [process] 新增 `storyboard_sequence_review` 阶段，放在 `storyboard_director` 之后、`asset_manifest_builder` 之前。
+- [skill] 新增 `skills/storyboard_sequence_review.md`，用 1-shot、2-shot、3-shot 滑动窗口检查分镜相邻逻辑。
+- [check] 新增 `docs/storyboard_sequence_review_protocol.md`，定义空间、道具、人物、时间、声音和母题连续性审查规则。
+- [schema] `asset_manifest_builder` 升级到 v0.2.0，读取分镜序列审查结果；有 P0 时不得进入资产注册表生成。
+- [check] `validate_project.py` 增加 `storyboard_sequence_review.json` 校验，存在未处理 P0 时失败。
+- [template] `production_status.template.csv` 增加分镜连续性状态字段。
+- [config] 项目版本升级到 v0.4.0，新增 `require_storyboard_sequence_review_before_assets` 质量门。
+
+### Reason
+- 本地创作中出现相邻分镜穿帮：座机在上一镜未建立，却在下一镜凭空进入生日餐桌构图。
+- 这类问题如果等到视频提示词阶段才发现，会连带污染资产清单、分镜图和视频提示词。
+
+### Compatibility
+- 旧项目需要补 `outputs/03_storyboard/storyboard_sequence_review.md` 与 `.json`，或重新从分镜阶段运行审查。
+- 旧 `production_status.csv` 可继续使用，但建议按新模板增加分镜连续性字段。
+
+### Validation
+- 已对项目文件做静态检查；该阶段需要在下一个完整 local run 中验证。
+
 ## 2026-06-14 - v0.3.0
 
 ### Changed

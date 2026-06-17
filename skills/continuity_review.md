@@ -10,6 +10,7 @@
   "story_json_path": "./outputs/01_story/story.json",
   "art_direction_json_path": "./outputs/02_art_direction/art_direction.json",
   "storyboard_json_path": "./outputs/03_storyboard/storyboard.json",
+  "storyboard_sequence_review_json_path": "./outputs/03_storyboard/storyboard_sequence_review.json",
   "asset_manifest_path": "./outputs/04_assets/asset_manifest.json",
   "shot_video_prompts_markdown_path": "./outputs/05_video_prompts/shot_video_prompts.md",
   "single_shot_prompt_dir": "./outputs/05_video_prompts/shots",
@@ -31,13 +32,14 @@
 1. 检查故事核心是否在视觉、分镜和视频提示词中保持。
 2. 检查风格圣经是否被所有下游阶段继承。
 3. 检查资产 ID 是否完整、唯一、引用正确。
-4. 检查角色外观、场景状态、道具状态是否在镜头间连续。
-5. 检查每个 shot 是否有独立 `shots/SHOT_XXX.md`，并已汇总到总文件。
-6. 检查视频提示词是否只输出中文，且每个 shot 都有建议时长和分镜图参考角色。
-7. 检查有台词、旁白、录音留言或可听见人声的 shot 是否有 `@AUDIO`。
-8. 检查 `@ENV` 是否只在镜头运动需要空间拓展时出现，并有引用决策说明。
-9. 检查视频提示词默认没有 `@PROP`，道具只作为画面描述出现。
-10. 输出问题清单、严重级别、影响镜头和修正建议。
+4. 读取 `storyboard_sequence_review.json`，确认早期分镜相邻逻辑审查已执行且 P0 已处理。
+5. 检查角色外观、场景状态、道具状态是否在镜头间连续。
+6. 检查每个 shot 是否有独立 `shots/SHOT_XXX.md`，并已汇总到总文件。
+7. 检查视频提示词是否只输出中文，且每个 shot 都有建议时长和分镜图参考角色。
+8. 检查有台词、旁白、录音留言或可听见人声的 shot 是否有 `@AUDIO`。
+9. 检查 `@ENV` 是否只在镜头运动需要空间拓展时出现，并有引用决策说明。
+10. 检查视频提示词默认没有 `@PROP`，道具只作为画面描述出现。
+11. 输出问题清单、严重级别、影响镜头和修正建议。
 
 ## Quality Gate
 - [ ] 没有缺失资产引用。
@@ -45,6 +47,7 @@
 - [ ] 没有场景时空状态冲突。
 - [ ] 没有道具状态前后矛盾。
 - [ ] 没有风格漂移到与 `style_bible.md` 冲突。
+- [ ] 分镜序列审查已执行，且没有未处理 P0。
 - [ ] 每个 shot 都有建议时长和 `@SHOT_XXX_STORYBOARD`。
 - [ ] 每个 shot 都有独立单 shot 提示词文件。
 - [ ] 有人声的 shot 都有 `@AUDIO`。

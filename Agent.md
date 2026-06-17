@@ -8,6 +8,7 @@
 - 完整短片故事
 - 视觉风格圣经
 - 分镜序列
+- 分镜相邻逻辑审查报告
 - 角色、场景、道具资产清单
 - 角色/场景/道具生成提示词
 - 可选的本地图片资产生成结果，或外部图片生成交接提示词
@@ -32,24 +33,28 @@
 1. 用户触发 `story_generation`，输入 `inputs/idea_brief.md`，产出 `outputs/01_story/story.md` 与 `outputs/01_story/story.json`，更新 `checkpoint.json`。
 2. 用户确认故事后，触发 `art_direction`，输入故事产物，产出 `outputs/02_art_direction/style_bible.md` 与 `outputs/02_art_direction/art_direction.json`，更新 `checkpoint.json`。
 3. 用户确认视觉方向后，触发 `storyboard_director`，输入故事与风格圣经，产出 `outputs/03_storyboard/storyboard.md` 与 `outputs/03_storyboard/storyboard.json`，更新 `checkpoint.json`。
-4. 用户确认分镜后，触发 `asset_manifest_builder`，输入分镜资产表，产出 `outputs/04_assets/asset_manifest.json`，更新 `checkpoint.json`。
-5. 用户按资产类别触发 `character_prompt_generator`、`scene_prompt_generator`、`prop_prompt_generator`，输入 `asset_manifest.json` 与 `style_bible.md`，产出资产级提示词文件。
-6. 进入图片生成前，必须询问用户选择 `internal_codex` 还是 `external_manual`。如果用户已明确说明，按用户说明执行并写入 `checkpoint.generation_modes.image_generation`。
-7. `internal_codex` 模式：使用角色、场景、道具提示词直接调用 CodeX 图片生成，结果只保存到本地 run，不提交仓库。
-8. `external_manual` 模式：整理角色、场景、道具图片生成提示词，供用户复制到外部网页端。
-9. 进入视频提示词前，建立 `outputs/04_assets/audio/voice_reference_manifest.json`。如果某个 shot 有台词、旁白、录音留言或可听见人声，必须有对应音色参考或明确 `missing` 占位。
-10. 用户确认图片资产或外部生成准备完成后，触发 `shot_video_prompt_generator`。该 Skill 必须逐 shot 循环生成 `outputs/05_video_prompts/shots/SHOT_XXX.md`，自检通过后再汇总为 `outputs/05_video_prompts/shot_video_prompts.md`。视频提示词只输出中文。
-11. 用户触发 `external_generation_handoff`，把逐镜头中文视频提示词、分镜图、人物、条件场景引用、音色引用和剪辑说明整理成可复制到外部网页端的交接包。
-12. 用户将视频提示词复制到即梦/Seedance 网页端或其他视频平台生成视频。
-13. 用户可把外部生成结果的文件名、链接、截图说明或人工备注记录到本地 run 目录；这些结果不进入仓库。
-14. 用户触发 `continuity_review`，输入故事、风格、分镜、资产、音色、视频提示词和可选的生成结果备注，产出 `outputs/07_final_delivery/continuity_report.md`。
-15. 剪辑在剪映等外部工具完成，CodeX 只输出剪辑交接清单，不执行剪辑。
-16. 用户确认全部产物后，触发 `production_package_builder`，汇总最终交付包。
+4. 用户确认分镜草案后，触发 `storyboard_sequence_review`，用 1-shot、2-shot、3-shot 滑动窗口检查相邻分镜逻辑，产出 `outputs/03_storyboard/storyboard_sequence_review.md` 与 `.json`。
+5. 如果 `storyboard_sequence_review` 发现 P0/P1 问题，先回到分镜阶段修正并重跑审查；通过后才触发 `asset_manifest_builder`。
+6. 用户确认分镜审查通过后，触发 `asset_manifest_builder`，输入分镜资产表，产出 `outputs/04_assets/asset_manifest.json`，更新 `checkpoint.json`。
+7. 用户按资产类别触发 `character_prompt_generator`、`scene_prompt_generator`、`prop_prompt_generator`，输入 `asset_manifest.json` 与 `style_bible.md`，产出资产级提示词文件。
+8. 进入图片生成前，必须询问用户选择 `internal_codex` 还是 `external_manual`。如果用户已明确说明，按用户说明执行并写入 `checkpoint.generation_modes.image_generation`。
+9. `internal_codex` 模式：使用角色、场景、道具提示词直接调用 CodeX 图片生成，结果只保存到本地 run，不提交仓库。
+10. `external_manual` 模式：整理角色、场景、道具图片生成提示词，供用户复制到外部网页端。
+11. 进入视频提示词前，建立 `outputs/04_assets/audio/voice_reference_manifest.json`。如果某个 shot 有台词、旁白、录音留言或可听见人声，必须有对应音色参考或明确 `missing` 占位。
+12. 用户确认图片资产或外部生成准备完成后，触发 `shot_video_prompt_generator`。该 Skill 必须逐 shot 循环生成 `outputs/05_video_prompts/shots/SHOT_XXX.md`，自检通过后再汇总为 `outputs/05_video_prompts/shot_video_prompts.md`。视频提示词只输出中文。
+13. 用户触发 `external_generation_handoff`，把逐镜头中文视频提示词、分镜图、人物、条件场景引用、音色引用和剪辑说明整理成可复制到外部网页端的交接包。
+14. 用户将视频提示词复制到即梦/Seedance 网页端或其他视频平台生成视频。
+15. 用户可把外部生成结果的文件名、链接、截图说明或人工备注记录到本地 run 目录；这些结果不进入仓库。
+16. 用户触发 `continuity_review`，输入故事、风格、分镜、资产、音色、视频提示词和可选的生成结果备注，产出 `outputs/07_final_delivery/continuity_report.md`。
+17. 剪辑在剪映等外部工具完成，CodeX 只输出剪辑交接清单，不执行剪辑。
+18. 用户确认全部产物后，触发 `production_package_builder`，汇总最终交付包。
 
 ## Decision Rules
 - `story_generation` 只负责故事开发，不负责视觉风格、分镜或视频提示词。
 - `art_direction` 只负责视觉方向系统，不改写故事核心。
 - `storyboard_director` 可以输出资产草表，但不负责生成最终角色/场景细节提示词。
+- `storyboard_sequence_review` 必须在资产生成前检查相邻分镜逻辑，重点看空间、道具、人物状态、声音来源、时间因果和母题连续性。
+- `storyboard_sequence_review` 发现 P0 问题时，不得进入 `asset_manifest_builder`。
 - `asset_manifest_builder` 是资产 ID 的唯一规范化来源。
 - `shot_video_prompt_generator` 必须逐 shot 循环生成，不得只一次性生成总文件。
 - `shot_video_prompt_generator` 必须引用已确认资产 ID，不得凭空重建角色或场景；默认 `@` 分镜图和主要人物，条件 `@` 音色和场景，道具只写入画面描述。

@@ -18,6 +18,7 @@
 | `video_prompt_loop` | 逐 shot 循环生成、单文件保存、汇总规则 | 是 |
 | `audio_reference` | 音色参考清单、台词镜头音频绑定规则 | 是 |
 | `character_view` | 人物三视图资产要求 | 是 |
+| `storyboard_sequence_review` | 分镜相邻逻辑、空间/道具/声音连续性审查 | 是 |
 | `secret` | token、API key、cookie、本地账号信息 | 否 |
 
 ## 每日创作迭代
@@ -61,6 +62,7 @@ project_slug/
 - 视频提示词生成方式需要从一次性批量改成逐 shot 循环。
 - 有台词镜头需要新增音色参考规则。
 - 人物资产稳定性不足，需要升级三视图规则。
+- 相邻分镜出现空间、道具、人物状态、声音来源或因果逻辑穿帮，需要新增分镜序列审查规则。
 - 单次项目中暴露出的年代准确性、文字生成、镜头秒数等通用问题。
 
 不可反哺内容：
@@ -82,6 +84,7 @@ project_slug/
 | 视频提示词逐 shot 循环 | `docs/video_prompt_loop_protocol.md`, `skills/shot_video_prompt_generator.md`, `scripts/validate_project.py` |
 | 音色参考规则 | `docs/audio_reference_protocol.md`, `skills/voice_reference_manifest_builder.md`, `templates/voice_reference_manifest.template.json` |
 | 人物三视图规则 | `docs/character_three_view_protocol.md`, `skills/character_prompt_generator.md`, `checks/consistency_checklist.md` |
+| 分镜相邻逻辑审查 | `docs/storyboard_sequence_review_protocol.md`, `skills/storyboard_sequence_review.md`, `docs/flow.md`, `Agent.md`, `checks/consistency_checklist.md` |
 | 内部/外部图片生成分支 | `docs/generation_mode_protocol.md`, `config/config.yaml`, `checkpoint.template.json` |
 | 仓库提交边界 | `docs/repository_policy.md`, `.gitignore` |
 | 质量检查 | `checks/consistency_checklist.md`, `scripts/validate_project.py` |

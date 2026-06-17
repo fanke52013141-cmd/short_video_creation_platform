@@ -8,6 +8,7 @@
 ## 数据连续
 - [ ] `story_generation` 输出能被 `art_direction` 读取。
 - [ ] `art_direction` 输出能锁定 `storyboard_director` 的风格边界。
+- [ ] `storyboard_sequence_review` 在 `storyboard_director` 之后、`asset_manifest_builder` 之前执行。
 - [ ] `storyboard_director` 输出的资产 ID 能被 `asset_manifest_builder` 解析。
 - [ ] `asset_manifest.json` 中的所有资产都能生成资产提示词。
 - [ ] `shot_video_prompt_generator` 不引用不存在的资产 ID。
@@ -36,6 +37,18 @@
 - [ ] 视频提示词中默认没有 `@PROP`。
 - [ ] 视频提示词只输出中文，不包含 `【English Prompt】`。
 - [ ] 道具在正文中有清晰画面描述。
+
+## 分镜序列连续
+- [ ] `outputs/03_storyboard/storyboard_sequence_review.md` 存在。
+- [ ] `outputs/03_storyboard/storyboard_sequence_review.json` 存在。
+- [ ] 每个 shot 都完成单镜头自洽检查。
+- [ ] 每组相邻 2-shot 窗口都完成检查。
+- [ ] 每组相邻 3-shot 窗口都完成检查。
+- [ ] 没有 P0 空间穿帮，例如道具凭空出现在上一个镜头未建立的位置。
+- [ ] 没有 P0 道具状态矛盾，例如已拿起的道具又无交代回到原位。
+- [ ] 没有 P0 人物状态断裂，例如年龄、服装、伤痕或位置无交代跳变。
+- [ ] 电话、门铃、电视、录像、旁白、台词等声音来源清楚，并标记给音色阶段。
+- [ ] 空椅子、警号、警帽等母题只在正确位置和正确状态出现。
 
 ## 风格一致
 - [ ] 分镜没有覆盖 `style_bible.md` 的核心风格。

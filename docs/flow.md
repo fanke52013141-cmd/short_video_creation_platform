@@ -33,14 +33,33 @@
   - `RUN/outputs/03_storyboard/storyboard.md`
   - `RUN/outputs/03_storyboard/storyboard.json`
 
-## 4. Storyboard To Canonical Asset Manifest
+## 4. Storyboard Sequence Review
+- Skill: `storyboard_sequence_review`
+- Protocol: `docs/storyboard_sequence_review_protocol.md`
+- Input:
+  - `RUN/outputs/01_story/story.json`
+  - `RUN/outputs/02_art_direction/style_bible.md`
+  - `RUN/outputs/03_storyboard/storyboard.md`
+  - `RUN/outputs/03_storyboard/storyboard.json`
+  - `RUN/outputs/03_storyboard/keyframes/*.png` when available
+- Output:
+  - `RUN/outputs/03_storyboard/storyboard_sequence_review.md`
+  - `RUN/outputs/03_storyboard/storyboard_sequence_review.json`
+- Rules:
+  - 必须检查 1-shot、2-shot、3-shot 滑动窗口。
+  - 重点检查空间、道具、人物状态、时间因果、声音来源和母题连续性。
+  - 有 P0 问题时不能进入资产清单阶段。
+  - 有 P1 问题时必须修正或由用户明确接受风险。
+
+## 5. Storyboard To Canonical Asset Manifest
 - Skill: `asset_manifest_builder`
 - Input:
   - `RUN/outputs/03_storyboard/storyboard.json`
+  - `RUN/outputs/03_storyboard/storyboard_sequence_review.json`
 - Output:
   - `RUN/outputs/04_assets/asset_manifest.json`
 
-## 5. Asset Prompt Generation
+## 6. Asset Prompt Generation
 - Character Skill: `character_prompt_generator`
 - Scene Skill: `scene_prompt_generator`
 - Prop Skill: `prop_prompt_generator`
@@ -55,7 +74,7 @@
   - 主要人物的每个状态变体必须按三视图生产。
   - 道具提示词仍必须生成，尤其是文字类道具。
 
-## 6. Image Generation Mode Selection
+## 7. Image Generation Mode Selection
 - Protocol: `docs/generation_mode_protocol.md`
 - Required decision:
   - `external_manual`: 只输出提示词和交接说明，由用户在外部网页端生成图片。
@@ -72,7 +91,7 @@
   - 主要人物的不同状态必须单独生成三视图。
   - 所有图片和外部生成结果都属于本地 run，不进入仓库。
 
-## 7. Audio Reference Collection
+## 8. Audio Reference Collection
 - Skill: `voice_reference_manifest_builder`
 - Protocol: `docs/audio_reference_protocol.md`
 - Input:
@@ -86,7 +105,7 @@
   - 有台词、旁白、录音留言或可听见人声的 shot 必须绑定 `@AUDIO`。
   - 缺少音色参考时，必须向用户索要或标记 `missing`，不得假装最终完成。
 
-## 8. Shot Video Prompt Generation
+## 9. Shot Video Prompt Generation
 - Skill: `shot_video_prompt_generator`
 - Source prompt: `skills/raw_prompts/seedance_video_prompt.source.md`
 - Input:
@@ -111,7 +130,7 @@
   - `@ENV` 只在镜头运动需要扩展分镜图外空间时使用，并写明原因。
   - 道具只写入画面描述，不 `@PROP`。
 
-## 9. External Generation Handoff
+## 10. External Generation Handoff
 - Skill: `external_generation_handoff`
 - Image generation: only included when `generation_modes.image_generation = external_manual`.
 - Video generation: manually execute shot prompts in Jimeng / Seedance web or selected video platform.
@@ -124,7 +143,7 @@
   - `RUN/outputs/06_external_results/external_generation_notes.md`
   - `RUN/outputs/06_external_results/shot_result_manifest.json`
 
-## 10. Review And Final Package
+## 11. Review And Final Package
 - Review Skill: `continuity_review`
 - Input:
   - `RUN/outputs/05_video_prompts/shot_video_prompts.md`

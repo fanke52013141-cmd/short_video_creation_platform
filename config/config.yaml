@@ -1,6 +1,6 @@
 project:
   name: "ai_short_film_pipeline"
-  version: "0.3.0"
+  version: "0.4.0"
   description: "将想法转化为 AI 短片生产包的 Skill-Oriented 工作流"
 
 runtime:
@@ -27,6 +27,7 @@ model_defaults:
     story_generation: 0.7
     art_direction: 0.45
     storyboard_director: 0.55
+    storyboard_sequence_review: 0.2
     asset_prompt_generation: 0.45
     video_prompt_generation: 0.35
     continuity_review: 0.2
@@ -37,7 +38,8 @@ skill_versions:
   art_direction: "1.0.0"
   storyboard_director: "1.0.0"
   storyboard_static_frame_variant: "1.0.0"
-  asset_manifest_builder: "0.1.0"
+  storyboard_sequence_review: "0.1.0"
+  asset_manifest_builder: "0.2.0"
   character_prompt_generator: "1.1.0"
   scene_prompt_generator: "1.0.0"
   prop_prompt_generator: "0.1.0"
@@ -60,6 +62,7 @@ paths:
   story_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/01_story"
   art_direction_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/02_art_direction"
   storyboard_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/03_storyboard"
+  storyboard_sequence_review_file: "./local_runs/YYYY-MM-DD/project_slug/outputs/03_storyboard/storyboard_sequence_review.md"
   asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets"
   audio_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets/audio"
   video_prompt_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/05_video_prompts"
@@ -131,6 +134,7 @@ quality_gates:
   require_asset_id_resolution: true
   require_style_bible_before_storyboard: true
   require_storyboard_before_video_prompts: true
+  require_storyboard_sequence_review_before_assets: true
   require_character_three_view_for_main_characters: true
   require_audio_reference_for_dialogue_shots: true
   require_per_shot_video_prompt_files: true

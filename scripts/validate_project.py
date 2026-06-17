@@ -36,17 +36,19 @@ def main() -> None:
 
     checkpoint_path = run_dir / "checkpoint.json"
     storyboard_path = run_dir / "outputs" / "03_storyboard" / "storyboard.json"
+    storyboard_review_path = run_dir / "outputs" / "03_storyboard" / "storyboard_sequence_review.json"
     video_prompt_path = run_dir / "outputs" / "05_video_prompts" / "shot_video_prompts.md"
     single_shot_dir = run_dir / "outputs" / "05_video_prompts" / "shots"
     reference_path = run_dir / "outputs" / "05_video_prompts" / "video_prompt_asset_reference.md"
     production_status_path = run_dir / "production_status.csv"
 
-    for path in [checkpoint_path, storyboard_path, video_prompt_path, reference_path]:
+    for path in [checkpoint_path, storyboard_path, storyboard_review_path, video_prompt_path, reference_path]:
         if not path.exists():
             fail(f"Required file missing: {path}")
 
     checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8-sig"))
     storyboard = json.loads(storyboard_path.read_text(encoding="utf-8-sig"))
+    storyboard_review = json.loads(storyboard_review_path.read_text(encoding="utf-8-sig"))
     prompt_text = video_prompt_path.read_text(encoding="utf-8")
     reference_text = reference_path.read_text(encoding="utf-8")
 
@@ -55,6 +57,17 @@ def main() -> None:
     if shot_count == 0:
         fail("storyboard.json has no shots")
     ok(f"storyboard shots: {shot_count}")
+
+    review_status = storyboard_review.get("status")
+    if review_status not in ("pass", "revise_required"):
+        fail(f"Invalid storyboard sequence review status: {review_status}")
+    p0_issues = [
+        item for item in storyboard_review.get("issues", [])
+        if item.get("severity") == "P0"
+    ]
+    if p0_issues:
+        fail(f"storyboard sequence review has unresolved P0 issues: {len(p0_issues)}")
+    ok(f"storyboard sequence review: {review_status}")
 
     image_mode = checkpoint.get("generation_modes", {}).get("image_generation")
     if image_mode in (None, "ask_user"):

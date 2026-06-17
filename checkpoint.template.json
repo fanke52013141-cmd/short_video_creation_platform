@@ -4,7 +4,7 @@
   "last_updated": "YYYY-MM-DDTHH:MM:SSZ",
   "current_phase": "initialized",
   "phase_index": 0,
-  "total_phases": 9,
+  "total_phases": 11,
   "completed_phases": [],
   "generation_modes": {
     "image_generation": "ask_user",
@@ -19,6 +19,13 @@
     "requires_audio_for_dialogue": true,
     "env_reference_policy": "conditional_by_camera_motion",
     "prop_reference_policy": "describe_only_no_at_prop"
+  },
+  "storyboard_sequence_review": {
+    "required": true,
+    "review_file": "./outputs/03_storyboard/storyboard_sequence_review.md",
+    "review_json_file": "./outputs/03_storyboard/storyboard_sequence_review.json",
+    "window_sizes": [1, 2, 3],
+    "blocks_next_phase_on_p0": true
   },
   "artifacts": {},
   "production_status": {
