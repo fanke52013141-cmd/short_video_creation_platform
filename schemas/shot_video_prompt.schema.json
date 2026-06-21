@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Shot Video Prompt",
+  "type": "object",
+  "required": [
+    "shot_id",
+    "duration_seconds",
+    "storyboard_reference",
+    "character_references",
+    "audio_reference_decision",
+    "env_reference_decision",
+    "prop_policy",
+    "prompt_cn",
+    "self_check"
+  ],
+  "properties": {
+    "shot_id": { "type": "string", "pattern": "^SHOT_[0-9]{3}$" },
+    "duration_seconds": { "type": ["integer", "number"] },
+    "storyboard_reference": { "type": "string" },
+    "character_references": { "type": "array", "items": { "type": "string" } },
+    "audio_reference_decision": { "type": ["object", "string"] },
+    "env_reference_decision": { "type": ["object", "string"] },
+    "prop_policy": { "type": "string" },
+    "prompt_cn": { "type": "string" },
+    "self_check": { "type": ["array", "object", "string"] }
+  }
+}

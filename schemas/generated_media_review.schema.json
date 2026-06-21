@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Generated Media Review",
+  "type": "object",
+  "required": ["status", "issues"],
+  "properties": {
+    "status": { "type": "string", "enum": ["pass", "revise_required", "not_executed"] },
+    "reviewed_shots": { "type": ["array", "integer"] },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "description"],
+        "properties": {
+          "severity": { "type": "string", "enum": ["P0", "P1", "P2"] },
+          "shot_id": { "type": ["string", "null"] },
+          "asset_id": { "type": ["string", "null"] },
+          "description": { "type": "string" },
+          "fix_suggestion": { "type": ["string", "null"] },
+          "fix_applied": { "type": ["boolean", "null"] },
+          "accepted_by_user": { "type": ["boolean", "null"] }
+        }
+      }
+    }
+  }
+}

@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-06-21 - v0.5.0
+
+### Changed
+- [process] 将流程升级为 13 阶段：新增 `image_generation_executor` 与 `generated_media_review`，外部生成结果审查位于交接之后、最终一致性审查之前。
+- [schema] 新增 `schemas/`，覆盖故事、艺术方向、分镜、分镜审查、资产清单、音色清单、单 shot 视频提示词、图片结果、视频结果、生成媒体审查、连续性报告和最终包。
+- [checkpoint] 升级 `checkpoint.template.json` 到 schema v1.1，加入项目元数据、阶段状态机、阶段顺序、质量门、已知缺口和阻塞问题。
+- [script] `init_local_run.ps1` 现在会写入真实 `project_slug`、`created_at`、`run_dir`，并初始化图片/视频外部结果 manifest。
+- [check] `validate_project.py` 改为阶段式校验，支持 `--phase initialized|story|art|storyboard|assets|audio|video_prompts|external|media_review|final|all`。
+- [skill] 新增 `skills/image_generation_executor.md`，包装内部/外部图片生成结果记录流程。
+- [skill] 新增 `skills/generated_media_review.md`，审查外部生成视频/图片结果。
+- [skill] 补齐 `skills/raw_prompts/prop_prompt_generator.source.md`，道具提示词不再临时复用场景提示词。
+- [template] 新增 `image_result_manifest.template.json` 和 `shot_result_manifest.template.json`。
+- [docs] 新增 `phase_state_machine.md`、`schema_contracts.md`、`generated_media_review_protocol.md` 和 `quality_gate_matrix.md`。
+
+### Reason
+- 上一轮审核发现流程已经具备创作骨架，但缺少机器契约、状态机、外部结果回流和最终交付硬门槛。
+- 如果不把外部生成结果纳入 manifest 和审查，角色变脸、道具丢失、空间穿帮等问题会停留在人工聊天记录里，无法进入最终质量门。
+- 如果 checkpoint 只是模板复制，流程阶段顺序和项目真实状态容易失真。
+
+### Compatibility
+- 旧 local run 的 `checkpoint.json` 不包含 `phases`、`known_gaps`、`blocking_issues` 等字段，建议重新初始化或手动迁移到 v1.1。
+- 旧项目没有 `image_result_manifest.json`、`shot_result_manifest.json` 和 `generated_media_review.json`，最终包不应直接标记为 `completed`。
+- 旧 `production_status.csv` 可继续阅读，但建议按新模板升级字段。
+
+### Validation
+- 已运行 `python -m py_compile scripts/validate_project.py`。
+- 已解析所有 `schemas/*.json`、`templates/*.json` 和 `checkpoint.template.json`。
+- 已使用临时 local run 执行初始化脚本。
+- 已对临时 local run 执行 `--phase initialized` 与音色清单校验并通过。
+
 ## 2026-06-17 - v0.4.0
 
 ### Changed

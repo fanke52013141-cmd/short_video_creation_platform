@@ -19,6 +19,8 @@
 | `audio_reference` | 音色参考清单、台词镜头音频绑定规则 | 是 |
 | `character_view` | 人物三视图资产要求 | 是 |
 | `storyboard_sequence_review` | 分镜相邻逻辑、空间/道具/声音连续性审查 | 是 |
+| `generated_media_review` | 外部生成图片/视频结果审查、最佳 take 问题回流 | 是 |
+| `phase_state` | checkpoint 阶段状态机、完成状态、已知缺口/阻塞项 | 是 |
 | `secret` | token、API key、cookie、本地账号信息 | 否 |
 
 ## 每日创作迭代
@@ -43,7 +45,6 @@ project_slug/
 │   ├── 06_external_results/
 │   └── 07_final_delivery/
 ├── references/
-├── external_results/
 ├── checkpoint.json
 └── notes.md
 ```
@@ -86,6 +87,9 @@ project_slug/
 | 人物三视图规则 | `docs/character_three_view_protocol.md`, `skills/character_prompt_generator.md`, `checks/consistency_checklist.md` |
 | 分镜相邻逻辑审查 | `docs/storyboard_sequence_review_protocol.md`, `skills/storyboard_sequence_review.md`, `docs/flow.md`, `Agent.md`, `checks/consistency_checklist.md` |
 | 内部/外部图片生成分支 | `docs/generation_mode_protocol.md`, `config/config.yaml`, `checkpoint.template.json` |
+| 外部生成结果审查 | `skills/generated_media_review.md`, `docs/generated_media_review_protocol.md`, `templates/shot_result_manifest.template.json`, `templates/image_result_manifest.template.json` |
+| Schema 契约 | `schemas/*.json`, `docs/schema_contracts.md`, `scripts/validate_project.py` |
+| 阶段状态机 | `checkpoint.template.json`, `docs/phase_state_machine.md`, `Agent.md`, `docs/flow.md` |
 | 仓库提交边界 | `docs/repository_policy.md`, `.gitignore` |
 | 质量检查 | `checks/consistency_checklist.md`, `scripts/validate_project.py` |
 | 生产状态记录 | `templates/production_status.template.csv`, `scripts/init_local_run.ps1` |

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Asset Manifest",
+  "type": "object",
+  "required": ["characters", "scenes", "props", "audio"],
+  "properties": {
+    "characters": { "$ref": "#/$defs/assets" },
+    "scenes": { "$ref": "#/$defs/assets" },
+    "props": { "$ref": "#/$defs/assets" },
+    "audio": { "$ref": "#/$defs/assets" }
+  },
+  "$defs": {
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "name", "appears_in_shots"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": ["string", "null"] },
+          "variants": { "type": ["array", "object", "null"] },
+          "appears_in_shots": { "type": "array", "items": { "type": "string" } },
+          "narrative_function": { "type": ["string", "null"] },
+          "continuity_notes": { "type": ["array", "string", "null"] },
+          "generation_status": { "type": ["string", "null"] },
+          "approval_status": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

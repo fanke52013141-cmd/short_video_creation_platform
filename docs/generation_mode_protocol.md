@@ -37,6 +37,7 @@
 - `outputs/04_assets/characters/character_assets.md`
 - `outputs/04_assets/scenes/scene_assets.md`
 - `outputs/04_assets/props/prop_assets.md`
+- `outputs/06_external_results/image_result_manifest.json`
 - 可选：`outputs/06_external_results/image_generation_handoff.md`
 
 不得调用图片生成工具。
@@ -50,6 +51,7 @@
 - `outputs/04_assets/final_images/scenes/*.png`
 - `outputs/04_assets/final_images/props/*.png`
 - `outputs/generated_image_index.md`
+- `outputs/06_external_results/image_result_manifest.json`
 
 要求：
 
@@ -78,3 +80,4 @@
 - 外部生成失败：记录到 `outputs/06_external_results/generation_log.csv`，保留提示词，标记重试原因。
 - 内部生成失败：保留提示词，记录失败资产 ID，不覆盖已确认图片。
 - 文字生成错误：优先重生 1-2 次；仍失败时标记为“需后期修正”，但保留构图可用版本。
+- 主要人物三视图未批准：允许草稿继续，但最终包不得标记为 `completed`。

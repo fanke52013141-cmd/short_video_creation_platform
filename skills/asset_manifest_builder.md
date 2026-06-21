@@ -1,5 +1,5 @@
 # Skill: asset_manifest_builder
-**Version**: 0.2.0
+**Version**: 0.3.0
 
 ## Purpose
 把分镜输出的资产草表规范化为唯一资产注册表，作为角色、场景、道具和视频提示词阶段的共同数据源。
@@ -22,9 +22,12 @@
 }
 ```
 
+## Schema
+`outputs/04_assets/asset_manifest.json` 必须满足 `schemas/asset_manifest.schema.json`。
+
 ## Procedure
 1. 读取分镜中的人物、场景、道具、音频资产。
-2. 读取 `storyboard_sequence_review.json`；如存在 P0 问题，停止进入资产注册表生成。
+2. 读取 `storyboard_sequence_review.json`；如存在未处理 P0 或 P1，停止进入资产注册表生成。
 3. 去重并统一 ID：`CHAR_001`、`ENV_001`、`PROP_001`、`AUDIO_001`。
 4. 保留状态变体：A/B/C。
 5. 将 P1/P2 连续性风险写入对应资产备注，例如“座机只能出现在墙边小柜，不进入餐桌构图”。
@@ -38,6 +41,7 @@
 - [ ] 状态变体有清晰触发条件。
 - [ ] 母题资产标记与叙事骨架一致。
 - [ ] `storyboard_sequence_review.json` 中没有未处理 P0。
+- [ ] `storyboard_sequence_review.json` 中没有未处理 P1。
 - [ ] P1/P2 连续性注意事项已写入相关资产备注或后续生产注意。
 
 ## Checkpoint Update
@@ -45,7 +49,7 @@
 - `current_phase`: `asset_manifest_builder`
 - `completed_phases`: 追加 `asset_manifest_builder`
 - `artifacts.asset_manifest`: `./outputs/04_assets/asset_manifest.json`
-- `next_phase.skill`: `character_prompt_generator | scene_prompt_generator | prop_prompt_generator`
+- `next_phase.skill`: `asset_prompt_generation`
 
 ## Failure Handling
 - 引用不存在：返回分镜阶段修正。

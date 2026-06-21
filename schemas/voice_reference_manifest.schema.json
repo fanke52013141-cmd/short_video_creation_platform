@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Voice Reference Manifest",
+  "type": "object",
+  "required": ["schema_version", "voice_references"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "project_title": { "type": "string" },
+    "voice_references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status", "required_for_shots"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^AUDIO_[0-9]{3}$" },
+          "name": { "type": "string" },
+          "speaker_asset_id": { "type": ["string", "null"] },
+          "reference_file": { "type": ["string", "null"] },
+          "status": { "type": "string", "enum": ["provided", "needed", "missing", "placeholder", "approved_placeholder"] },
+          "voice_direction": { "type": ["string", "null"] },
+          "required_for_shots": { "type": "array", "items": { "type": "string" } },
+          "final_ready": { "type": ["boolean", "null"] }
+        }
+      }
+    }
+  }
+}

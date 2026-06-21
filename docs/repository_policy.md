@@ -45,7 +45,6 @@ local_runs/
         ├── inputs/
         ├── outputs/
         ├── references/
-        ├── external_results/
         ├── checkpoint.json
         └── notes.md
 ```
@@ -54,11 +53,13 @@ local_runs/
 
 ## 可迁移原则
 另一台电脑 clone 仓库后，只需要：
-1. 新建 `local_runs/YYYY-MM-DD/project_slug/`。
-2. 复制 `checkpoint.template.json` 为 `local_runs/YYYY-MM-DD/project_slug/checkpoint.json`。
-3. 复制 `inputs/idea_brief.template.md` 为 `local_runs/YYYY-MM-DD/project_slug/inputs/idea_brief.md`。
-4. 配置 `config/config.local.yaml` 或环境变量。
+1. 执行 `scripts/init_local_run.ps1 -ProjectSlug project-slug`。
+2. 填写生成的 `local_runs/YYYY-MM-DD/project_slug/inputs/idea_brief.md`。
+3. 配置 `config/config.local.yaml` 或环境变量。
+4. 运行 `python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase initialized`。
 5. 按 `Agent.md` 和 `docs/flow.md` 运行流程。
+
+不要手工复制 `checkpoint.template.json` 作为正式 checkpoint；初始化脚本会写入真实 `project_slug`、创建时间和绝对 run 路径。
 
 ## 版本原则
 - 源提示词进入仓库后，按版本演进，不直接覆盖历史语义。

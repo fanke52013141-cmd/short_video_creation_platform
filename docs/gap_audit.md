@@ -1,42 +1,35 @@
 # Gap Audit
 
 ## 已覆盖能力
+
 - 想法到短片故事：已有源提示词 `story_generation.source.md`。
 - 故事到视觉风格系统：已有源提示词 `art_direction.source.md`。
-- 故事到分镜与资产草表：已有两个分镜源提示词。
-- 角色提示词：已有源提示词 `character_prompt_generator.source.md`。
-- 场景/文生图画面描述：已有源提示词 `scene_prompt_generator.source.md`。
+- 故事到分镜与资产草表：已有主分镜源提示词和静态帧变体。
+- 分镜相邻逻辑审查：已有 `storyboard_sequence_review`，在资产生成前检查 1-shot、2-shot、3-shot 窗口中的空间、道具、人物、时间、声音和母题连续性。
+- 角色提示词：已有源提示词 `character_prompt_generator.source.md`，支持主要人物三视图。
+- 场景提示词：已有源提示词 `scene_prompt_generator.source.md`。
+- 道具提示词：已补 `prop_prompt_generator.source.md`，支持母题道具、文字类道具和状态变体。
 - Seedance 视频提示词：已有源提示词 `seedance_video_prompt.source.md`。
-- 图片生成分支：已补 `external_manual` / `internal_codex` 协议。
+- 图片生成分支：已有 `external_manual` / `internal_codex` 协议，并新增 `image_generation_executor` 包装层。
 - 视频提示词资产引用：已补分镜图、人物必 `@`，音色和场景条件 `@`，道具默认不 `@PROP` 的规则。
 - 视频提示词生成方式：已补逐 shot 循环生成协议。
-- 人物资产稳定性：已补主要人物三视图协议。
 - 音色参考：已补有声镜头音色参考协议。
-- 分镜相邻逻辑审查：已补 `storyboard_sequence_review`，在资产生成前检查 1-shot、2-shot、3-shot 窗口中的空间、道具、人物、时间、声音和母题连续性。
+- 外部结果记录：已补 `image_result_manifest` 与 `shot_result_manifest` 模板。
+- 外部生成结果审查：已补 `generated_media_review` Skill 和协议。
+- 结构化契约：已新增 `schemas/` 与 `docs/schema_contracts.md`。
+- 状态机：已新增 `docs/phase_state_machine.md`，并升级 `checkpoint.template.json`。
+- 阶段式校验：`scripts/validate_project.py` 支持 `--phase`。
 
-## 发现的重复或边界重叠
-- 分镜提示词已经输出资产表，但资产表不是最终资产注册表。建议保留分镜资产草表，再由 `asset_manifest_builder` 做规范化。
-- 艺术总监提示词与分镜提示词都会输出视觉基调。建议以 `art_direction` 的 `style_bible.md` 为上游锁定版本，分镜中的视觉基调只允许做镜头层面的微调。
-- 两个分镜提示词职责接近。建议：
-  - `storyboard_director.source.md` 作为主版本，适合视频生产。
-  - `storyboard_static_frame_variant.source.md` 作为静态帧或关键帧生产变体。
+## 仍需持续完善的能力
 
-## 当前缺口
-- `asset_manifest_builder`：需要把分镜资产草表转成稳定 JSON 注册表。
-- `prop_prompt_generator`：当前没有独立道具提示词专家。MVP 可用场景画面描述 Skill 临时适配道具静物，但建议后续补一个专门道具 Skill。
-- `continuity_review`：已覆盖最终交付前一致性审查；后续可继续增强对外部生成结果截图/视频的人工备注解析。
-- `production_package_builder`：需要最终打包目录、清单和版本信息。
-- `media_reference_registry`：如果后续使用大量参考图、音频、视频，需要管理素材角色、路径、授权状态和被哪些镜头引用。
-- `image_generation_executor`：当前已有 `internal_codex` 分支规则，但还没有独立执行 Skill 包装层；可在多次内部生成稳定后补。
-- `media_reference_registry`：后续可统一管理分镜图、人物三视图、音色、动作参考、授权状态和被哪些镜头引用。
+- `asset_manifest_builder` 的实际生成质量仍依赖 Agent 执行，后续可增加更严格的资产合并/拆分规则。
+- `image_generation_executor` 目前是流程包装层；真实内部图片生成仍依赖运行环境能力。
+- `generated_media_review` 目前以人工记录和 manifest 为主；后续可增强对截图/视频文件的视觉检查。
+- `production_package_builder` 已定义更严格状态，但后续可补自动汇总脚本。
+- `media_reference_registry` 仍可作为后续增强项，用于统一管理参考图、音频、动作参考、授权状态和被哪些镜头引用。
 
-## MVP 结论
-当前提示词已经足够支撑第一版流程。必须新增并持续完善的是以下胶水层：
-1. `asset_manifest_builder`
-2. `voice_reference_manifest_builder`
-3. `storyboard_sequence_review`
-4. `continuity_review`
-5. `external_generation_handoff`
-6. `production_package_builder`
+## 当前 MVP 结论
 
-不建议在当前阶段实现 `video_generation_executor`。视频生成和剪辑仍然外部手动完成；图片生成允许用户选择 `internal_codex` 或 `external_manual`，但生成媒体都只保存在本地 run。
+当前仓库已从“提示词流程骨架”升级为“带状态机、schema、校验、外部结果回流”的生产流程骨架。
+
+仍不建议在当前阶段实现 `video_generation_executor`。视频生成和剪辑继续外部手动完成；仓库负责提示词、资产声明、结果记录、审查和最终交付包。

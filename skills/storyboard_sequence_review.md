@@ -1,5 +1,5 @@
 # Skill: storyboard_sequence_review
-**Version**: 0.1.0
+**Version**: 0.2.0
 
 ## Purpose
 在分镜生成后，对全片分镜做相邻镜头逻辑审查，发现穿帮、空间跳变、道具凭空出现、人物状态断裂、声音来源不明和母题误用等问题。
@@ -25,6 +25,9 @@
   "status": "pass | revise_required"
 }
 ```
+
+## Schema
+`outputs/03_storyboard/storyboard_sequence_review.json` 必须满足 `schemas/storyboard_sequence_review.schema.json`。
 
 ## Procedure
 1. 读取 `docs/storyboard_sequence_review_protocol.md`。
@@ -52,6 +55,7 @@
 - [ ] 每组相邻 3-shot 窗口都被审查。
 - [ ] 报告中没有未解释的 `P0`。
 - [ ] 所有 `P1` 都有明确修正建议或用户接受说明。
+- [ ] 每个 P1 在 JSON 中包含 `fix_applied=true`、`accepted_by_user=true` 或等价已解决状态。
 - [ ] 发现人声但无音色准备的镜头被标记给后续音色阶段。
 
 ## Checkpoint Update

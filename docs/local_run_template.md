@@ -34,11 +34,13 @@ local_runs/YYYY-MM-DD/project_slug/notes.md
 | storyboard_sequence_review | pending |  |  |
 | asset_manifest_builder | pending |  |  |
 | asset_prompt_generation | pending |  |  |
-| image_generation_or_handoff | pending |  |  |
+| image_generation_executor | pending |  |  |
 | voice_reference_manifest_builder | pending |  |  |
-| shot_video_prompt_generation | pending |  |  |
+| shot_video_prompt_generator | pending |  |  |
 | external_generation_handoff | pending |  |  |
+| generated_media_review | pending |  |  |
 | continuity_review | pending |  |  |
+| production_package_builder | pending |  |  |
 
 ## Production Status
 用 `production_status.csv` 跟踪每个 shot 的分镜连续性、音色、场景引用决策、提示词、图片、视频、最佳版本和返修问题。
@@ -57,6 +59,27 @@ local_runs/YYYY-MM-DD/project_slug/notes.md
 ## Audio References
 - Manifest: `outputs/04_assets/audio/voice_reference_manifest.json`
 - 有台词、旁白、录音留言或可听见人声的 shot 必须绑定音色参考。
+
+## External Results
+- Image result manifest: `outputs/06_external_results/image_result_manifest.json`
+- Shot result manifest template: `outputs/06_external_results/shot_result_manifest.template.json`
+- Shot result manifest after generation: `outputs/06_external_results/shot_result_manifest.json`
+- Generated media review: `outputs/06_external_results/generated_media_review.md`
+
+外部平台生成图片或视频后，必须把结果文件名、链接、版本、最佳 take、问题和返修建议记录到 manifest。
+
+## Validation
+初始化后运行：
+
+```text
+python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase initialized
+```
+
+完整项目运行：
+
+```text
+python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase all
+```
 
 ## Problems Found
 - 

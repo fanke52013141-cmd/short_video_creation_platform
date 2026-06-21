@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Art Direction",
+  "type": "object",
+  "required": [
+    "visual_principles",
+    "color_rules",
+    "lighting_rules",
+    "material_rules",
+    "cinematography_rules",
+    "negative_style_rules",
+    "compressed_prompt_style_block"
+  ],
+  "properties": {
+    "visual_principles": { "type": ["array", "object", "string"] },
+    "color_rules": { "type": ["array", "object", "string"] },
+    "lighting_rules": { "type": ["array", "object", "string"] },
+    "material_rules": { "type": ["array", "object", "string"] },
+    "cinematography_rules": { "type": ["array", "object", "string"] },
+    "character_visual_rules": { "type": ["array", "object", "string", "null"] },
+    "scene_visual_rules": { "type": ["array", "object", "string", "null"] },
+    "negative_style_rules": { "type": ["array", "object", "string"] },
+    "platform_adaptation": { "type": ["object", "string", "null"] },
+    "compressed_prompt_style_block": { "type": "string" }
+  }
+}

@@ -1,5 +1,5 @@
 # Skill: storyboard_director
-**Version**: 1.0.0
+**Version**: 1.0.1
 
 ## Source Prompt
 `skills/raw_prompts/storyboard_director.source.md`
@@ -26,6 +26,9 @@
 }
 ```
 
+## Schema
+`outputs/03_storyboard/storyboard.json` 必须满足 `schemas/storyboard.schema.json`。
+
 ## Procedure
 1. 读取 `storyboard_director.source.md` 作为主提示词。
 2. 将 `style_bible.md` 作为上游视觉锁定，不重新发明全片风格。
@@ -46,7 +49,7 @@
 - `completed_phases`: 追加 `storyboard_director`
 - `artifacts.storyboard_markdown`: `./outputs/03_storyboard/storyboard.md`
 - `artifacts.storyboard_json`: `./outputs/03_storyboard/storyboard.json`
-- `next_phase.skill`: `asset_manifest_builder`
+- `next_phase.skill`: `storyboard_sequence_review`
 
 ## Failure Handling
 - 资产 ID 缺失或冲突：先修正分镜资产表，再进入资产清单阶段。

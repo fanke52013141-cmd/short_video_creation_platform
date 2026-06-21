@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Continuity Report",
+  "type": "object",
+  "required": ["status", "issues"],
+  "properties": {
+    "status": { "type": "string", "enum": ["pass", "revise_required"] },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "description"],
+        "properties": {
+          "severity": { "type": "string", "enum": ["P0", "P1", "P2"] },
+          "scope": { "type": ["string", "null"] },
+          "shot_ids": { "type": ["array", "null"], "items": { "type": "string" } },
+          "description": { "type": "string" },
+          "fix_suggestion": { "type": ["string", "null"] },
+          "fix_applied": { "type": ["boolean", "null"] },
+          "accepted_by_user": { "type": ["boolean", "null"] }
+        }
+      }
+    }
+  }
+}

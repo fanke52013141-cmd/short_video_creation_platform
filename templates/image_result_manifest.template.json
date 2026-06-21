@@ -1,0 +1,6 @@
+{
+  "schema_version": "0.1",
+  "project_title": "",
+  "image_results": [],
+  "status_values": ["pending", "generated", "reviewed", "approved", "needs_regen", "missing"]
+}

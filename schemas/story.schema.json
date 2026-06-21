@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Story",
+  "type": "object",
+  "required": [
+    "title_candidates",
+    "logline",
+    "duration_minutes",
+    "genre",
+    "theme_question",
+    "characters",
+    "locations",
+    "beats",
+    "visual_moments",
+    "production_constraints"
+  ],
+  "properties": {
+    "title_candidates": { "type": "array", "items": { "type": "string" } },
+    "logline": { "type": "string" },
+    "duration_minutes": { "type": ["number", "string"] },
+    "genre": { "type": "string" },
+    "theme_question": { "type": "string" },
+    "characters": { "type": "array", "items": { "type": "object" } },
+    "locations": { "type": "array", "items": { "type": "object" } },
+    "beats": { "type": "array", "items": { "type": "object" } },
+    "visual_moments": { "type": "array", "items": { "type": ["string", "object"] } },
+    "dialogue_or_voiceover_intent": { "type": ["string", "array", "object", "null"] },
+    "production_constraints": { "type": ["object", "array"] }
+  }
+}

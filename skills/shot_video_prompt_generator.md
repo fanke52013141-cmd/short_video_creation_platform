@@ -1,5 +1,5 @@
 # Skill: shot_video_prompt_generator
-**Version**: 1.2.0
+**Version**: 1.3.0
 
 ## Source Prompt
 `skills/raw_prompts/seedance_video_prompt.source.md`
@@ -25,11 +25,15 @@
 ```json
 {
   "single_shot_prompt_dir": "./outputs/05_video_prompts/shots",
+  "single_shot_prompt_json_path": "./outputs/05_video_prompts/shots/SHOT_XXX.json",
   "shot_video_prompt_index_path": "./outputs/05_video_prompts/shot_video_prompt_index.md",
   "shot_video_prompts_markdown_path": "./outputs/05_video_prompts/shot_video_prompts.md",
   "video_prompt_asset_reference_path": "./outputs/05_video_prompts/video_prompt_asset_reference.md"
 }
 ```
+
+## Schema
+如果输出 `outputs/05_video_prompts/shots/SHOT_XXX.json`，必须满足 `schemas/shot_video_prompt.schema.json`。
 
 ## Procedure
 1. 读取 Seedance 视频提示词源文件和 `docs/video_prompt_loop_protocol.md`。
@@ -42,6 +46,7 @@
    - 根据镜头运动和分镜图覆盖范围判断是否声明 `@ENV`；必须写明使用或不使用理由。
    - 道具只写入正文画面描述，不写 `@PROP`。
    - 生成单条中文视频提示词，保存为 `outputs/05_video_prompts/shots/SHOT_XXX.md`。
+   - 如运行环境支持结构化输出，同时保存 `outputs/05_video_prompts/shots/SHOT_XXX.json`，字段需满足 `schemas/shot_video_prompt.schema.json`。
    - 对该 shot 自检，不合格则重写该 shot。
 4. 全部单 shot 文件通过后，生成 `shot_video_prompt_index.md`。
 5. 按镜头顺序汇总所有单 shot 文件，生成 `shot_video_prompts.md`。
@@ -59,6 +64,7 @@
 - [ ] 台词、动作、镜头运动和情绪可被视频模型执行。
 - [ ] 输出包含自检通过项。
 - [ ] 不输出 `【English Prompt】`。
+- [ ] 若输出 `SHOT_XXX.json`，必须满足 `schemas/shot_video_prompt.schema.json`。
 
 ## Checkpoint Update
 通过质量门后更新：
@@ -68,7 +74,7 @@
 - `artifacts.shot_video_prompt_index`: `./outputs/05_video_prompts/shot_video_prompt_index.md`
 - `artifacts.shot_video_prompts`: `./outputs/05_video_prompts/shot_video_prompts.md`
 - `artifacts.video_prompt_asset_reference`: `./outputs/05_video_prompts/video_prompt_asset_reference.md`
-- `next_phase.skill`: `continuity_review`
+- `next_phase.skill`: `external_generation_handoff`
 
 ## Failure Handling
 - 资产引用缺失：停止生成该镜头，返回资产清单阶段。

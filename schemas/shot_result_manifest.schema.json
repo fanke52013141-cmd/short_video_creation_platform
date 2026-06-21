@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Shot Result Manifest",
+  "type": "object",
+  "required": ["schema_version", "shot_results"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "shot_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["shot_id", "status"],
+        "properties": {
+          "shot_id": { "type": "string", "pattern": "^SHOT_[0-9]{3}$" },
+          "tool": { "type": ["string", "null"] },
+          "prompt_version": { "type": ["string", "null"] },
+          "take_id": { "type": ["string", "null"] },
+          "file_path_or_url": { "type": ["string", "null"] },
+          "selected": { "type": ["boolean", "null"] },
+          "rating": { "type": ["number", "integer", "null"] },
+          "status": { "type": "string" },
+          "issues": { "type": ["array", "string", "null"] },
+          "regen_instruction": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

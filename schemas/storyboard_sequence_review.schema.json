@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Storyboard Sequence Review",
+  "type": "object",
+  "required": ["status", "issues"],
+  "properties": {
+    "status": { "type": "string", "enum": ["pass", "revise_required"] },
+    "checked_shots": { "type": ["array", "integer"] },
+    "checked_windows_1shot": { "type": ["array", "integer"] },
+    "checked_windows_2shot": { "type": ["array", "integer"] },
+    "checked_windows_3shot": { "type": ["array", "integer"] },
+    "p0_count": { "type": ["integer", "null"] },
+    "p1_count": { "type": ["integer", "null"] },
+    "p2_count": { "type": ["integer", "null"] },
+    "p1_resolution_status": { "type": ["string", "null"] },
+    "user_acceptance_required": { "type": ["boolean", "null"] },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "description"],
+        "properties": {
+          "id": { "type": ["string", "null"] },
+          "severity": { "type": "string", "enum": ["P0", "P1", "P2"] },
+          "shot_ids": { "type": ["array", "null"], "items": { "type": "string" } },
+          "description": { "type": "string" },
+          "fix_suggestion": { "type": ["string", "null"] },
+          "fix_applied": { "type": ["boolean", "null"] },
+          "accepted_by_user": { "type": ["boolean", "null"] },
+          "resolution_status": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

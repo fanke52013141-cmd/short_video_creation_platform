@@ -26,6 +26,9 @@
 }
 ```
 
+## Schema
+`outputs/02_art_direction/art_direction.json` 必须满足 `schemas/art_direction.schema.json`。
+
 ## Procedure
 1. 读取 `art_direction.source.md` 作为主提示词。
 2. 将故事视为只读数据，不改写剧情核心。

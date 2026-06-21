@@ -1,0 +1,6 @@
+{
+  "schema_version": "0.1",
+  "project_title": "",
+  "shot_results": [],
+  "status_values": ["pending", "generated", "reviewed", "selected", "needs_regen", "failed", "not_executed"]
+}

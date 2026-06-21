@@ -1,5 +1,5 @@
 # Skill: production_package_builder
-**Version**: 0.1.0
+**Version**: 0.2.0
 
 ## Purpose
 汇总最终短片生产包，形成可交接、可归档、可复用的项目交付清单。
@@ -9,7 +9,8 @@
 {
   "checkpoint_path": "./checkpoint.json",
   "output_dir": "./outputs",
-  "continuity_report_path": "./outputs/07_final_delivery/continuity_report.md"
+  "continuity_report_path": "./outputs/07_final_delivery/continuity_report.md",
+  "generated_media_review_path": "./outputs/06_external_results/generated_media_review.md"
 }
 ```
 
@@ -17,20 +18,30 @@
 ```json
 {
   "final_manifest_path": "./outputs/07_final_delivery/final_package_manifest.json",
-  "final_readme_path": "./outputs/07_final_delivery/README.md"
+  "final_readme_path": "./outputs/07_final_delivery/README.md",
+  "status": "completed | completed_with_known_gaps | revise_required"
 }
 ```
+
+## Schema
+`outputs/07_final_delivery/final_package_manifest.json` 必须满足 `schemas/final_package_manifest.schema.json`。
 
 ## Procedure
 1. 读取 `checkpoint.json` 和所有阶段产物路径。
 2. 检查关键产物是否存在。
-3. 生成最终交付清单，包含版本、Skill 源、产物路径、缺失项和后续待办。
-4. 不重新创作内容，只做整理和归档。
+3. 检查 `checkpoint.known_gaps` 和 `checkpoint.blocking_issues`。
+4. 检查分镜审查、音色、主要人物三视图、视频提示词、外部生成结果审查和连续性审查状态。
+5. 生成最终交付清单，包含版本、Skill 源、产物路径、缺失项和后续待办。
+6. 不重新创作内容，只做整理和归档。
 
 ## Quality Gate
 - [ ] 所有必需产物路径存在。
 - [ ] 每个产物能追溯到对应 Skill 和源提示词版本。
 - [ ] 缺失项被明确标记，不伪装完成。
+- [ ] `completed` 状态下没有未处理 P0/P1。
+- [ ] `completed` 状态下主要人物三视图已批准或有明确豁免。
+- [ ] `completed` 状态下有声镜头音色不是 `missing`。
+- [ ] `completed` 状态下外部生成最佳 take 没有未处理 P0。
 
 ## Checkpoint Update
 通过质量门后更新：
@@ -40,4 +51,6 @@
 
 ## Failure Handling
 - 缺失必需产物：输出缺失清单，不标记项目完成。
+- 存在已知缺口但不阻塞草稿：标记为 `completed_with_known_gaps`，不得标记为 `completed`。
+- 存在 P0/P1 阻塞项：标记为 `revise_required`。
 

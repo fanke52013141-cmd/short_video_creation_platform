@@ -1,5 +1,5 @@
 # Skill: voice_reference_manifest_builder
-**Version**: 0.1.0
+**Version**: 0.2.0
 
 ## Purpose
 根据分镜台词、旁白、录音留言和角色资产，建立项目级音色参考清单。该 Skill 不生成音频，只识别哪些 shot 需要音色参考，并要求用户提供或确认占位。
@@ -21,6 +21,9 @@
 }
 ```
 
+## Schema
+`outputs/04_assets/audio/voice_reference_manifest.json` 必须满足 `schemas/voice_reference_manifest.schema.json`。
+
 ## Procedure
 1. 读取 `storyboard.json`，识别包含对白、旁白、录音留言、新闻播报或可听见人声的 shot。
 2. 将每个有声 shot 绑定到说话人角色或旁白类型。
@@ -37,9 +40,11 @@
 
 ## Checkpoint Update
 通过质量门后更新：
+- `current_phase`: `voice_reference_manifest_builder`
 - `artifacts.voice_reference_manifest`: `./outputs/04_assets/audio/voice_reference_manifest.json`
 - `artifacts.voice_reference_assets`: `./outputs/04_assets/audio/voice_reference_assets.md`
 - `completed_phases`: 追加 `voice_reference_manifest_builder`
+- `next_phase.skill`: `shot_video_prompt_generator`
 
 ## Failure Handling
 - 有台词但没有说话人：返回分镜阶段补全。

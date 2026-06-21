@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Image Result Manifest",
+  "type": "object",
+  "required": ["schema_version", "image_results"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "image_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["asset_id", "status"],
+        "properties": {
+          "asset_id": { "type": "string" },
+          "asset_type": { "type": ["string", "null"] },
+          "variant_id": { "type": ["string", "null"] },
+          "tool": { "type": ["string", "null"] },
+          "prompt_file": { "type": ["string", "null"] },
+          "result_file_or_url": { "type": ["string", "null"] },
+          "selected": { "type": ["boolean", "null"] },
+          "rating": { "type": ["number", "integer", "null"] },
+          "status": { "type": "string" },
+          "issues": { "type": ["array", "string", "null"] },
+          "regen_instruction": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

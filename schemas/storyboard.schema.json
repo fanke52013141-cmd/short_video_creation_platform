@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Storyboard",
+  "type": "object",
+  "required": ["shots"],
+  "properties": {
+    "shots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "duration_seconds",
+          "scene_id",
+          "character_ids",
+          "narrative_function",
+          "camera",
+          "frame_strategy",
+          "prompt_cn"
+        ],
+        "properties": {
+          "id": { "type": "string", "pattern": "^SHOT_[0-9]{3}$" },
+          "duration_seconds": { "type": ["integer", "number"] },
+          "scene_id": { "type": ["string", "null"] },
+          "character_ids": { "type": "array", "items": { "type": "string" } },
+          "prop_ids": { "type": "array", "items": { "type": "string" } },
+          "audio_intent": { "type": ["string", "object", "null"] },
+          "narrative_function": { "type": "string" },
+          "camera": { "type": ["string", "object"] },
+          "shot_size": { "type": ["string", "null"] },
+          "movement": { "type": ["string", "object", "null"] },
+          "frame_strategy": { "type": ["string", "object"] },
+          "transition": { "type": ["string", "null"] },
+          "prompt_cn": { "type": "string" },
+          "continuity_notes": { "type": ["string", "array", "null"] }
+        }
+      }
+    }
+  }
+}

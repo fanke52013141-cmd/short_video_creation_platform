@@ -1,5 +1,5 @@
 # Skill: continuity_review
-**Version**: 0.3.0
+**Version**: 0.4.0
 
 ## Purpose
 检查故事、视觉风格、分镜、资产提示词和视频提示词之间的一致性，发现会导致批量视频生成跑偏的问题。
@@ -15,7 +15,8 @@
   "shot_video_prompts_markdown_path": "./outputs/05_video_prompts/shot_video_prompts.md",
   "single_shot_prompt_dir": "./outputs/05_video_prompts/shots",
   "voice_reference_manifest_path": "./outputs/04_assets/audio/voice_reference_manifest.json",
-  "video_prompt_asset_reference_path": "./outputs/05_video_prompts/video_prompt_asset_reference.md"
+  "video_prompt_asset_reference_path": "./outputs/05_video_prompts/video_prompt_asset_reference.md",
+  "generated_media_review_json_path": "./outputs/06_external_results/generated_media_review.json"
 }
 ```
 
@@ -28,6 +29,9 @@
 }
 ```
 
+## Schema
+`outputs/07_final_delivery/continuity_report.json` 必须满足 `schemas/continuity_report.schema.json`。
+
 ## Procedure
 1. 检查故事核心是否在视觉、分镜和视频提示词中保持。
 2. 检查风格圣经是否被所有下游阶段继承。
@@ -39,7 +43,8 @@
 8. 检查有台词、旁白、录音留言或可听见人声的 shot 是否有 `@AUDIO`。
 9. 检查 `@ENV` 是否只在镜头运动需要空间拓展时出现，并有引用决策说明。
 10. 检查视频提示词默认没有 `@PROP`，道具只作为画面描述出现。
-11. 输出问题清单、严重级别、影响镜头和修正建议。
+11. 读取 `generated_media_review.json`（如果已执行），确认外部生成结果没有未处理 P0。
+12. 输出问题清单、严重级别、影响镜头和修正建议。
 
 ## Quality Gate
 - [ ] 没有缺失资产引用。
@@ -54,6 +59,8 @@
 - [ ] `@ENV` 使用或不使用都有理由。
 - [ ] 视频提示词不包含 `【English Prompt】`。
 - [ ] 默认没有 `@PROP`。
+- [ ] 如果已执行外部生成结果审查，则没有未处理 P0。
+- [ ] 如果外部生成尚未执行，报告中明确标记为不可最终 `completed`，只可作为草稿交付。
 
 ## Checkpoint Update
 通过质量门后更新：

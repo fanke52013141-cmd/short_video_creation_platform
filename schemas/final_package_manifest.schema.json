@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Final Package Manifest",
+  "type": "object",
+  "required": ["status", "artifacts"],
+  "properties": {
+    "status": { "type": "string", "enum": ["completed", "completed_with_known_gaps", "revise_required"] },
+    "artifacts": { "type": "object" },
+    "known_gaps": { "type": ["array", "null"] },
+    "blocking_issues": { "type": ["array", "null"] },
+    "created_at": { "type": ["string", "null"] }
+  }
+}

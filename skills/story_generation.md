@@ -29,6 +29,9 @@
 }
 ```
 
+## Schema
+`outputs/01_story/story.json` 必须满足 `schemas/story.schema.json`。
+
 ## Procedure
 1. 读取 `story_generation.source.md` 作为主提示词，不改写其创作方法论。
 2. 读取 `idea_brief_path`。
