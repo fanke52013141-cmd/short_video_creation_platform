@@ -37,6 +37,36 @@ PHASE_ALIASES = {
 }
 
 
+CHARACTER_VARIANT_REQUIRED_TYPES = {
+    "age_change",
+    "wardrobe_change",
+    "identity_uniform",
+    "dirty_clothes",
+    "wet_clothes",
+    "damaged_wardrobe",
+    "blood",
+    "visible_wound",
+    "scar",
+    "bandage",
+    "hair_change",
+    "makeup_change",
+    "body_shape_change",
+    "nonhuman_transformation",
+    "mechanical_transformation",
+    "disguise",
+    "ritual_state",
+    "post_event_state",
+    "other_persistent_visual_change",
+}
+
+
+TRANSIENT_CHARACTER_CHANGE_KEYWORDS = re.compile(
+    r"表情|微笑|哭|皱眉|惊讶|愤怒|恐惧|动作|站立|奔跑|坐下|回头|伸手|弯腰|"
+    r"近景|远景|侧面|背影|俯视|仰视|冷光|暖光|逆光|阴影|临时拿|拿着|握着|"
+    r"汗水|轻微灰尘|短暂|一瞬间|镜头角度"
+)
+
+
 def fail(message: str) -> None:
     print(f"FAIL: {message}")
     raise SystemExit(1)
@@ -343,6 +373,84 @@ def collect_storyboard_asset_refs(storyboard: dict[str, Any]) -> dict[str, set[s
     return refs
 
 
+def as_list(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
+def is_truthy_flag(value: Any) -> bool:
+    if value is True:
+        return True
+    if isinstance(value, str):
+        return value.strip().lower() in {"true", "yes", "required", "1"}
+    return False
+
+
+def validate_character_variants(manifest: dict[str, Any]) -> None:
+    checked_variants = 0
+    generated_variants = 0
+    for character in manifest.get("characters", []) or []:
+        character_id = str(character.get("id", "<missing id>"))
+        variants = as_list(character.get("variants"))
+        identity_anchors = as_list(character.get("identity_anchors"))
+
+        if variants and not identity_anchors:
+            fail(f"{character_id} has variants but missing identity_anchors")
+
+        seen_variant_ids: set[str] = set()
+        for variant in variants:
+            if not isinstance(variant, dict):
+                fail(f"{character_id} variants must be objects")
+            checked_variants += 1
+
+            variant_id = str(variant.get("variant_id", "")).strip()
+            if not variant_id:
+                fail(f"{character_id} has variant missing variant_id")
+            if variant_id in seen_variant_ids:
+                fail(f"{character_id} duplicate variant_id: {variant_id}")
+            seen_variant_ids.add(variant_id)
+
+            if not variant_id.startswith(f"{character_id}_"):
+                fail(f"{variant_id} must use parent character prefix {character_id}_")
+
+            trigger = str(variant.get("trigger", "")).strip()
+            if not trigger:
+                fail(f"{variant_id} missing trigger")
+
+            appears = variant.get("appears_in_shots")
+            if not isinstance(appears, list) or not appears:
+                fail(f"{variant_id} appears_in_shots must be a non-empty list")
+
+            change_types = {str(item) for item in as_list(variant.get("appearance_change_type")) if item}
+            visual_changes = str(variant.get("visual_changes", "")).strip()
+            if change_types & CHARACTER_VARIANT_REQUIRED_TYPES and not visual_changes:
+                fail(f"{variant_id} has persistent appearance change type but missing visual_changes")
+
+            if TRANSIENT_CHARACTER_CHANGE_KEYWORDS.search(" ".join(sorted(change_types)) + " " + visual_changes):
+                if not (change_types & CHARACTER_VARIANT_REQUIRED_TYPES):
+                    warn(f"{variant_id} may be a transient action/expression variant; consider merging it")
+
+            if is_truthy_flag(variant.get("generation_required")):
+                generated_variants += 1
+                if not visual_changes:
+                    fail(f"{variant_id} generation_required=true but missing visual_changes")
+                if not is_truthy_flag(variant.get("three_view_required")):
+                    fail(f"{variant_id} generation_required=true but three_view_required is not true")
+                must_keep = as_list(variant.get("must_keep"))
+                if not must_keep:
+                    fail(f"{variant_id} generation_required=true but missing must_keep identity anchors")
+
+            must_not_mix_with = as_list(variant.get("must_not_mix_with"))
+            if variant_id in {str(item) for item in must_not_mix_with}:
+                fail(f"{variant_id} must_not_mix_with cannot include itself")
+
+    ok(f"character variants checked: {checked_variants}")
+    ok(f"character variants requiring generation: {generated_variants}")
+
+
 def validate_assets(run_dir: Path) -> dict[str, Any]:
     storyboard, _ = validate_storyboard(run_dir)
     manifest = validate_schema_file(
@@ -377,6 +485,7 @@ def validate_assets(run_dir: Path) -> dict[str, Any]:
     if missing:
         fail("storyboard references missing from asset_manifest.json: " + ", ".join(missing))
     ok("storyboard asset references resolved")
+    validate_character_variants(manifest)
     return manifest
 
 
