@@ -43,7 +43,7 @@ skill_versions:
   character_prompt_generator: "1.2.0"
   scene_prompt_generator: "1.1.0"
   prop_prompt_generator: "1.1.0"
-  image_generation_executor: "0.1.0"
+  image_generation_executor: "0.2.0"
   voice_reference_manifest_builder: "0.2.0"
   shot_video_prompt_generator: "1.3.0"
   external_generation_handoff: "0.4.0"
@@ -66,6 +66,7 @@ paths:
   storyboard_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/03_storyboard"
   storyboard_sequence_review_file: "./local_runs/YYYY-MM-DD/project_slug/outputs/03_storyboard/storyboard_sequence_review.md"
   asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets"
+  image_generation_queue_file: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets/image_generation_queue.json"
   final_image_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets/final_images"
   audio_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets/audio"
   video_prompt_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/05_video_prompts"
@@ -116,6 +117,26 @@ output_formats:
   asset_prompt_language: "zh"
   video_prompt_generation_mode: "per_shot_loop"
 
+image_generation_policy:
+  priority_classes:
+    - "must_generate"
+    - "optional_generate"
+    - "skip_generation"
+  image_roles:
+    - "character_turnaround"
+    - "character_full_body"
+    - "scene_key_plate"
+    - "scene_sheet"
+    - "prop_standard_asset"
+    - "prop_detail_closeup"
+  blocking_statuses:
+    - "missing"
+    - "rejected"
+    - "needs_regeneration"
+  completed_requires_no_blocking_missing_images: true
+  scene_reference_priority: "key_plate"
+  prop_reference_default: "describe_in_prompt_not_at_ref"
+
 external_services:
   seedance:
     enabled: false
@@ -134,12 +155,12 @@ external_workflow:
   image_generation:
     mode_selection_required: true
     supported_modes:
-      external_manual: "Codex outputs image prompts and handoff instructions; user generates images in external web tools."
-      internal_codex: "Codex uses the same prompts to generate images and saves results to the local run."
+      external_manual: "Codex outputs image prompts, an image generation queue, and handoff instructions; user generates images in external web tools."
+      internal_codex: "Codex uses the same image generation queue to generate images and saves results to the local run."
     suggested_tools:
       - "CodeX/ChatGPT web image generation"
       - "other external image tools"
-    codex_output: "asset prompts; optionally generated local images when user selects internal_codex"
+    codex_output: "asset prompts, image_generation_queue.json, image_result_manifest.json; optionally generated local images when user selects internal_codex"
   video_generation:
     executed_outside_codex: true
     suggested_tools:
@@ -169,6 +190,11 @@ quality_gates:
   require_prop_must_not_change_for_generated_props: true
   require_text_prop_generation_strategy: true
   forbid_unnecessary_prop_assets: true
+  require_image_generation_queue: true
+  require_image_generation_priority: true
+  require_image_blocking_flags: true
+  require_image_results_for_must_generate: true
+  block_completed_on_missing_required_images: true
   require_audio_reference_for_dialogue_shots: true
   require_per_shot_video_prompt_files: true
   allow_env_reference_only_when_spatial_expansion_needed: true
