@@ -36,9 +36,9 @@ model_defaults:
 skill_versions:
   story_generation: "1.0.1"
   art_direction: "1.0.1"
-  storyboard_director: "1.2.0"
+  storyboard_director: "1.3.0"
   storyboard_static_frame_variant: "1.0.0"
-  storyboard_sequence_review: "0.3.0"
+  storyboard_sequence_review: "0.4.0"
   asset_manifest_builder: "0.5.0"
   character_prompt_generator: "1.2.0"
   scene_prompt_generator: "1.1.0"
@@ -137,6 +137,17 @@ image_generation_policy:
   scene_reference_priority: "key_plate"
   prop_reference_default: "describe_in_prompt_not_at_ref"
 
+storyboard_generation_policy:
+  max_shot_duration_seconds: 15
+  concretization_translation_required: true
+  abstract_terms_must_have_visual_evidence: true
+  critical_turning_points_require_visible_evidence: true
+  concrete_evidence_dimensions:
+    - "emotion_to_microexpression"
+    - "atmosphere_to_light_and_sound"
+    - "event_to_action"
+    - "relationship_to_space"
+
 external_services:
   seedance:
     enabled: false
@@ -180,6 +191,9 @@ quality_gates:
   require_storyboard_before_video_prompts: true
   require_storyboard_sequence_review_before_assets: true
   block_assets_on_unresolved_p1: true
+  require_storyboard_concretization_translation: true
+  require_storyboard_concretization_review: true
+  block_key_turning_points_without_visual_evidence: true
   require_character_three_view_for_main_characters: true
   require_character_identity_anchors: true
   require_character_variant_triggers: true
