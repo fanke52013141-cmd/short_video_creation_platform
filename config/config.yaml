@@ -36,9 +36,9 @@ model_defaults:
 skill_versions:
   story_generation: "1.0.1"
   art_direction: "1.0.1"
-  storyboard_director: "1.0.1"
+  storyboard_director: "1.2.0"
   storyboard_static_frame_variant: "1.0.0"
-  storyboard_sequence_review: "0.2.0"
+  storyboard_sequence_review: "0.3.0"
   asset_manifest_builder: "0.3.0"
   character_prompt_generator: "1.1.0"
   scene_prompt_generator: "1.0.0"
@@ -166,3 +166,6 @@ quality_gates:
   forbid_prop_reference_in_video_prompts_by_default: true
   require_generated_media_review_before_completed: true
   require_continuity_review_before_final_delivery: true
+  max_storyboard_shot_duration_seconds: 15
+  require_storyboard_shot_boundary_reason: true
+  block_artificial_continuous_shot_splitting: true
