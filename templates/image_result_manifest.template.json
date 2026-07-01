@@ -1,6 +1,12 @@
 {
-  "schema_version": "0.1",
-  "project_title": "",
-  "image_results": [],
-  "status_values": ["pending", "generated", "reviewed", "approved", "needs_regen", "missing"]
+  "schema_version": "0.2",
+  "generation_mode": null,
+  "queue_file": "./outputs/04_assets/image_generation_queue.json",
+  "summary": {
+    "must_generate_total": 0,
+    "optional_generate_total": 0,
+    "skip_generation_total": 0,
+    "blocking_missing_count": 0
+  },
+  "image_results": []
 }
