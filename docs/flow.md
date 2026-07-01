@@ -136,21 +136,34 @@
 - Rules:
   - 角色、场景、道具所需提示词都完成后，才将 checkpoint 阶段 `asset_prompt_generation` 标记为完成。
 
-## 7. Image Generation Mode And Image Results
+## 7. Image Generation Queue And Results
 
 - Skill: `image_generation_executor`
 - Protocol: `docs/generation_mode_protocol.md`
 - Required decision:
-  - `external_manual`: 只输出提示词和交接说明，由用户在外部网页端生成图片。
-  - `internal_codex`: CodeX 使用同一批图片提示词直接生成图片并保存到本地 run。
+  - `external_manual`: 只输出图片生成队列、提示词和结果登记表，由用户在外部网页端生成图片。
+  - `internal_codex`: CodeX 使用同一图片生成队列直接生成图片并保存到本地 run。
 - Output:
+  - `RUN/outputs/04_assets/image_generation_queue.json`
   - `RUN/outputs/04_assets/final_images/**/*.png` when generated
   - `RUN/outputs/generated_image_index.md` when generated
   - `RUN/outputs/06_external_results/image_result_manifest.json`
 - Schema: `schemas/image_result_manifest.schema.json`
+- Queue priority:
+  - `must_generate`: 缺失会阻断最终 `completed`。
+  - `optional_generate`: 缺失不阻断流程，但必须记录 known gap。
+  - `skip_generation`: 不生成独立图片，只写入分镜/场景/视频正文描述。
+- Image role rules:
+  - 角色转面参考图：`character_turnaround`。
+  - 角色单人立绘：`character_full_body`。
+  - 场景 Key Plate：`scene_key_plate`，默认可作为视频参考图。
+  - 场景 Scene Sheet：`scene_sheet`，用于设计审查，不作为默认视频参考图。
+  - 道具标准资产图：`prop_standard_asset`。
+  - 道具细节/特写图：`prop_detail_closeup`。
 - Note:
   - 所有图片和外部生成结果都属于本地 run，不进入仓库。
-  - 主要人物三视图缺失时允许草稿继续，但最终包不得标记为 `completed`。
+  - `blocking_if_missing=true` 且状态为 `missing | rejected | needs_regeneration` 时，最终包不得标记为 `completed`。
+  - 主要人物转面参考图缺失时，不得把该角色状态声明为可稳定视频参考。
   - 场景图片生成优先生成 `ENV_XXX_KEY_PLATE`；`ENV_XXX_SCENE_SHEET` 只在 `scene_sheet_required=true` 时生成。
   - 道具图片只生成 `generation_required=true` 的 canonical prop；普通一次性物件不生成独立道具图。
 
