@@ -34,7 +34,7 @@ model_defaults:
   max_tokens: 8000
 
 skill_versions:
-  story_generation: "1.0.0"
+  story_generation: "1.0.1"
   art_direction: "1.0.0"
   storyboard_director: "1.0.1"
   storyboard_static_frame_variant: "1.0.0"
