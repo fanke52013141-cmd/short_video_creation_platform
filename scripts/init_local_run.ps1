@@ -53,6 +53,7 @@ Set-Content -LiteralPath (Join-Path $runRoot "checkpoint.json") -Value $checkpoi
 Copy-Item -LiteralPath (Join-Path $repoRoot "docs\local_run_template.md") -Destination (Join-Path $runRoot "notes.md") -Force
 Copy-Item -LiteralPath (Join-Path $repoRoot "templates\production_status.template.csv") -Destination (Join-Path $runRoot "production_status.csv") -Force
 Copy-Item -LiteralPath (Join-Path $repoRoot "templates\voice_reference_manifest.template.json") -Destination (Join-Path $runRoot "outputs\04_assets\audio\voice_reference_manifest.json") -Force
+Copy-Item -LiteralPath (Join-Path $repoRoot "templates\image_generation_queue.template.json") -Destination (Join-Path $runRoot "outputs\04_assets\image_generation_queue.json") -Force
 Copy-Item -LiteralPath (Join-Path $repoRoot "templates\image_result_manifest.template.json") -Destination (Join-Path $runRoot "outputs\06_external_results\image_result_manifest.json") -Force
 Copy-Item -LiteralPath (Join-Path $repoRoot "templates\shot_result_manifest.template.json") -Destination (Join-Path $runRoot "outputs\06_external_results\shot_result_manifest.template.json") -Force
 
@@ -62,6 +63,7 @@ $requiredFiles = @(
   "notes.md",
   "production_status.csv",
   "outputs\04_assets\audio\voice_reference_manifest.json",
+  "outputs\04_assets\image_generation_queue.json",
   "outputs\06_external_results\image_result_manifest.json",
   "outputs\06_external_results\shot_result_manifest.template.json"
 )
