@@ -2,23 +2,70 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Generated Media Review",
   "type": "object",
-  "required": ["status", "issues"],
+  "required": ["status", "task_type_review_passed", "issues"],
   "properties": {
     "status": { "type": "string", "enum": ["pass", "revise_required", "not_executed"] },
     "reviewed_shots": { "type": ["array", "integer"] },
+    "task_type_review_passed": { "type": "boolean" },
+    "edit_preservation_check_passed": { "type": ["boolean", "null"] },
+    "extend_continuity_check_passed": { "type": ["boolean", "null"] },
+    "reference_dimension_check_passed": { "type": ["boolean", "null"] },
+    "dialogue_audio_sync_check_passed": { "type": ["boolean", "null"] },
+    "text_logo_watermark_check_passed": { "type": ["boolean", "null"] },
+    "selected_take_check_passed": { "type": ["boolean", "null"] },
+    "shot_reviews": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "object",
+        "properties": {
+          "shot_id": { "type": "string" },
+          "task_type": {
+            "type": ["string", "null"],
+            "enum": ["pipeline_shot_generation", "multimodal_reference", "video_edit", "video_extend", "combined_task", null]
+          },
+          "best_take_id": { "type": ["string", "null"] },
+          "selected_for_edit": { "type": ["boolean", "null"] },
+          "review_status": { "type": ["string", "null"] },
+          "task_type_execution_passed": { "type": ["boolean", "null"] },
+          "notes": { "type": ["string", "null"] }
+        }
+      }
+    },
     "issues": {
       "type": "array",
       "items": {
         "type": "object",
         "required": ["severity", "description"],
         "properties": {
+          "id": { "type": ["string", "null"] },
           "severity": { "type": "string", "enum": ["P0", "P1", "P2"] },
+          "category": {
+            "type": ["string", "null"],
+            "enum": [
+              "task_type_execution",
+              "edit_preservation",
+              "extend_continuity",
+              "reference_dimension",
+              "dialogue_audio_sync",
+              "text_logo_watermark",
+              "character",
+              "scene",
+              "prop",
+              "camera",
+              "sound",
+              "style",
+              "take_selection",
+              null
+            ]
+          },
           "shot_id": { "type": ["string", "null"] },
+          "take_id": { "type": ["string", "null"] },
           "asset_id": { "type": ["string", "null"] },
           "description": { "type": "string" },
           "fix_suggestion": { "type": ["string", "null"] },
           "fix_applied": { "type": ["boolean", "null"] },
-          "accepted_by_user": { "type": ["boolean", "null"] }
+          "accepted_by_user": { "type": ["boolean", "null"] },
+          "resolution_status": { "type": ["string", "null"] }
         }
       }
     }
