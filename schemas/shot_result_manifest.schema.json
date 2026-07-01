@@ -12,15 +12,44 @@
         "required": ["shot_id", "status"],
         "properties": {
           "shot_id": { "type": "string", "pattern": "^SHOT_[0-9]{3}$" },
+          "task_type": {
+            "type": ["string", "null"],
+            "enum": ["pipeline_shot_generation", "multimodal_reference", "video_edit", "video_extend", "combined_task", null]
+          },
           "tool": { "type": ["string", "null"] },
           "prompt_version": { "type": ["string", "null"] },
-          "take_id": { "type": ["string", "null"] },
-          "file_path_or_url": { "type": ["string", "null"] },
-          "selected": { "type": ["boolean", "null"] },
-          "rating": { "type": ["number", "integer", "null"] },
+          "best_take_id": { "type": ["string", "null"] },
+          "selected_for_edit": { "type": ["boolean", "null"] },
+          "review_status": {
+            "type": ["string", "null"],
+            "enum": ["not_generated", "generated", "approved", "rejected", "needs_regeneration", null]
+          },
           "status": { "type": "string" },
+          "blocking_issues": { "type": ["array", "string", "null"] },
           "issues": { "type": ["array", "string", "null"] },
-          "regen_instruction": { "type": ["string", "null"] }
+          "regen_instruction": { "type": ["string", "null"] },
+          "takes": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "object",
+              "required": ["take_id", "status"],
+              "properties": {
+                "take_id": { "type": "string" },
+                "file_path_or_url": { "type": ["string", "null"] },
+                "external_platform_url": { "type": ["string", "null"] },
+                "selected": { "type": ["boolean", "null"] },
+                "selected_for_edit": { "type": ["boolean", "null"] },
+                "rating": { "type": ["number", "integer", "null"] },
+                "status": {
+                  "type": "string",
+                  "enum": ["generated", "approved", "rejected", "needs_regeneration"]
+                },
+                "issues": { "type": ["array", "string", "null"] },
+                "review_notes": { "type": ["string", "null"] },
+                "regen_instruction": { "type": ["string", "null"] }
+              }
+            }
+          }
         }
       }
     }
