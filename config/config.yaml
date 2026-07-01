@@ -41,7 +41,7 @@ skill_versions:
   storyboard_sequence_review: "0.3.0"
   asset_manifest_builder: "0.3.0"
   character_prompt_generator: "1.1.0"
-  scene_prompt_generator: "1.0.0"
+  scene_prompt_generator: "1.1.0"
   prop_prompt_generator: "1.0.0"
   image_generation_executor: "0.1.0"
   voice_reference_manifest_builder: "0.2.0"
@@ -169,3 +169,6 @@ quality_gates:
   max_storyboard_shot_duration_seconds: 15
   require_storyboard_shot_boundary_reason: true
   block_artificial_continuous_shot_splitting: true
+  require_scene_key_plate_prompt: true
+  scene_sheet_generation_policy: "required_for_complex_or_recurring_scenes"
+  scene_reference_priority: "key_plate"
