@@ -93,6 +93,13 @@
   - 明显年龄变化、完整服装变化、身份装束变化、持续脏污/血迹/破损、可见且持续的伤痕、明显发型/体态/变异必须拆成独立状态。
   - 表情、动作、镜头角度、光线、临时持有道具、单镜头短暂汗水或轻微污渍不得拆成角色状态。
   - 每个要生成的角色状态变体必须包含 `variant_id`、`trigger`、`appearance_change_type`、`visual_changes`、`appears_in_shots`、`generation_required`、`three_view_required`、`must_keep`。
+- Prop registration rules:
+  - 只有需要跨镜头稳定、承担叙事功能、反复出现、被特写展示、发生状态变化，或承载文字/符号/母题信息的道具，才创建独立 `PROP_XXX`。
+  - 反复出现、明线/暗线道具、视觉母题、角色身份绑定道具、特写道具、状态变化道具、文字/照片/符号道具、复杂造型道具，必须注册为 `canonical_prop`。
+  - 只出现一次、无叙事功能、无状态变化、无特写、无需跨镜头保持一致的普通物件，不创建独立 `PROP_XXX`；只写入分镜提示词、场景提示词或单镜头视频提示词。
+  - 场景陈设类物件应写入 `ENV_XXX`，除非其中某个物件被剧情单独拿出来使用、特写或反复出现。
+  - 每个 `generation_required=true` 的道具必须包含 `prop_category`、`asset_tier=canonical_prop`、`reason_to_generate`、`must_not_change`。
+  - 文字类道具必须包含 `text_content`、`text_visibility`、`text_generation_strategy` 和 `blank_area_required`；重要文字优先后期叠字或留白。
 
 ## 6. Asset Prompt Generation
 
@@ -120,8 +127,13 @@
   - 每个 `ENV_XXX` 必须生成 Key Plate 中景图提示词，作为后续视频镜头默认引用图。
   - Scene Sheet 四宫格概览图只在复杂、核心、反复出现、多角度拍摄或有角色移动路径的场景中生成。
   - 四宫格用于场景设计审查和空间布局确认，不作为默认视频引用图。
+- Prop prompt rules:
+  - 道具提示词阶段只处理 `asset_manifest.json` 中 `asset_tier=canonical_prop` 且 `generation_required=true` 的道具。
+  - `scene_dressing` 应进入场景提示词，不生成独立道具图。
+  - `shot_description_only` 应进入分镜或视频提示词，不生成独立道具图。
+  - 每个需要生成的道具必须输出标准资产图提示词；`detail_prompt_required=true` 时额外输出细节/特写提示词。
+  - 不默认要求视频阶段使用 `@PROP`；视频阶段默认只在正文描述道具。
 - Rules:
-  - 道具提示词必须生成，尤其是文字类道具和母题道具。
   - 角色、场景、道具所需提示词都完成后，才将 checkpoint 阶段 `asset_prompt_generation` 标记为完成。
 
 ## 7. Image Generation Mode And Image Results
@@ -140,6 +152,7 @@
   - 所有图片和外部生成结果都属于本地 run，不进入仓库。
   - 主要人物三视图缺失时允许草稿继续，但最终包不得标记为 `completed`。
   - 场景图片生成优先生成 `ENV_XXX_KEY_PLATE`；`ENV_XXX_SCENE_SHEET` 只在 `scene_sheet_required=true` 时生成。
+  - 道具图片只生成 `generation_required=true` 的 canonical prop；普通一次性物件不生成独立道具图。
 
 ## 8. Audio Reference Collection
 
