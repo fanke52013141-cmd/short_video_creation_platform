@@ -22,6 +22,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = REPO_ROOT / "schemas"
+MAX_SHOT_DURATION_SECONDS = 15
 
 
 PHASE_ALIASES = {
@@ -93,6 +94,7 @@ def validate_schema_subset(data: Any, schema: dict[str, Any], label: str) -> Non
 
     It intentionally covers only the keywords used in schemas/: type, required,
     properties, items, enum, pattern and local $ref into $defs.
+    Project-specific semantic checks are implemented separately below.
     """
 
     defs = schema.get("$defs", {})
@@ -263,6 +265,27 @@ def unresolved_issues(review: dict[str, Any], severity: str) -> list[dict[str, A
     return unresolved
 
 
+def validate_shot_contract(shot: dict[str, Any]) -> None:
+    shot_id = shot.get("id") or "<missing id>"
+    duration = shot.get("duration_seconds")
+    if not isinstance(duration, (int, float)) or isinstance(duration, bool):
+        fail(f"{shot_id} duration_seconds must be a number")
+    if duration <= 0:
+        fail(f"{shot_id} duration_seconds must be greater than 0")
+    if duration > MAX_SHOT_DURATION_SECONDS:
+        fail(f"{shot_id} duration_seconds {duration} exceeds {MAX_SHOT_DURATION_SECONDS} seconds")
+
+    boundary_type = str(shot.get("shot_boundary_type", "")).strip()
+    if not boundary_type:
+        fail(f"{shot_id} missing shot_boundary_type")
+
+    boundary_reason = str(shot.get("boundary_reason", "")).strip()
+    if not boundary_reason:
+        fail(f"{shot_id} missing boundary_reason")
+    if len(boundary_reason) < 8:
+        fail(f"{shot_id} boundary_reason is too thin to justify an independent shot")
+
+
 def validate_storyboard(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     storyboard = validate_schema_file(
         run_dir / "outputs" / "03_storyboard" / "storyboard.json",
@@ -281,7 +304,18 @@ def validate_storyboard(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     shot_ids = [shot.get("id") for shot in shots]
     if len(shot_ids) != len(set(shot_ids)):
         fail("storyboard.json has duplicate shot ids")
+    for shot in shots:
+        validate_shot_contract(shot)
     ok(f"storyboard shots: {len(shots)}")
+    ok(f"storyboard shot duration limit: <= {MAX_SHOT_DURATION_SECONDS}s")
+    ok("storyboard shot boundary metadata")
+
+    if review.get("duration_check_passed") is False:
+        fail("storyboard sequence review duration_check_passed=false")
+    if review.get("shot_boundary_check_passed") is False:
+        fail("storyboard sequence review shot_boundary_check_passed=false")
+    if review.get("storytelling_quality_check_passed") is False:
+        fail("storyboard sequence review storytelling_quality_check_passed=false")
 
     p0_unresolved = unresolved_issues(review, "P0")
     if p0_unresolved:
