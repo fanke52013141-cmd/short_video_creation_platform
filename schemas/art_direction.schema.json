@@ -12,6 +12,47 @@
     "compressed_prompt_style_block"
   ],
   "properties": {
+    "art_direction_mode": {
+      "type": "string",
+      "enum": [
+        "reference_image_first",
+        "user_visual_direction_preservation",
+        "open_art_direction"
+      ]
+    },
+    "visual_input_type": {
+      "type": "string",
+      "enum": [
+        "reference_image_provided",
+        "explicit_visual_notes",
+        "open_visual_direction",
+        "conflicting_reference"
+      ]
+    },
+    "reference_paths": {
+      "type": ["array", "null"],
+      "items": { "type": "string" }
+    },
+    "reference_image_policy": {
+      "type": ["object", "string", "null"]
+    },
+    "reference_image_analysis": {
+      "type": ["object", "array", "string", "null"]
+    },
+    "style_expansion_policy": {
+      "type": ["object", "string", "null"]
+    },
+    "user_visual_constraints": {
+      "type": ["object", "array", "string", "null"]
+    },
+    "candidate_generation_mode": {
+      "type": ["string", "null"],
+      "enum": [
+        "reference_based_variants",
+        "open_style_candidates",
+        null
+      ]
+    },
     "visual_principles": { "type": ["array", "object", "string"] },
     "color_rules": { "type": ["array", "object", "string"] },
     "lighting_rules": { "type": ["array", "object", "string"] },
