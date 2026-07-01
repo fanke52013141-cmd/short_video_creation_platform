@@ -4,6 +4,8 @@
   "type": "object",
   "required": ["shots"],
   "properties": {
+    "max_shot_duration_seconds": { "type": ["integer", "number"] },
+    "shot_boundary_policy": { "type": ["object", "string", "null"] },
     "shots": {
       "type": "array",
       "items": {
@@ -14,6 +16,8 @@
           "scene_id",
           "character_ids",
           "narrative_function",
+          "shot_boundary_type",
+          "boundary_reason",
           "camera",
           "frame_strategy",
           "prompt_cn"
@@ -26,6 +30,26 @@
           "prop_ids": { "type": "array", "items": { "type": "string" } },
           "audio_intent": { "type": ["string", "object", "null"] },
           "narrative_function": { "type": "string" },
+          "shot_boundary_type": {
+            "type": "string",
+            "enum": [
+              "shot_size_change",
+              "camera_position_change",
+              "perspective_change",
+              "focus_change",
+              "subject_change",
+              "space_change",
+              "time_change",
+              "reaction_shot",
+              "insert_shot",
+              "information_reveal",
+              "montage_cut",
+              "establishing_shot",
+              "other"
+            ]
+          },
+          "boundary_reason": { "type": "string" },
+          "continuity_risk": { "type": ["string", "object", "null"] },
           "camera": { "type": ["string", "object"] },
           "shot_size": { "type": ["string", "null"] },
           "movement": { "type": ["string", "object", "null"] },
