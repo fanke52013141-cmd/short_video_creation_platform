@@ -6,6 +6,7 @@
   "properties": {
     "max_shot_duration_seconds": { "type": ["integer", "number"] },
     "shot_boundary_policy": { "type": ["object", "string", "null"] },
+    "concretization_translation_policy": { "type": ["object", "string", "null"] },
     "shots": {
       "type": "array",
       "items": {
@@ -20,6 +21,8 @@
           "boundary_reason",
           "camera",
           "frame_strategy",
+          "abstract_terms_detected",
+          "concretization_evidence",
           "prompt_cn"
         ],
         "properties": {
@@ -55,6 +58,31 @@
           "movement": { "type": ["string", "object", "null"] },
           "frame_strategy": { "type": ["string", "object"] },
           "transition": { "type": ["string", "null"] },
+          "abstract_terms_detected": {
+            "type": ["array", "string", "null"],
+            "items": { "type": "string" }
+          },
+          "concretization_evidence": {
+            "type": ["object", "string"],
+            "properties": {
+              "emotion_evidence": {
+                "type": ["array", "string", "null"],
+                "items": { "type": "string" }
+              },
+              "atmosphere_evidence": {
+                "type": ["array", "string", "null"],
+                "items": { "type": "string" }
+              },
+              "event_evidence": {
+                "type": ["array", "string", "null"],
+                "items": { "type": "string" }
+              },
+              "relationship_evidence": {
+                "type": ["array", "string", "null"],
+                "items": { "type": "string" }
+              }
+            }
+          },
           "prompt_cn": { "type": "string" },
           "continuity_notes": { "type": ["string", "array", "null"] }
         }
