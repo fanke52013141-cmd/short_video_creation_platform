@@ -46,10 +46,10 @@ skill_versions:
   image_generation_executor: "0.2.0"
   voice_reference_manifest_builder: "0.2.0"
   shot_video_prompt_generator: "1.4.0"
-  external_generation_handoff: "0.4.0"
-  generated_media_review: "0.1.0"
-  continuity_review: "0.4.0"
-  production_package_builder: "0.2.0"
+  external_generation_handoff: "0.5.0"
+  generated_media_review: "0.2.0"
+  continuity_review: "0.5.0"
+  production_package_builder: "0.3.0"
 
 paths:
   active_run_dir: "./local_runs/YYYY-MM-DD/project_slug"
@@ -170,6 +170,22 @@ video_prompt_policy:
     - "中文视频提示词"
     - "自检通过项"
 
+completion_policy:
+  completed_requires_storyboard_concretization_check: true
+  completed_requires_no_blocking_image_results: true
+  completed_requires_audio_references_ready: true
+  completed_requires_seedance_prompt_validation: true
+  completed_requires_external_task_type_review: true
+  completed_requires_continuity_review_passed: true
+  completed_forbidden_audio_statuses:
+    - "missing"
+    - "needed"
+    - "placeholder"
+  completed_forbidden_image_statuses:
+    - "missing"
+    - "rejected"
+    - "needs_regeneration"
+
 external_services:
   seedance:
     enabled: false
@@ -241,8 +257,11 @@ quality_gates:
   require_per_shot_video_prompt_files: true
   allow_env_reference_only_when_spatial_expansion_needed: true
   forbid_prop_reference_in_video_prompts_by_default: true
+  require_external_handoff_preserve_task_type: true
   require_generated_media_review_before_completed: true
+  require_generated_media_task_type_review: true
   require_continuity_review_before_final_delivery: true
+  require_final_package_quality_gates: true
   max_storyboard_shot_duration_seconds: 15
   require_storyboard_shot_boundary_reason: true
   block_artificial_continuous_shot_splitting: true
