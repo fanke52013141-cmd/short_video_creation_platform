@@ -5,23 +5,79 @@
   "required": ["schema_version", "image_results"],
   "properties": {
     "schema_version": { "type": "string" },
+    "generation_mode": {
+      "type": ["string", "null"],
+      "enum": ["external_manual", "internal_codex", null]
+    },
+    "queue_file": { "type": ["string", "null"] },
+    "summary": {
+      "type": ["object", "null"],
+      "properties": {
+        "must_generate_total": { "type": ["integer", "null"] },
+        "optional_generate_total": { "type": ["integer", "null"] },
+        "skip_generation_total": { "type": ["integer", "null"] },
+        "blocking_missing_count": { "type": ["integer", "null"] }
+      }
+    },
     "image_results": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["asset_id", "status"],
+        "required": ["asset_id", "image_role", "generation_priority", "status"],
         "properties": {
+          "queue_id": { "type": ["string", "null"] },
           "asset_id": { "type": "string" },
-          "asset_type": { "type": ["string", "null"] },
+          "parent_asset_id": { "type": ["string", "null"] },
+          "asset_type": {
+            "type": ["string", "null"],
+            "enum": [
+              "character",
+              "character_variant",
+              "scene",
+              "prop",
+              "prop_variant",
+              null
+            ]
+          },
           "variant_id": { "type": ["string", "null"] },
-          "tool": { "type": ["string", "null"] },
+          "image_role": {
+            "type": "string",
+            "enum": [
+              "character_turnaround",
+              "character_full_body",
+              "scene_key_plate",
+              "scene_sheet",
+              "prop_standard_asset",
+              "prop_detail_closeup"
+            ]
+          },
+          "generation_priority": {
+            "type": "string",
+            "enum": ["must_generate", "optional_generate", "skip_generation"]
+          },
+          "blocking_if_missing": { "type": ["boolean", "null"] },
+          "used_as_video_reference": { "type": ["boolean", "null"] },
+          "prompt_source": { "type": ["string", "null"] },
           "prompt_file": { "type": ["string", "null"] },
+          "expected_output_path": { "type": ["string", "null"] },
+          "tool": { "type": ["string", "null"] },
           "result_file_or_url": { "type": ["string", "null"] },
           "selected": { "type": ["boolean", "null"] },
           "rating": { "type": ["number", "integer", "null"] },
-          "status": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": [
+              "missing",
+              "generated",
+              "approved",
+              "rejected",
+              "needs_regeneration",
+              "not_required"
+            ]
+          },
           "issues": { "type": ["array", "string", "null"] },
-          "regen_instruction": { "type": ["string", "null"] }
+          "regen_instruction": { "type": ["string", "null"] },
+          "review_notes": { "type": ["string", "null"] }
         }
       }
     }
