@@ -45,7 +45,7 @@ skill_versions:
   prop_prompt_generator: "1.1.0"
   image_generation_executor: "0.2.0"
   voice_reference_manifest_builder: "0.2.0"
-  shot_video_prompt_generator: "1.3.0"
+  shot_video_prompt_generator: "1.4.0"
   external_generation_handoff: "0.4.0"
   generated_media_review: "0.1.0"
   continuity_review: "0.4.0"
@@ -148,6 +148,28 @@ storyboard_generation_policy:
     - "event_to_action"
     - "relationship_to_space"
 
+video_prompt_policy:
+  task_type_required: true
+  default_task_type: "pipeline_shot_generation"
+  allowed_task_types:
+    - "pipeline_shot_generation"
+    - "multimodal_reference"
+    - "video_edit"
+    - "video_extend"
+    - "combined_task"
+  require_strict_edit_phrase: true
+  require_extend_direction_phrase: true
+  require_asset_declaration_consistency: true
+  require_seedance_sound_symbols: true
+  require_single_primary_camera_movement: true
+  require_approved_image_references_only: true
+  prop_reference_policy: "describe_in_prompt_not_at_ref"
+  output_sections:
+    - "引用决策"
+    - "资产声明区"
+    - "中文视频提示词"
+    - "自检通过项"
+
 external_services:
   seedance:
     enabled: false
@@ -209,6 +231,12 @@ quality_gates:
   require_image_blocking_flags: true
   require_image_results_for_must_generate: true
   block_completed_on_missing_required_images: true
+  require_seedance_task_type_detection: true
+  require_seedance_strict_edit_phrase: true
+  require_seedance_extend_phrase: true
+  require_seedance_asset_declaration_consistency: true
+  require_seedance_sound_symbols: true
+  require_approved_image_references_only: true
   require_audio_reference_for_dialogue_shots: true
   require_per_shot_video_prompt_files: true
   allow_env_reference_only_when_spatial_expansion_needed: true
