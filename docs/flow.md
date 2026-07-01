@@ -104,6 +104,10 @@
   - `RUN/outputs/04_assets/scenes/*.json`
   - `RUN/outputs/04_assets/props/*.md`
   - `RUN/outputs/04_assets/props/*.json`
+- Scene prompt rules:
+  - 每个 `ENV_XXX` 必须生成 Key Plate 中景图提示词，作为后续视频镜头默认引用图。
+  - Scene Sheet 四宫格概览图只在复杂、核心、反复出现、多角度拍摄或有角色移动路径的场景中生成。
+  - 四宫格用于场景设计审查和空间布局确认，不作为默认视频引用图。
 - Rules:
   - 主要人物的每个状态变体必须按三视图生产。
   - 道具提示词必须生成，尤其是文字类道具和母题道具。
@@ -124,6 +128,7 @@
 - Note:
   - 所有图片和外部生成结果都属于本地 run，不进入仓库。
   - 主要人物三视图缺失时允许草稿继续，但最终包不得标记为 `completed`。
+  - 场景图片生成优先生成 `ENV_XXX_KEY_PLATE`；`ENV_XXX_SCENE_SHEET` 只在 `scene_sheet_required=true` 时生成。
 
 ## 8. Audio Reference Collection
 
