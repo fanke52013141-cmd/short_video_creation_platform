@@ -24,6 +24,57 @@
             "type": ["array", "string", "null"],
             "items": { "type": "string" }
           },
+          "prop_category": {
+            "type": ["string", "null"],
+            "enum": [
+              "hero_prop",
+              "motif_prop",
+              "text_prop",
+              "identity_prop",
+              "functional_prop",
+              "background_prop",
+              "temporary_prop",
+              null
+            ]
+          },
+          "asset_tier": {
+            "type": ["string", "null"],
+            "enum": ["canonical_prop", "scene_dressing", "shot_description_only", null]
+          },
+          "generation_required": { "type": ["boolean", "string", "null"] },
+          "detail_prompt_required": { "type": ["boolean", "string", "null"] },
+          "reason_to_generate": {
+            "type": ["array", "string", "null"],
+            "items": {
+              "type": "string",
+              "enum": [
+                "repeated_appearance",
+                "story_clue",
+                "story_motif",
+                "character_identity_bound",
+                "close_up",
+                "state_change",
+                "text_or_symbol",
+                "complex_design",
+                "functional_story_action"
+              ]
+            }
+          },
+          "reason_not_to_generate": { "type": ["string", "null"] },
+          "must_not_change": {
+            "type": ["array", "string", "null"],
+            "items": { "type": "string" }
+          },
+          "text_content": { "type": ["string", "null"] },
+          "text_visibility": {
+            "type": ["string", "null"],
+            "enum": ["must_be_readable", "suggestive_only", "not_readable", null]
+          },
+          "text_generation_strategy": {
+            "type": ["string", "null"],
+            "enum": ["generate_directly", "post_production_overlay", "blank_space_for_text", null]
+          },
+          "blank_area_required": { "type": ["boolean", "string", "null"] },
           "variants": {
             "type": ["array", "object", "null"],
             "items": { "$ref": "#/$defs/asset_variant" }
@@ -72,7 +123,21 @@
               "disguise",
               "ritual_state",
               "post_event_state",
-              "other_persistent_visual_change"
+              "other_persistent_visual_change",
+              "closed_state",
+              "opened_state",
+              "broken_state",
+              "clean_state",
+              "dirty_state",
+              "wet_state",
+              "burned_state",
+              "bloodied_state",
+              "text_clear",
+              "text_blurred",
+              "lit_state",
+              "unlit_state",
+              "functional_change",
+              "other_prop_state_change"
             ]
           }
         },
@@ -80,7 +145,12 @@
         "appears_in_shots": { "type": "array", "items": { "type": "string" } },
         "generation_required": { "type": ["boolean", "string", "null"] },
         "three_view_required": { "type": ["boolean", "string", "null"] },
+        "detail_prompt_required": { "type": ["boolean", "string", "null"] },
         "must_keep": {
+          "type": ["array", "string", "null"],
+          "items": { "type": "string" }
+        },
+        "must_not_change": {
           "type": ["array", "string", "null"],
           "items": { "type": "string" }
         },
