@@ -39,8 +39,8 @@ skill_versions:
   storyboard_director: "1.2.0"
   storyboard_static_frame_variant: "1.0.0"
   storyboard_sequence_review: "0.3.0"
-  asset_manifest_builder: "0.3.0"
-  character_prompt_generator: "1.1.0"
+  asset_manifest_builder: "0.4.0"
+  character_prompt_generator: "1.2.0"
   scene_prompt_generator: "1.1.0"
   prop_prompt_generator: "1.0.0"
   image_generation_executor: "0.1.0"
@@ -160,6 +160,10 @@ quality_gates:
   require_storyboard_sequence_review_before_assets: true
   block_assets_on_unresolved_p1: true
   require_character_three_view_for_main_characters: true
+  require_character_identity_anchors: true
+  require_character_variant_triggers: true
+  require_character_variant_must_keep: true
+  require_asset_manifest_character_variant_policy: true
   require_audio_reference_for_dialogue_shots: true
   require_per_shot_video_prompt_files: true
   allow_env_reference_only_when_spatial_expansion_needed: true
