@@ -2,10 +2,25 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Final Package Manifest",
   "type": "object",
-  "required": ["status", "artifacts"],
+  "required": ["status", "artifacts", "quality_gates"],
   "properties": {
     "status": { "type": "string", "enum": ["completed", "completed_with_known_gaps", "revise_required"] },
     "artifacts": { "type": "object" },
+    "quality_gates": {
+      "type": "object",
+      "properties": {
+        "storyboard_concretization_check_passed": { "type": ["boolean", "null"] },
+        "image_required_references_ready": { "type": ["boolean", "null"] },
+        "audio_references_ready_for_final": { "type": ["boolean", "null"] },
+        "seedance_task_type_check_passed": { "type": ["boolean", "null"] },
+        "seedance_prompt_surface_check_passed": { "type": ["boolean", "null"] },
+        "external_handoff_preserved_task_type": { "type": ["boolean", "null"] },
+        "generated_media_task_type_review_passed": { "type": ["boolean", "null"] },
+        "generated_media_no_unresolved_p0": { "type": ["boolean", "null"] },
+        "continuity_review_passed": { "type": ["boolean", "null"] },
+        "completed_blockers_checked": { "type": ["boolean", "null"] }
+      }
+    },
     "known_gaps": { "type": ["array", "null"] },
     "blocking_issues": { "type": ["array", "null"] },
     "created_at": { "type": ["string", "null"] }
