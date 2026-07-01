@@ -11,6 +11,7 @@
 | `outputs/03_storyboard/storyboard.json` | `schemas/storyboard.schema.json` |
 | `outputs/03_storyboard/storyboard_sequence_review.json` | `schemas/storyboard_sequence_review.schema.json` |
 | `outputs/04_assets/asset_manifest.json` | `schemas/asset_manifest.schema.json` |
+| `outputs/04_assets/image_generation_queue.json` | queue contract defined by `docs/generation_mode_protocol.md` |
 | `outputs/04_assets/audio/voice_reference_manifest.json` | `schemas/voice_reference_manifest.schema.json` |
 | `outputs/05_video_prompts/shots/SHOT_XXX.json` | `schemas/shot_video_prompt.schema.json` |
 | `outputs/06_external_results/image_result_manifest.json` | `schemas/image_result_manifest.schema.json` |
@@ -18,6 +19,36 @@
 | `outputs/06_external_results/generated_media_review.json` | `schemas/generated_media_review.schema.json` |
 | `outputs/07_final_delivery/continuity_report.json` | `schemas/continuity_report.schema.json` |
 | `outputs/07_final_delivery/final_package_manifest.json` | `schemas/final_package_manifest.schema.json` |
+
+## 图片结果契约
+
+`image_result_manifest.json` 必须记录每个图片队列项的：
+
+- `asset_id`
+- `image_role`
+- `generation_priority`
+- `status`
+- `blocking_if_missing`
+- `used_as_video_reference`
+- `prompt_source` 或 `prompt_file`
+- `expected_output_path` 或 `result_file_or_url`
+
+`generation_priority` 只能是：
+
+- `must_generate`
+- `optional_generate`
+- `skip_generation`
+
+`status` 只能是：
+
+- `missing`
+- `generated`
+- `approved`
+- `rejected`
+- `needs_regeneration`
+- `not_required`
+
+`blocking_if_missing=true` 且状态为 `missing | rejected | needs_regeneration` 时，最终包不得标记为 `completed`。
 
 ## 原则
 
