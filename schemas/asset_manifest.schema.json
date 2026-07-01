@@ -20,13 +20,77 @@
           "type": { "type": "string" },
           "name": { "type": "string" },
           "description": { "type": ["string", "null"] },
-          "variants": { "type": ["array", "object", "null"] },
+          "identity_anchors": {
+            "type": ["array", "string", "null"],
+            "items": { "type": "string" }
+          },
+          "variants": {
+            "type": ["array", "object", "null"],
+            "items": { "$ref": "#/$defs/asset_variant" }
+          },
           "appears_in_shots": { "type": "array", "items": { "type": "string" } },
           "narrative_function": { "type": ["string", "null"] },
+          "motif": { "type": ["boolean", "string", "null"] },
+          "visual_dependencies": {
+            "type": ["array", "string", "null"],
+            "items": { "type": "string" }
+          },
           "continuity_notes": { "type": ["array", "string", "null"] },
           "generation_status": { "type": ["string", "null"] },
           "approval_status": { "type": ["string", "null"] }
         }
+      }
+    },
+    "asset_variant": {
+      "type": "object",
+      "required": ["variant_id", "name", "trigger", "appears_in_shots"],
+      "properties": {
+        "variant_id": { "type": "string" },
+        "name": { "type": "string" },
+        "trigger": { "type": "string" },
+        "appearance_change_type": {
+          "type": ["array", "string", "null"],
+          "items": {
+            "type": "string",
+            "enum": [
+              "base_wardrobe",
+              "wardrobe_change",
+              "age_change",
+              "identity_uniform",
+              "dirty_clothes",
+              "wet_clothes",
+              "damaged_wardrobe",
+              "blood",
+              "visible_wound",
+              "scar",
+              "bandage",
+              "hair_change",
+              "makeup_change",
+              "body_shape_change",
+              "nonhuman_transformation",
+              "mechanical_transformation",
+              "disguise",
+              "ritual_state",
+              "post_event_state",
+              "other_persistent_visual_change"
+            ]
+          }
+        },
+        "visual_changes": { "type": ["string", "null"] },
+        "appears_in_shots": { "type": "array", "items": { "type": "string" } },
+        "generation_required": { "type": ["boolean", "string", "null"] },
+        "three_view_required": { "type": ["boolean", "string", "null"] },
+        "must_keep": {
+          "type": ["array", "string", "null"],
+          "items": { "type": "string" }
+        },
+        "must_not_mix_with": {
+          "type": ["array", "string", "null"],
+          "items": { "type": "string" }
+        },
+        "continuity_notes": { "type": ["array", "string", "null"] },
+        "generation_status": { "type": ["string", "null"] },
+        "approval_status": { "type": ["string", "null"] }
       }
     }
   }
