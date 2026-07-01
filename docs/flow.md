@@ -87,6 +87,12 @@
   - `RUN/outputs/04_assets/asset_manifest.json`
   - `RUN/outputs/04_assets/asset_manifest.md`
 - Schema: `schemas/asset_manifest.schema.json`
+- Character variant rules:
+  - `CHAR_XXX` 是角色身份母体；`CHAR_XXX_A/B/C` 是该角色的持续性视觉状态。
+  - 角色状态变体只在资产清单阶段决定；后续角色提示词阶段不得临时拆分或新增状态。
+  - 明显年龄变化、完整服装变化、身份装束变化、持续脏污/血迹/破损、可见且持续的伤痕、明显发型/体态/变异必须拆成独立状态。
+  - 表情、动作、镜头角度、光线、临时持有道具、单镜头短暂汗水或轻微污渍不得拆成角色状态。
+  - 每个要生成的角色状态变体必须包含 `variant_id`、`trigger`、`appearance_change_type`、`visual_changes`、`appears_in_shots`、`generation_required`、`three_view_required`、`must_keep`。
 
 ## 6. Asset Prompt Generation
 
@@ -104,12 +110,17 @@
   - `RUN/outputs/04_assets/scenes/*.json`
   - `RUN/outputs/04_assets/props/*.md`
   - `RUN/outputs/04_assets/props/*.json`
+- Character prompt rules:
+  - 角色提示词阶段只处理 `asset_manifest.json` 已登记的角色和状态变体。
+  - 每个 `generation_required=true` 的主要角色状态变体都必须生成角色转面参考图提示词。
+  - `three_view_required=true` 的状态必须包含面部特写、正面全身、侧面全身、背面全身。
+  - 不得把多个年龄、职业装束、战损状态、伤痕状态或脏污状态放进同一张最终人物资产图。
+  - 每个状态必须保留 `must_keep` 身份锚点，并避免混入 `must_not_mix_with` 中的其他状态。
 - Scene prompt rules:
   - 每个 `ENV_XXX` 必须生成 Key Plate 中景图提示词，作为后续视频镜头默认引用图。
   - Scene Sheet 四宫格概览图只在复杂、核心、反复出现、多角度拍摄或有角色移动路径的场景中生成。
   - 四宫格用于场景设计审查和空间布局确认，不作为默认视频引用图。
 - Rules:
-  - 主要人物的每个状态变体必须按三视图生产。
   - 道具提示词必须生成，尤其是文字类道具和母题道具。
   - 角色、场景、道具所需提示词都完成后，才将 checkpoint 阶段 `asset_prompt_generation` 标记为完成。
 
