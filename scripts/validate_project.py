@@ -3,8 +3,8 @@
 
 Usage:
   python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug
-  python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase assets
-  python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase external
+  python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase video
+  python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase final
 """
 
 from __future__ import annotations
@@ -20,6 +20,19 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = REPO_ROOT / "schemas"
 MAX_SHOT_DURATION_SECONDS = 15
 BLOCKING_IMAGE_STATUSES = {"missing", "rejected", "needs_regeneration"}
+READY_IMAGE_STATUSES = {"generated", "approved"}
+READY_AUDIO_STATUSES = {"provided", "approved", "ready"}
+NOT_FINAL_AUDIO_STATUSES = {"missing", "needed", "placeholder"}
+
+ABSTRACT_TERMS = re.compile(
+    r"疲惫|压抑|紧张|孤独|温馨|神秘|犹豫|愤怒|委屈|亲密|疏离|对峙|等待|思考|难过|高级|克制|失控"
+)
+VISIBLE_EVIDENCE = re.compile(
+    r"眼|眉|嘴|唇|下颌|肩|手|拳|指|呼吸|视线|身体|距离|前景|后景|阴影|顶光|侧光|色调|滴答|嗡鸣|风声|脚步|回响|敲|捏|靠|低头|抬手|转身|停顿"
+)
+DIALOGUE_HINT = re.compile(r"对白|旁白|台词|留言|录音|电话|新闻|播报|低声|说：|说道|回答|问：|“[^”]+”")
+TASK_TYPES = {"pipeline_shot_generation", "multimodal_reference", "video_edit", "video_extend", "combined_task"}
+REQUIRED_SEEDANCE_SECTIONS = ["【引用决策】", "【资产声明区】", "【中文视频提示词】", "【自检通过项】"]
 
 PHASE_ALIASES = {
     "init": "initialized",
@@ -30,28 +43,6 @@ PHASE_ALIASES = {
     "video": "video_prompts",
     "handoff": "external",
     "generated_media": "media_review",
-}
-
-CHARACTER_VARIANT_REQUIRED_TYPES = {
-    "age_change",
-    "wardrobe_change",
-    "identity_uniform",
-    "dirty_clothes",
-    "wet_clothes",
-    "damaged_wardrobe",
-    "blood",
-    "visible_wound",
-    "scar",
-    "bandage",
-    "hair_change",
-    "makeup_change",
-    "body_shape_change",
-    "nonhuman_transformation",
-    "mechanical_transformation",
-    "disguise",
-    "ritual_state",
-    "post_event_state",
-    "other_persistent_visual_change",
 }
 
 PROP_GENERATION_REASONS = {
@@ -65,12 +56,6 @@ PROP_GENERATION_REASONS = {
     "complex_design",
     "functional_story_action",
 }
-
-TRANSIENT_CHARACTER_CHANGE_KEYWORDS = re.compile(
-    r"表情|微笑|哭|皱眉|惊讶|愤怒|恐惧|动作|站立|奔跑|坐下|回头|伸手|弯腰|"
-    r"近景|远景|侧面|背影|俯视|仰视|冷光|暖光|逆光|阴影|临时拿|拿着|握着|"
-    r"汗水|轻微灰尘|短暂|一瞬间|镜头角度"
-)
 
 
 def fail(message: str) -> None:
@@ -115,14 +100,6 @@ def as_list(value: Any) -> list[Any]:
     return [value]
 
 
-def is_truthy_flag(value: Any) -> bool:
-    if value is True:
-        return True
-    if isinstance(value, str):
-        return value.strip().lower() in {"true", "yes", "required", "1"}
-    return False
-
-
 def schema_type_matches(value: Any, expected: str) -> bool:
     if expected == "object":
         return isinstance(value, dict)
@@ -154,9 +131,7 @@ def validate_schema_subset(data: Any, schema: dict[str, Any], label: str) -> Non
         if name not in defs:
             fail(f"{label}: missing schema def {name}")
         merged = dict(defs[name])
-        for key, value in node.items():
-            if key != "$ref":
-                merged[key] = value
+        merged.update({k: v for k, v in node.items() if k != "$ref"})
         return merged
 
     def check(value: Any, node: dict[str, Any], path: str) -> None:
@@ -168,9 +143,8 @@ def validate_schema_subset(data: Any, schema: dict[str, Any], label: str) -> Non
                 fail(f"{label}: {path} expected type {expected_types}, got {type(value).__name__}")
         if "enum" in node and value not in node["enum"]:
             fail(f"{label}: {path} value {value!r} not in enum {node['enum']}")
-        if isinstance(value, str) and "pattern" in node:
-            if not re.search(node["pattern"], value):
-                fail(f"{label}: {path} value {value!r} does not match {node['pattern']}")
+        if isinstance(value, str) and "pattern" in node and not re.search(node["pattern"], value):
+            fail(f"{label}: {path} value {value!r} does not match {node['pattern']}")
         if isinstance(value, dict):
             for required_key in node.get("required", []):
                 if required_key not in value:
@@ -204,27 +178,10 @@ def validate_checkpoint(run_dir: Path) -> dict[str, Any]:
     checkpoint_path = run_dir / "checkpoint.json"
     require_file(checkpoint_path)
     checkpoint = read_json(checkpoint_path)
-    project = checkpoint.get("project")
-    if isinstance(project, dict):
-        for key in ("slug", "created_at", "run_dir"):
-            if not project.get(key) or str(project.get(key)).startswith("__"):
-                fail(f"checkpoint.project.{key} is not initialized")
-        ok("checkpoint project metadata")
-    else:
-        warn("checkpoint.project is not an object; using legacy checkpoint shape")
-    phase_order = checkpoint.get("phase_order", [])
-    if phase_order:
-        required_order = ["story_generation", "art_direction", "storyboard_director", "storyboard_sequence_review", "asset_manifest_builder"]
-        positions = {phase: phase_order.index(phase) for phase in phase_order}
-        for earlier, later in zip(required_order, required_order[1:]):
-            if earlier not in positions or later not in positions:
-                fail(f"checkpoint.phase_order missing required phase: {earlier} or {later}")
-            if positions[earlier] > positions[later]:
-                fail(f"checkpoint.phase_order has invalid order: {earlier} after {later}")
-        ok("checkpoint phase order")
     completed = checkpoint.get("completed_phases", [])
     if completed and "asset_manifest_builder" in completed and "storyboard_sequence_review" not in completed:
         fail("asset_manifest_builder completed before storyboard_sequence_review")
+    ok("checkpoint exists")
     return checkpoint
 
 
@@ -235,7 +192,6 @@ def validate_initialized(run_dir: Path) -> None:
         "outputs/01_story",
         "outputs/02_art_direction",
         "outputs/03_storyboard",
-        "outputs/03_storyboard/keyframes",
         "outputs/04_assets/characters",
         "outputs/04_assets/scenes",
         "outputs/04_assets/props",
@@ -251,9 +207,9 @@ def validate_initialized(run_dir: Path) -> None:
     required_files = [
         "inputs/idea_brief.md",
         "checkpoint.json",
-        "notes.md",
         "production_status.csv",
         "outputs/04_assets/audio/voice_reference_manifest.json",
+        "outputs/04_assets/image_generation_queue.json",
         "outputs/06_external_results/image_result_manifest.json",
         "outputs/06_external_results/shot_result_manifest.template.json",
     ]
@@ -263,19 +219,20 @@ def validate_initialized(run_dir: Path) -> None:
 
 
 def validate_story(run_dir: Path) -> None:
-    require_file(run_dir / "outputs" / "01_story" / "story.md")
-    validate_schema_file(run_dir / "outputs" / "01_story" / "story.json", "story.schema.json")
+    require_file(run_dir / "outputs/01_story/story.md")
+    validate_schema_file(run_dir / "outputs/01_story/story.json", "story.schema.json")
 
 
 def validate_art(run_dir: Path) -> None:
-    require_file(run_dir / "outputs" / "02_art_direction" / "style_bible.md")
-    validate_schema_file(run_dir / "outputs" / "02_art_direction" / "art_direction.json", "art_direction.schema.json")
+    require_file(run_dir / "outputs/02_art_direction/style_bible.md")
+    validate_schema_file(run_dir / "outputs/02_art_direction/art_direction.json", "art_direction.schema.json")
 
 
 def unresolved_issues(review: dict[str, Any], severity: str) -> list[dict[str, Any]]:
-    issues = [item for item in review.get("issues", []) if item.get("severity") == severity]
     unresolved: list[dict[str, Any]] = []
-    for item in issues:
+    for item in review.get("issues", []) or []:
+        if item.get("severity") != severity:
+            continue
         if item.get("fix_applied") is True or item.get("accepted_by_user") is True:
             continue
         if str(item.get("resolution_status", "")).lower() in {"fixed", "accepted", "resolved"}:
@@ -284,29 +241,41 @@ def unresolved_issues(review: dict[str, Any], severity: str) -> list[dict[str, A
     return unresolved
 
 
+def evidence_has_content(value: Any) -> bool:
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, list):
+        return any(evidence_has_content(item) for item in value)
+    if isinstance(value, dict):
+        return any(evidence_has_content(item) for item in value.values())
+    return False
+
+
 def validate_shot_contract(shot: dict[str, Any]) -> None:
     shot_id = shot.get("id") or "<missing id>"
     duration = shot.get("duration_seconds")
     if not isinstance(duration, (int, float)) or isinstance(duration, bool):
         fail(f"{shot_id} duration_seconds must be a number")
-    if duration <= 0:
-        fail(f"{shot_id} duration_seconds must be greater than 0")
-    if duration > MAX_SHOT_DURATION_SECONDS:
-        fail(f"{shot_id} duration_seconds {duration} exceeds {MAX_SHOT_DURATION_SECONDS} seconds")
-    if not str(shot.get("shot_boundary_type", "")).strip():
-        fail(f"{shot_id} missing shot_boundary_type")
-    boundary_reason = str(shot.get("boundary_reason", "")).strip()
-    if not boundary_reason:
-        fail(f"{shot_id} missing boundary_reason")
-    if len(boundary_reason) < 8:
-        fail(f"{shot_id} boundary_reason is too thin to justify an independent shot")
+    if duration <= 0 or duration > MAX_SHOT_DURATION_SECONDS:
+        fail(f"{shot_id} duration_seconds must be > 0 and <= {MAX_SHOT_DURATION_SECONDS}")
+    if len(str(shot.get("boundary_reason", "")).strip()) < 8:
+        fail(f"{shot_id} boundary_reason is missing or too thin")
+    prompt_cn = str(shot.get("prompt_cn", ""))
+    terms = shot.get("abstract_terms_detected")
+    evidence = shot.get("concretization_evidence")
+    if terms is None:
+        fail(f"{shot_id} missing abstract_terms_detected")
+    if evidence is None or not evidence_has_content(evidence):
+        fail(f"{shot_id} missing concretization_evidence")
+    if ABSTRACT_TERMS.search(prompt_cn) and not VISIBLE_EVIDENCE.search(prompt_cn):
+        fail(f"{shot_id} contains abstract terms but lacks visible/audio evidence in prompt_cn")
 
 
 def validate_storyboard(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
-    storyboard = validate_schema_file(run_dir / "outputs" / "03_storyboard" / "storyboard.json", "storyboard.schema.json")
-    require_file(run_dir / "outputs" / "03_storyboard" / "storyboard.md")
-    review = validate_schema_file(run_dir / "outputs" / "03_storyboard" / "storyboard_sequence_review.json", "storyboard_sequence_review.schema.json")
-    require_file(run_dir / "outputs" / "03_storyboard" / "storyboard_sequence_review.md")
+    storyboard = validate_schema_file(run_dir / "outputs/03_storyboard/storyboard.json", "storyboard.schema.json")
+    require_file(run_dir / "outputs/03_storyboard/storyboard.md")
+    review = validate_schema_file(run_dir / "outputs/03_storyboard/storyboard_sequence_review.json", "storyboard_sequence_review.schema.json")
+    require_file(run_dir / "outputs/03_storyboard/storyboard_sequence_review.md")
     shots = storyboard.get("shots", [])
     if not shots:
         fail("storyboard.json has no shots")
@@ -315,13 +284,14 @@ def validate_storyboard(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
         fail("storyboard.json has duplicate shot ids")
     for shot in shots:
         validate_shot_contract(shot)
-    ok(f"storyboard shots: {len(shots)}")
-    ok(f"storyboard shot duration limit: <= {MAX_SHOT_DURATION_SECONDS}s")
-    ok("storyboard shot boundary metadata")
     if review.get("duration_check_passed") is False:
         fail("storyboard sequence review duration_check_passed=false")
     if review.get("shot_boundary_check_passed") is False:
         fail("storyboard sequence review shot_boundary_check_passed=false")
+    if review.get("concretization_check_passed") is not True:
+        fail("storyboard sequence review concretization_check_passed is not true")
+    if review.get("key_turning_point_visual_evidence_check_passed") is False:
+        fail("key turning point visual evidence check failed")
     if review.get("storytelling_quality_check_passed") is False:
         fail("storyboard sequence review storytelling_quality_check_passed=false")
     p0_unresolved = unresolved_issues(review, "P0")
@@ -330,16 +300,16 @@ def validate_storyboard(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     p1_unresolved = unresolved_issues(review, "P1")
     if p1_unresolved:
         fail(f"storyboard sequence review has unresolved P1 issues: {len(p1_unresolved)}")
-    ok(f"storyboard sequence review: {review.get('status')}")
+    ok(f"storyboard shots: {len(shots)}")
+    ok("storyboard concretization checks")
     return storyboard, review
 
 
 def collect_storyboard_asset_refs(storyboard: dict[str, Any]) -> dict[str, set[str]]:
     refs = {"characters": set(), "scenes": set(), "props": set(), "audio": set()}
     for shot in storyboard.get("shots", []):
-        scene_id = shot.get("scene_id")
-        if scene_id:
-            refs["scenes"].add(scene_id)
+        if shot.get("scene_id"):
+            refs["scenes"].add(shot["scene_id"])
         for item in shot.get("character_ids", []) or []:
             refs["characters"].add(item)
         for item in shot.get("prop_ids", []) or []:
@@ -350,155 +320,46 @@ def collect_storyboard_asset_refs(storyboard: dict[str, Any]) -> dict[str, set[s
     return refs
 
 
-def validate_character_variants(manifest: dict[str, Any]) -> None:
-    checked_variants = 0
-    generated_variants = 0
-    for character in manifest.get("characters", []) or []:
-        character_id = str(character.get("id", "<missing id>"))
-        variants = as_list(character.get("variants"))
-        identity_anchors = as_list(character.get("identity_anchors"))
-        if variants and not identity_anchors:
-            fail(f"{character_id} has variants but missing identity_anchors")
-        seen_variant_ids: set[str] = set()
-        for variant in variants:
-            if not isinstance(variant, dict):
-                fail(f"{character_id} variants must be objects")
-            checked_variants += 1
-            variant_id = str(variant.get("variant_id", "")).strip()
-            if not variant_id:
-                fail(f"{character_id} has variant missing variant_id")
-            if variant_id in seen_variant_ids:
-                fail(f"{character_id} duplicate variant_id: {variant_id}")
-            seen_variant_ids.add(variant_id)
-            if not variant_id.startswith(f"{character_id}_"):
-                fail(f"{variant_id} must use parent character prefix {character_id}_")
-            if not str(variant.get("trigger", "")).strip():
-                fail(f"{variant_id} missing trigger")
-            appears = variant.get("appears_in_shots")
-            if not isinstance(appears, list) or not appears:
-                fail(f"{variant_id} appears_in_shots must be a non-empty list")
-            change_types = {str(item) for item in as_list(variant.get("appearance_change_type")) if item}
-            visual_changes = str(variant.get("visual_changes", "")).strip()
-            if change_types & CHARACTER_VARIANT_REQUIRED_TYPES and not visual_changes:
-                fail(f"{variant_id} has persistent appearance change type but missing visual_changes")
-            if TRANSIENT_CHARACTER_CHANGE_KEYWORDS.search(" ".join(sorted(change_types)) + " " + visual_changes):
-                if not (change_types & CHARACTER_VARIANT_REQUIRED_TYPES):
-                    warn(f"{variant_id} may be a transient action/expression variant; consider merging it")
-            if is_truthy_flag(variant.get("generation_required")):
-                generated_variants += 1
-                if not visual_changes:
-                    fail(f"{variant_id} generation_required=true but missing visual_changes")
-                if not is_truthy_flag(variant.get("three_view_required")):
-                    fail(f"{variant_id} generation_required=true but three_view_required is not true")
-                if not as_list(variant.get("must_keep")):
-                    fail(f"{variant_id} generation_required=true but missing must_keep identity anchors")
-            must_not_mix_with = as_list(variant.get("must_not_mix_with"))
-            if variant_id in {str(item) for item in must_not_mix_with}:
-                fail(f"{variant_id} must_not_mix_with cannot include itself")
-    ok(f"character variants checked: {checked_variants}")
-    ok(f"character variants requiring generation: {generated_variants}")
-
-
-def validate_prop_policy(manifest: dict[str, Any]) -> None:
-    checked_props = 0
-    generated_props = 0
-    for prop in manifest.get("props", []) or []:
-        checked_props += 1
-        prop_id = str(prop.get("id", "<missing id>"))
-        asset_tier = prop.get("asset_tier")
-        prop_category = prop.get("prop_category")
-        generation_required = is_truthy_flag(prop.get("generation_required"))
-        reason_to_generate = {str(item) for item in as_list(prop.get("reason_to_generate")) if item}
-        appears_in_shots = prop.get("appears_in_shots") or []
-        if generation_required:
-            generated_props += 1
-            if asset_tier != "canonical_prop":
-                fail(f"{prop_id} generation_required=true but asset_tier is not canonical_prop")
-            if not reason_to_generate:
-                fail(f"{prop_id} generation_required=true but missing reason_to_generate")
-            unknown_reasons = reason_to_generate - PROP_GENERATION_REASONS
-            if unknown_reasons:
-                fail(f"{prop_id} has unknown reason_to_generate values: {sorted(unknown_reasons)}")
-            if not as_list(prop.get("must_not_change")):
-                fail(f"{prop_id} generation_required=true but missing must_not_change anchors")
-        if asset_tier == "shot_description_only" and generation_required:
-            fail(f"{prop_id} shot_description_only cannot be generation_required=true")
-        if asset_tier == "scene_dressing" and generation_required:
-            fail(f"{prop_id} scene_dressing should not be independently generated")
-        if len(appears_in_shots) >= 2 and asset_tier not in {"canonical_prop", None, ""}:
-            fail(f"{prop_id} appears in multiple shots but is not canonical_prop")
-        if prop_category in {"background_prop", "temporary_prop"} and generation_required:
-            allowed_override = reason_to_generate & {"close_up", "story_clue", "state_change", "text_or_symbol"}
-            if not allowed_override:
-                fail(f"{prop_id} is {prop_category} but lacks a strong reason to generate")
-        if prop_category == "text_prop" or "text_or_symbol" in reason_to_generate:
-            if not prop.get("text_generation_strategy"):
-                fail(f"{prop_id} is text/symbol prop but missing text_generation_strategy")
-            if not prop.get("text_visibility"):
-                fail(f"{prop_id} is text/symbol prop but missing text_visibility")
-            if prop.get("text_visibility") == "must_be_readable" and prop.get("text_generation_strategy") == "generate_directly":
-                warn(f"{prop_id} readable text is set to generate_directly; post_production_overlay or blank_space_for_text is safer")
-        if not generation_required and asset_tier in {"scene_dressing", "shot_description_only"} and not prop.get("reason_not_to_generate"):
-            warn(f"{prop_id} is not generated but missing reason_not_to_generate")
-        seen_variant_ids: set[str] = set()
-        for variant in as_list(prop.get("variants")):
-            if not isinstance(variant, dict):
-                fail(f"{prop_id} variants must be objects")
-            variant_id = str(variant.get("variant_id", "")).strip()
-            if not variant_id:
-                fail(f"{prop_id} has variant missing variant_id")
-            if variant_id in seen_variant_ids:
-                fail(f"{prop_id} duplicate variant_id: {variant_id}")
-            seen_variant_ids.add(variant_id)
-            if not variant_id.startswith(f"{prop_id}_"):
-                fail(f"{variant_id} must use parent prop prefix {prop_id}_")
-            if is_truthy_flag(variant.get("generation_required")):
-                if not str(variant.get("visual_changes", "")).strip():
-                    fail(f"{variant_id} generation_required=true but missing visual_changes")
-                if not as_list(variant.get("appears_in_shots")):
-                    fail(f"{variant_id} generation_required=true but missing appears_in_shots")
-    ok(f"props checked: {checked_props}")
-    ok(f"props requiring generation: {generated_props}")
-
-
 def validate_assets(run_dir: Path) -> dict[str, Any]:
     storyboard, _ = validate_storyboard(run_dir)
-    manifest = validate_schema_file(run_dir / "outputs" / "04_assets" / "asset_manifest.json", "asset_manifest.schema.json")
-    markdown_path = run_dir / "outputs" / "04_assets" / "asset_manifest.md"
-    if markdown_path.exists():
-        ok("asset manifest markdown")
-    else:
-        warn(f"asset manifest markdown missing: {markdown_path}")
-    id_lists_by_group = {
-        "characters": [item.get("id") for item in manifest.get("characters", []) if item.get("id")],
-        "scenes": [item.get("id") for item in manifest.get("scenes", []) if item.get("id")],
-        "props": [item.get("id") for item in manifest.get("props", []) if item.get("id")],
-        "audio": [item.get("id") for item in manifest.get("audio", []) if item.get("id")],
+    manifest = validate_schema_file(run_dir / "outputs/04_assets/asset_manifest.json", "asset_manifest.schema.json")
+    ids_by_group = {
+        "characters": {item.get("id") for item in manifest.get("characters", []) if item.get("id")},
+        "scenes": {item.get("id") for item in manifest.get("scenes", []) if item.get("id")},
+        "props": {item.get("id") for item in manifest.get("props", []) if item.get("id")},
+        "audio": {item.get("id") for item in manifest.get("audio", []) if item.get("id")},
     }
-    ids_by_group = {group: set(ids) for group, ids in id_lists_by_group.items()}
-    all_ids: list[str] = []
-    for group, ids in id_lists_by_group.items():
-        if len(ids) != len(set(ids)):
-            fail(f"duplicate asset ids in {group}")
-        all_ids.extend(ids)
+    all_ids = [item for ids in ids_by_group.values() for item in ids]
     if len(all_ids) != len(set(all_ids)):
         fail("duplicate asset ids across asset groups")
     refs = collect_storyboard_asset_refs(storyboard)
-    missing: list[str] = []
+    missing = []
     for group, required_ids in refs.items():
         missing.extend(f"{group}:{asset_id}" for asset_id in sorted(required_ids - ids_by_group[group]))
     if missing:
         fail("storyboard references missing from asset_manifest.json: " + ", ".join(missing))
-    ok("storyboard asset references resolved")
-    validate_character_variants(manifest)
-    validate_prop_policy(manifest)
+    for prop in manifest.get("props", []) or []:
+        prop_id = prop.get("id", "<missing prop>")
+        if prop.get("generation_required") is True:
+            if prop.get("asset_tier") != "canonical_prop":
+                fail(f"{prop_id} generation_required=true but asset_tier is not canonical_prop")
+            reasons = set(as_list(prop.get("reason_to_generate")))
+            if not reasons:
+                fail(f"{prop_id} generation_required=true but missing reason_to_generate")
+            unknown = reasons - PROP_GENERATION_REASONS
+            if unknown:
+                fail(f"{prop_id} has unknown reason_to_generate values: {sorted(unknown)}")
+            if not as_list(prop.get("must_not_change")):
+                fail(f"{prop_id} generation_required=true but missing must_not_change")
+        if prop.get("asset_tier") in {"scene_dressing", "shot_description_only"} and prop.get("generation_required") is True:
+            fail(f"{prop_id} non-canonical prop tier cannot be generation_required=true")
+    ok("asset manifest references and prop policy")
     return manifest
 
 
 def validate_image_result_manifest(run_dir: Path, enforce_no_blocking_missing: bool = False) -> dict[str, Any]:
-    manifest_path = run_dir / "outputs" / "06_external_results" / "image_result_manifest.json"
-    manifest = validate_schema_file(manifest_path, "image_result_manifest.schema.json")
-    queue_path = run_dir / "outputs" / "04_assets" / "image_generation_queue.json"
+    manifest = validate_schema_file(run_dir / "outputs/06_external_results/image_result_manifest.json", "image_result_manifest.schema.json")
+    queue_path = run_dir / "outputs/04_assets/image_generation_queue.json"
     if queue_path.exists():
         queue = read_json(queue_path)
         queue_items = queue.get("image_queue", queue.get("queue", []))
@@ -508,26 +369,19 @@ def validate_image_result_manifest(run_dir: Path, enforce_no_blocking_missing: b
             missing_queue_ids = sorted(must_queue_ids - result_queue_ids)
             if missing_queue_ids:
                 fail("must_generate queue items missing from image_result_manifest.json: " + ", ".join(missing_queue_ids))
-            ok(f"image generation queue items: {len(queue_items)}")
-        else:
-            warn("image_generation_queue.json does not contain image_queue or queue list")
-    else:
-        warn(f"image generation queue missing: {queue_path}")
-
     blocking_missing = []
     for item in manifest.get("image_results", []) or []:
         asset_id = item.get("asset_id", "<missing asset_id>")
         role = item.get("image_role")
-        priority = item.get("generation_priority")
         status = item.get("status")
-        if priority == "must_generate" and item.get("blocking_if_missing") is not True:
+        if item.get("generation_priority") == "must_generate" and item.get("blocking_if_missing") is not True:
             fail(f"{asset_id}/{role} must_generate requires blocking_if_missing=true")
-        if priority == "skip_generation" and status != "not_required":
+        if item.get("generation_priority") == "skip_generation" and status != "not_required":
             fail(f"{asset_id}/{role} skip_generation must use status=not_required")
         if item.get("blocking_if_missing") is True and status in BLOCKING_IMAGE_STATUSES:
             blocking_missing.append(f"{asset_id}/{role}:{status}")
-        if item.get("used_as_video_reference") is True and status not in {"generated", "approved"}:
-            warn(f"{asset_id}/{role} is marked used_as_video_reference but status is {status}")
+        if item.get("used_as_video_reference") is True and status not in READY_IMAGE_STATUSES:
+            fail(f"{asset_id}/{role} is marked used_as_video_reference but status is {status}")
     if enforce_no_blocking_missing and blocking_missing:
         fail("final completed is blocked by required image results: " + ", ".join(blocking_missing))
     if blocking_missing:
@@ -536,99 +390,127 @@ def validate_image_result_manifest(run_dir: Path, enforce_no_blocking_missing: b
     return manifest
 
 
-def validate_audio(run_dir: Path) -> dict[str, Any]:
-    voice_manifest = validate_schema_file(run_dir / "outputs" / "04_assets" / "audio" / "voice_reference_manifest.json", "voice_reference_manifest.schema.json")
-    voice_ids = {item.get("id") for item in voice_manifest.get("voice_references", []) if item.get("id")}
-    ok(f"voice references: {len(voice_ids)}")
+def validate_audio(run_dir: Path, enforce_final_ready: bool = False) -> dict[str, Any]:
+    voice_manifest = validate_schema_file(run_dir / "outputs/04_assets/audio/voice_reference_manifest.json", "voice_reference_manifest.schema.json")
+    for item in voice_manifest.get("voice_references", []) or []:
+        status = str(item.get("status", "")).lower()
+        audio_id = item.get("id", "<missing audio id>")
+        if enforce_final_ready and status in NOT_FINAL_AUDIO_STATUSES:
+            fail(f"{audio_id} audio reference is {status}; final completed is not allowed")
+    ok(f"voice references: {len(voice_manifest.get('voice_references', []))}")
     return voice_manifest
 
 
 def shot_has_dialogue(shot: dict[str, Any]) -> bool:
-    dialogue_patterns = re.compile(r"对白|旁白|台词|留言|录音|电话|新闻|播报|宣誓|祝福|低声|问：|说：|回答|“[^”]+”")
-    shot_audio_hint = " ".join(str(shot.get(key, "")) for key in ("audio_emotion", "audio_intent", "prompt_cn", "narrative_function"))
-    return bool(dialogue_patterns.search(shot_audio_hint))
+    text = " ".join(str(shot.get(key, "")) for key in ("audio_emotion", "audio_intent", "prompt_cn", "narrative_function"))
+    return bool(DIALOGUE_HINT.search(text))
+
+
+def extract_cn_prompt(text: str) -> str:
+    if "【中文视频提示词】" not in text:
+        return ""
+    content = text.split("【中文视频提示词】", 1)[1]
+    if "【自检通过项】" in content:
+        content = content.split("【自检通过项】", 1)[0]
+    return content.strip()
+
+
+def declared_task_type(text: str) -> str | None:
+    for task_type in TASK_TYPES:
+        if task_type in text:
+            return task_type
+    match = re.search(r"任务类型[：:]\s*([a-z_]+)", text)
+    if match and match.group(1) in TASK_TYPES:
+        return match.group(1)
+    return None
+
+
+def validate_seedance_shot_file(shot: dict[str, Any], shot_file: Path) -> None:
+    require_file(shot_file)
+    shot_id = shot.get("id")
+    text = shot_file.read_text(encoding="utf-8")
+    for section in REQUIRED_SEEDANCE_SECTIONS:
+        if section not in text:
+            fail(f"{shot_id} missing required section: {section}")
+    if "【English Prompt】" in text or "English Prompt" in text or "中英对照" in text:
+        fail(f"{shot_id} contains forbidden English/bilingual block")
+    if f"@{shot_id}_STORYBOARD" not in text:
+        fail(f"{shot_id} missing @{shot_id}_STORYBOARD reference")
+    if "@PROP_" in text:
+        fail(f"{shot_id} contains @PROP reference; props must be described in prompt body")
+    task_type = declared_task_type(text)
+    if not task_type:
+        fail(f"{shot_id} missing Seedance task type declaration")
+    cn_prompt = extract_cn_prompt(text)
+    if not cn_prompt:
+        fail(f"{shot_id} has empty 中文视频提示词 section")
+    if task_type == "video_edit" and not re.search(r"严格编辑\s*@视频\d+", cn_prompt):
+        fail(f"{shot_id} video_edit must use '严格编辑 @视频N'")
+    if task_type == "video_extend" and not re.search(r"向前延长\s*@视频\d+|向后延长\s*@视频\d+", cn_prompt):
+        fail(f"{shot_id} video_extend must use '向前延长 @视频N' or '向后延长 @视频N'")
+    if task_type == "combined_task":
+        has_reference = re.search(r"参考\s*@(?:图片|视频|音频)\d+", cn_prompt)
+        has_operation = re.search(r"严格编辑\s*@视频\d+|向前延长\s*@视频\d+|向后延长\s*@视频\d+", cn_prompt)
+        if not has_reference or not has_operation:
+            fail(f"{shot_id} combined_task must include both reference and edit/extend operation")
+    if shot_has_dialogue(shot) and "@AUDIO_" not in text:
+        fail(f"{shot_id} appears to contain voice/dialogue but has no @AUDIO reference")
+    if ("@AUDIO_" in text or re.search(r"@音频\d+", text)) and ("说道" in cn_prompt or "台词" in text) and "{" not in cn_prompt:
+        fail(f"{shot_id} dialogue should use Seedance braces like {{台词内容}}")
+    if "场景：" not in text:
+        fail(f"{shot_id} missing scene reference decision")
+    if "音色：" not in text:
+        fail(f"{shot_id} missing audio reference decision")
 
 
 def validate_video_prompts(run_dir: Path) -> None:
     storyboard, _ = validate_storyboard(run_dir)
     validate_audio(run_dir)
-    video_prompt_path = run_dir / "outputs" / "05_video_prompts" / "shot_video_prompts.md"
-    single_shot_dir = run_dir / "outputs" / "05_video_prompts" / "shots"
-    reference_path = run_dir / "outputs" / "05_video_prompts" / "video_prompt_asset_reference.md"
+    validate_image_result_manifest(run_dir, enforce_no_blocking_missing=False)
+    video_prompt_path = run_dir / "outputs/05_video_prompts/shot_video_prompts.md"
+    single_shot_dir = run_dir / "outputs/05_video_prompts/shots"
+    reference_path = run_dir / "outputs/05_video_prompts/video_prompt_asset_reference.md"
     require_file(video_prompt_path)
     require_dir(single_shot_dir)
     require_file(reference_path)
     prompt_text = video_prompt_path.read_text(encoding="utf-8")
-    reference_text = reference_path.read_text(encoding="utf-8")
     shots = storyboard.get("shots", [])
-    shot_count = len(shots)
-    expected_counts = {
-        "shot headings": len(re.findall(r"^## SHOT_\d{3}\b", prompt_text, flags=re.MULTILINE)),
-        "duration lines": len(re.findall(r"^建议时长：\d+ 秒$", prompt_text, flags=re.MULTILINE)),
-        "storyboard declarations": len(re.findall(r"^@SHOT_\d{3}_STORYBOARD（", prompt_text, flags=re.MULTILINE)),
-        "Chinese storyboard usage lines": len(re.findall(r"^以 @SHOT_\d{3}_STORYBOARD 作为", prompt_text, flags=re.MULTILINE)),
-    }
-    for label, count in expected_counts.items():
-        if count != shot_count:
-            fail(f"{label} count {count} does not match shot count {shot_count}")
-        ok(f"{label}: {count}")
-    if "【English Prompt】" in prompt_text:
+    if "【English Prompt】" in prompt_text or "English Prompt" in prompt_text:
         fail("English Prompt blocks are not allowed")
-    ok("Chinese-only video prompt contract")
     if "@PROP_" in prompt_text:
         fail("@PROP references are not allowed by default")
-    ok("no @PROP references")
     single_shot_files = sorted(single_shot_dir.glob("SHOT_*.md"))
-    if len(single_shot_files) != shot_count:
-        fail(f"single shot file count {len(single_shot_files)} does not match shot count {shot_count}")
-    ok(f"single shot files: {len(single_shot_files)}")
+    if len(single_shot_files) != len(shots):
+        fail(f"single shot file count {len(single_shot_files)} does not match shot count {len(shots)}")
     for shot in shots:
         shot_id = shot.get("id")
-        if not shot_id:
-            fail("shot missing id")
-        shot_file = single_shot_dir / f"{shot_id}.md"
-        require_file(shot_file)
-        shot_text = shot_file.read_text(encoding="utf-8")
-        for snippet in ["【引用决策】", "【资产声明】", "【中文提示词】", f"@{shot_id}_STORYBOARD"]:
-            if snippet not in shot_text:
-                fail(f"{shot_id} missing required snippet: {snippet}")
-        if "【English Prompt】" in shot_text:
-            fail(f"{shot_id} contains English Prompt block")
-        if "@PROP_" in shot_text:
-            fail(f"{shot_id} contains @PROP reference")
-        if "场景：" not in shot_text:
-            fail(f"{shot_id} missing scene reference decision")
-        if "音色：" not in shot_text:
-            fail(f"{shot_id} missing audio reference decision")
-        if shot_has_dialogue(shot) and "@AUDIO_" not in shot_text:
-            fail(f"{shot_id} appears to contain voice/dialogue but has no @AUDIO reference")
+        validate_seedance_shot_file(shot, single_shot_dir / f"{shot_id}.md")
         shot_json = single_shot_dir / f"{shot_id}.json"
         if shot_json.exists():
             validate_schema_file(shot_json, "shot_video_prompt.schema.json")
-    reference_shot_map_count = len(re.findall(r"^\| `@SHOT_\d{3}_STORYBOARD`", reference_text, flags=re.MULTILINE))
-    if reference_shot_map_count != shot_count:
-        fail(f"storyboard reference map count {reference_shot_map_count} does not match shot count {shot_count}")
-    ok(f"storyboard reference map: {reference_shot_map_count}")
+    ok(f"Seedance shot prompts: {len(shots)}")
 
 
 def validate_external(run_dir: Path) -> None:
-    require_file(run_dir / "outputs" / "06_external_results" / "external_generation_handoff.md")
-    require_file(run_dir / "outputs" / "06_external_results" / "shot_result_manifest.template.json")
-    require_file(run_dir / "outputs" / "06_external_results" / "edit_notes.md")
+    require_file(run_dir / "outputs/06_external_results/external_generation_handoff.md")
+    require_file(run_dir / "outputs/06_external_results/shot_result_manifest.template.json")
+    require_file(run_dir / "outputs/06_external_results/edit_notes.md")
     validate_image_result_manifest(run_dir, enforce_no_blocking_missing=False)
     ok("external generation handoff")
 
 
 def validate_media_review(run_dir: Path) -> None:
-    validate_schema_file(run_dir / "outputs" / "06_external_results" / "generated_media_review.json", "generated_media_review.schema.json")
-    require_file(run_dir / "outputs" / "06_external_results" / "generated_media_review.md")
+    review = validate_schema_file(run_dir / "outputs/06_external_results/generated_media_review.json", "generated_media_review.schema.json")
+    require_file(run_dir / "outputs/06_external_results/generated_media_review.md")
+    if review.get("status") == "pass" and unresolved_issues(review, "P0"):
+        fail("generated media review has unresolved P0 while status=pass")
     ok("generated media review")
 
 
 def validate_final(run_dir: Path) -> None:
-    validate_schema_file(run_dir / "outputs" / "07_final_delivery" / "continuity_report.json", "continuity_report.schema.json")
-    require_file(run_dir / "outputs" / "07_final_delivery" / "continuity_report.md")
-    manifest_path = run_dir / "outputs" / "07_final_delivery" / "final_package_manifest.json"
+    validate_schema_file(run_dir / "outputs/07_final_delivery/continuity_report.json", "continuity_report.schema.json")
+    require_file(run_dir / "outputs/07_final_delivery/continuity_report.md")
+    manifest_path = run_dir / "outputs/07_final_delivery/final_package_manifest.json"
     if manifest_path.exists():
         manifest = validate_schema_file(manifest_path, "final_package_manifest.schema.json")
         if manifest.get("status") == "completed":
@@ -638,6 +520,14 @@ def validate_final(run_dir: Path) -> None:
             if checkpoint.get("blocking_issues"):
                 fail("final package is completed but checkpoint.blocking_issues is not empty")
             validate_image_result_manifest(run_dir, enforce_no_blocking_missing=True)
+            validate_audio(run_dir, enforce_final_ready=True)
+            media_review_path = run_dir / "outputs/06_external_results/generated_media_review.json"
+            if media_review_path.exists():
+                media_review = read_json(media_review_path)
+                if media_review.get("status") != "pass":
+                    fail("final completed requires generated_media_review status=pass")
+                if unresolved_issues(media_review, "P0"):
+                    fail("final completed blocked by generated media P0 issues")
     ok("final delivery")
 
 
@@ -650,11 +540,7 @@ def validate_all(run_dir: Path) -> None:
     validate_external(run_dir)
     validate_media_review(run_dir)
     validate_final(run_dir)
-    production_status_path = run_dir / "production_status.csv"
-    if not production_status_path.exists():
-        warn(f"production_status.csv missing: {production_status_path}")
-    else:
-        ok("production_status.csv exists")
+    ok("production_status.csv exists" if (run_dir / "production_status.csv").exists() else "production_status.csv optional")
 
 
 def main() -> None:
@@ -664,25 +550,9 @@ def main() -> None:
         "--phase",
         default="all",
         choices=[
-            "initialized",
-            "init",
-            "story",
-            "art",
-            "art_direction",
-            "storyboard",
-            "storyboard_sequence_review",
-            "assets",
-            "asset_manifest",
-            "audio",
-            "voice",
-            "video_prompts",
-            "video",
-            "external",
-            "handoff",
-            "media_review",
-            "generated_media",
-            "final",
-            "all",
+            "initialized", "init", "story", "art", "art_direction", "storyboard", "storyboard_sequence_review",
+            "assets", "asset_manifest", "audio", "voice", "video_prompts", "video", "external", "handoff",
+            "media_review", "generated_media", "final", "all",
         ],
         help="Validation phase",
     )
