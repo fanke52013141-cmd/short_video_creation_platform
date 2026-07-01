@@ -2,17 +2,31 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Storyboard Sequence Review",
   "type": "object",
-  "required": ["status", "issues"],
+  "required": ["status", "concretization_check_passed", "issues"],
   "properties": {
     "status": { "type": "string", "enum": ["pass", "revise_required"] },
     "max_shot_duration_seconds": { "type": ["integer", "number", "null"] },
     "duration_check_passed": { "type": ["boolean", "null"] },
     "shot_boundary_check_passed": { "type": ["boolean", "null"] },
+    "concretization_check_passed": { "type": "boolean" },
+    "key_turning_point_visual_evidence_check_passed": { "type": ["boolean", "null"] },
     "storytelling_quality_check_passed": { "type": ["boolean", "null"] },
     "checked_shots": { "type": ["array", "integer"] },
     "checked_windows_1shot": { "type": ["array", "integer"] },
     "checked_windows_2shot": { "type": ["array", "integer"] },
     "checked_windows_3shot": { "type": ["array", "integer"] },
+    "abstract_prompt_issues": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "object",
+        "properties": {
+          "shot_id": { "type": ["string", "null"] },
+          "abstract_terms": { "type": ["array", "string", "null"], "items": { "type": "string" } },
+          "missing_evidence_type": { "type": ["array", "string", "null"], "items": { "type": "string" } },
+          "description": { "type": ["string", "null"] }
+        }
+      }
+    },
     "p0_count": { "type": ["integer", "null"] },
     "p1_count": { "type": ["integer", "null"] },
     "p2_count": { "type": ["integer", "null"] },
@@ -31,6 +45,7 @@
             "enum": [
               "duration",
               "shot_boundary",
+              "concretization",
               "storytelling",
               "space",
               "prop",
