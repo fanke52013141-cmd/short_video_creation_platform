@@ -60,6 +60,19 @@ CHARACTER_VARIANT_REQUIRED_TYPES = {
 }
 
 
+PROP_GENERATION_REASONS = {
+    "repeated_appearance",
+    "story_clue",
+    "story_motif",
+    "character_identity_bound",
+    "close_up",
+    "state_change",
+    "text_or_symbol",
+    "complex_design",
+    "functional_story_action",
+}
+
+
 TRANSIENT_CHARACTER_CHANGE_KEYWORDS = re.compile(
     r"表情|微笑|哭|皱眉|惊讶|愤怒|恐惧|动作|站立|奔跑|坐下|回头|伸手|弯腰|"
     r"近景|远景|侧面|背影|俯视|仰视|冷光|暖光|逆光|阴影|临时拿|拿着|握着|"
@@ -451,6 +464,77 @@ def validate_character_variants(manifest: dict[str, Any]) -> None:
     ok(f"character variants requiring generation: {generated_variants}")
 
 
+def validate_prop_policy(manifest: dict[str, Any]) -> None:
+    checked_props = 0
+    generated_props = 0
+    for prop in manifest.get("props", []) or []:
+        checked_props += 1
+        prop_id = str(prop.get("id", "<missing id>"))
+        asset_tier = prop.get("asset_tier")
+        prop_category = prop.get("prop_category")
+        generation_required = is_truthy_flag(prop.get("generation_required"))
+        reason_to_generate = {str(item) for item in as_list(prop.get("reason_to_generate")) if item}
+        appears_in_shots = prop.get("appears_in_shots") or []
+
+        if generation_required:
+            generated_props += 1
+            if asset_tier != "canonical_prop":
+                fail(f"{prop_id} generation_required=true but asset_tier is not canonical_prop")
+            if not reason_to_generate:
+                fail(f"{prop_id} generation_required=true but missing reason_to_generate")
+            unknown_reasons = reason_to_generate - PROP_GENERATION_REASONS
+            if unknown_reasons:
+                fail(f"{prop_id} has unknown reason_to_generate values: {sorted(unknown_reasons)}")
+            if not as_list(prop.get("must_not_change")):
+                fail(f"{prop_id} generation_required=true but missing must_not_change anchors")
+
+        if asset_tier == "shot_description_only" and generation_required:
+            fail(f"{prop_id} shot_description_only cannot be generation_required=true")
+        if asset_tier == "scene_dressing" and generation_required:
+            fail(f"{prop_id} scene_dressing should not be independently generated")
+
+        if len(appears_in_shots) >= 2 and asset_tier not in {"canonical_prop", None, ""}:
+            fail(f"{prop_id} appears in multiple shots but is not canonical_prop")
+
+        if prop_category in {"background_prop", "temporary_prop"} and generation_required:
+            allowed_override = reason_to_generate & {"close_up", "story_clue", "state_change", "text_or_symbol"}
+            if not allowed_override:
+                fail(f"{prop_id} is {prop_category} but lacks a strong reason to generate")
+
+        if prop_category == "text_prop" or "text_or_symbol" in reason_to_generate:
+            if not prop.get("text_generation_strategy"):
+                fail(f"{prop_id} is text/symbol prop but missing text_generation_strategy")
+            if not prop.get("text_visibility"):
+                fail(f"{prop_id} is text/symbol prop but missing text_visibility")
+            if prop.get("text_visibility") == "must_be_readable" and prop.get("text_generation_strategy") == "generate_directly":
+                warn(f"{prop_id} readable text is set to generate_directly; post_production_overlay or blank_space_for_text is safer")
+
+        if not generation_required and asset_tier in {"scene_dressing", "shot_description_only"}:
+            if not prop.get("reason_not_to_generate"):
+                warn(f"{prop_id} is not generated but missing reason_not_to_generate")
+
+        seen_variant_ids: set[str] = set()
+        for variant in as_list(prop.get("variants")):
+            if not isinstance(variant, dict):
+                fail(f"{prop_id} variants must be objects")
+            variant_id = str(variant.get("variant_id", "")).strip()
+            if not variant_id:
+                fail(f"{prop_id} has variant missing variant_id")
+            if variant_id in seen_variant_ids:
+                fail(f"{prop_id} duplicate variant_id: {variant_id}")
+            seen_variant_ids.add(variant_id)
+            if not variant_id.startswith(f"{prop_id}_"):
+                fail(f"{variant_id} must use parent prop prefix {prop_id}_")
+            if is_truthy_flag(variant.get("generation_required")):
+                if not str(variant.get("visual_changes", "")).strip():
+                    fail(f"{variant_id} generation_required=true but missing visual_changes")
+                if not as_list(variant.get("appears_in_shots")):
+                    fail(f"{variant_id} generation_required=true but missing appears_in_shots")
+
+    ok(f"props checked: {checked_props}")
+    ok(f"props requiring generation: {generated_props}")
+
+
 def validate_assets(run_dir: Path) -> dict[str, Any]:
     storyboard, _ = validate_storyboard(run_dir)
     manifest = validate_schema_file(
@@ -486,6 +570,7 @@ def validate_assets(run_dir: Path) -> dict[str, Any]:
         fail("storyboard references missing from asset_manifest.json: " + ", ".join(missing))
     ok("storyboard asset references resolved")
     validate_character_variants(manifest)
+    validate_prop_policy(manifest)
     return manifest
 
 
