@@ -103,6 +103,8 @@ asset_prompt_generation
 - 普通镜头存在抽象词，但部分证据不足：`P1`。
 - 证据存在但可以更具体：`P2`。
 
+JSON issue 的 `category` 仍使用现有 schema 枚举中的 `storytelling`，并在 `description` 中写明 `concretization_translation` 或“四译法”。
+
 ### 分镜叙事力
 
 分镜不只是“把剧情画出来”，而是通过镜头语言讲故事。
@@ -206,8 +208,8 @@ JSON 必须包含：
       "id": "SEQ_001",
       "severity": "P0 | P1 | P2",
       "shot_ids": ["SHOT_001", "SHOT_002"],
-      "category": "duration | shot_boundary | concretization | storytelling | space | prop | character | time | sound | motif | style",
-      "description": "",
+      "category": "storytelling",
+      "description": "concretization_translation: 抽象词未转译为画面证据。",
       "fix_suggestion": ""
     }
   ]
