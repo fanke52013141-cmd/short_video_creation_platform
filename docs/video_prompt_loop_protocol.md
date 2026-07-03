@@ -10,14 +10,16 @@
 outputs/05_video_prompts/
 ├── shots/
 │   ├── SHOT_001.md
+│   ├── SHOT_001.json
 │   ├── SHOT_002.md
 │   └── ...
 ├── shot_video_prompt_index.md
 ├── shot_video_prompts.md
+├── video_prompt_review.json
 └── video_prompt_asset_reference.md
 ```
 
-用户最终主要查看 `shot_video_prompts.md`，但生成过程必须留下 `shots/SHOT_XXX.md`，用于证明每条镜头已独立生成、独立自检、可单独返修。
+用户最终主要查看 `shot_video_prompts.md`，但每个镜头必须同时留下 `SHOT_XXX.md/json`；全部生成后由同一 Skill 输出一次 `video_prompt_review.json`，不增加新阶段。
 
 ## Seedance 任务类型
 
@@ -53,8 +55,18 @@ outputs/05_video_prompts/
 9. 判断是否有外部图片、视频或音频素材；若未命名，按上传顺序命名为 `@图片1`、`@视频1`、`@音频1`。
 10. 若外部素材存在多个主体，先用 2-3 个稳定静态特征定义主体名。
 11. 生成单条中文视频提示词，保存到 `outputs/05_video_prompts/shots/SHOT_XXX.md`。
-12. 对单条提示词自检，不合格则重写该 shot。
-13. 全部 shot 通过后，按镜头顺序汇总到 `shot_video_prompts.md`。
+12. 同时生成 `SHOT_XXX.json`，记录上一镜、连续关系、生成策略和首尾状态。
+13. 对单条提示词自检，不合格则重写该 shot。
+14. 全部 shot 通过后，按镜头顺序汇总到 `shot_video_prompts.md`。
+15. AI 检查全部提示词及所有相邻镜头，输出 `video_prompt_review.json`。
+
+## 相邻镜头规则
+
+- `same_continuous_shot`：说明分镜拆错，只能合并生成或延长上一段视频；不得用尾帧参考假装成两个独立镜头。
+- `merge_with_previous`：提示词必须明确写“与上一镜合并生成”，并同时引用当前与上一镜分镜图。
+- `previous_last_frame`：提示词必须引用 `@SHOT_XXX_LAST_FRAME`，让动作方向、姿态、道具和光线接续。
+- `hard_cut`：可以独立生成，但人物身份、服装、场景锚点和时间状态仍需一致。
+- AI 总检发现变脸、变装、道具凭空变化、轴线反转、光线跳变或动作断裂时必须返修。
 
 ## 单 shot 文件结构
 

@@ -1,5 +1,5 @@
 # Skill: shot_video_prompt_generator
-**Version**: 1.4.0
+**Version**: 1.5.0
 
 ## Source Prompt
 `skills/raw_prompts/seedance_video_prompt.source.md`
@@ -42,7 +42,7 @@
 ```
 
 ## Schema
-如果输出 `outputs/05_video_prompts/shots/SHOT_XXX.json`，必须满足 `schemas/shot_video_prompt.schema.json`。
+每个 `SHOT_XXX.md` 都必须同时生成 `SHOT_XXX.json`，并满足 `schemas/shot_video_prompt.schema.json`。
 
 ## Seedance Task Type Rules
 
@@ -99,10 +99,11 @@
    - 若外部素材中有多个主体，先用 2-3 个稳定静态特征定义主体名。
    - 使用 Seedance 声音符号：背景音乐用 `（背景中播放着...）`，环境音用 `<...>`，人物台词用 `{...}`，字幕用 `【...】`。
    - 生成单条中文视频提示词，保存为 `outputs/05_video_prompts/shots/SHOT_XXX.md`。
-   - 如运行环境支持结构化输出，同时保存 `outputs/05_video_prompts/shots/SHOT_XXX.json`。
+   - 同时保存 `outputs/05_video_prompts/shots/SHOT_XXX.json`，写入上一镜、连续关系、生成策略和首尾状态。
    - 对该 shot 自检，不合格则重写该 shot。
 4. 全部单 shot 文件通过后，生成 `shot_video_prompt_index.md`。
 5. 按镜头顺序汇总所有单 shot 文件，生成 `shot_video_prompts.md`。
+6. 在本 Skill 内对全部提示词做一次 AI 总检，输出 `video_prompt_review.json`；不增加新的流程阶段。
 
 ## Quality Gate
 - [ ] 每个 storyboard shot 都有一个 `shots/SHOT_XXX.md`。
@@ -123,7 +124,9 @@
 - [ ] 台词、动作、镜头运动、声音和情绪可被视频模型执行。
 - [ ] 输出包含自检通过项。
 - [ ] 不输出 `【English Prompt】`。
-- [ ] 若输出 `SHOT_XXX.json`，必须满足 `schemas/shot_video_prompt.schema.json`。
+- [ ] 每个 shot 都有符合 schema 的 `SHOT_XXX.json`。
+- [ ] `match_action` 或 `same_continuous_shot` 不得使用 `independent_clip`。
+- [ ] `video_prompt_review.json` 由 AI 生成，覆盖全部镜头和相邻镜头，且没有未处理 P0/P1。
 
 ## Checkpoint Update
 通过质量门后更新：
@@ -133,6 +136,7 @@
 - `artifacts.shot_video_prompt_index`: `./outputs/05_video_prompts/shot_video_prompt_index.md`
 - `artifacts.shot_video_prompts`: `./outputs/05_video_prompts/shot_video_prompts.md`
 - `artifacts.video_prompt_asset_reference`: `./outputs/05_video_prompts/video_prompt_asset_reference.md`
+- `artifacts.video_prompt_review`: `./outputs/05_video_prompts/video_prompt_review.json`
 - `artifacts.seedance_task_type_policy`: `enabled`
 - `next_phase.skill`: `external_generation_handoff`
 

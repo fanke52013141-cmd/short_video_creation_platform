@@ -1,5 +1,5 @@
 # Skill: storyboard_director
-**Version**: 1.3.0
+**Version**: 1.4.0
 
 ## Source Prompt
 `skills/raw_prompts/storyboard_director.source.md`
@@ -75,7 +75,8 @@
 8. 对每个抽象项执行四译法，写入 `concretization_evidence`，并把证据融合进 `prompt_cn`。
 9. 输出叙事骨架、视觉基调微调、资产草表和分镜序列。
 10. 分镜中所有人物、场景、道具必须使用资产 ID 引用。
-11. 保存结构化 `storyboard.json`，供资产清单、审查和视频提示词阶段使用。
+11. 每个镜头记录 `previous_shot_id`、`continuity_relation`、`start_state`、`end_state` 和 `recommended_generation`，让相邻镜头能够机械检查。
+12. 保存结构化 `storyboard.json`，供资产清单、审查和视频提示词阶段使用。
 
 ## Quality Gate
 - [ ] 分镜覆盖完整故事，不遗漏关键叙事节点。
@@ -89,6 +90,7 @@
 - [ ] 资产 ID 格式稳定：`CHAR_001`、`ENV_001`、`PROP_001`。
 - [ ] 母题资产在叙事骨架、资产草表、分镜引用中一致。
 - [ ] 没有覆盖或冲突 `style_bible.md` 的核心视觉方向。
+- [ ] 连续动作没有被独立盲生成：同一连续镜头优先合并，合法动作匹配切镜使用上一镜尾帧或视频延长。
 
 ## Checkpoint Update
 通过质量门后更新：

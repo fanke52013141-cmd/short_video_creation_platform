@@ -49,7 +49,7 @@
 9. 进入图片阶段前，必须确认 `internal_codex` 或 `external_manual`，并写入 `checkpoint.generation_modes.image_generation`。
 10. 用户触发 `image_generation_executor`：内部模式生成/索引图片；外部模式创建或核对 `image_result_manifest.json`。
 11. 用户触发 `voice_reference_manifest_builder`，为有人声镜头建立 `AUDIO_XXX` 音色参考。
-12. 用户确认图片和音色准备状态后，触发 `shot_video_prompt_generator`，逐 shot 生成 `outputs/05_video_prompts/shots/SHOT_XXX.md` 并汇总。
+12. 用户确认图片和音色准备状态后，触发 `shot_video_prompt_generator`，逐 shot 生成 `SHOT_XXX.md/json`，并在同一步骤内完成 AI 跨镜提示词总检。
 13. 用户触发 `external_generation_handoff`，输出可复制到外部工具的交接包、图片结果表、视频结果模板和剪辑说明。
 14. 用户在即梦/Seedance 等外部平台生成视频，并把结果填入 `shot_result_manifest.json`。
 15. 用户触发 `generated_media_review`，审查外部生成结果是否有角色变脸、道具丢失、空间穿帮、音色错误等问题。
@@ -65,12 +65,13 @@
 - `asset_manifest_builder` 是资产 ID 的唯一规范化来源。
 - `prop_prompt_generator` 必须使用独立源提示词 `skills/raw_prompts/prop_prompt_generator.source.md`。
 - `image_generation_executor` 不改变故事或资产定义，只负责图片生成/结果记录。
-- `shot_video_prompt_generator` 必须逐 shot 循环生成，不得只一次性生成总文件。
+- `shot_video_prompt_generator` 必须逐 shot 生成 Markdown/JSON，并输出 `video_prompt_review.json`；不新增流程阶段。
+- 连续动作镜头不得使用 `independent_clip`；应合并、使用上一镜尾帧或延长上一段视频。
 - 视频提示词必须引用已确认资产 ID，不得凭空重建角色或场景；默认 `@` 分镜图和主要人物，条件 `@` 音色和场景，道具只写入画面描述。
 - `@ENV` 只在镜头运动需要扩展分镜图外空间时使用。
 - 有台词、旁白、录音留言或可听见人声时必须 `@AUDIO`。
 - `generated_media_review` 只审查生成结果，不重新生成内容。
-- `production_package_builder` 只能在所有关键质量门通过时标记 `completed`；存在缺口时使用 `completed_with_known_gaps` 或 `revise_required`。
+- `production_package_builder` 先运行 `scripts/build_resource_package.py` 按资产类型落盘；只有所有关键质量门通过时才能标记 `completed`。
 
 ## Error Handling
 

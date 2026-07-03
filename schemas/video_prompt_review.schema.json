@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Video Prompt Review",
+  "type": "object",
+  "required": ["reviewer", "status", "checked_shots", "adjacent_checks", "issues"],
+  "properties": {
+    "reviewer": { "type": "string", "enum": ["ai"] },
+    "status": { "type": "string", "enum": ["pass", "revise_required"] },
+    "checked_shots": { "type": "array", "items": { "type": "string" } },
+    "adjacent_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["shot_ids", "prompt_executable", "continuity_passed", "breakthrough_risk", "notes"],
+        "properties": {
+          "shot_ids": { "type": "array", "items": { "type": "string" } },
+          "prompt_executable": { "type": "boolean" },
+          "continuity_passed": { "type": "boolean" },
+          "breakthrough_risk": { "type": "boolean" },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "description"],
+        "properties": {
+          "severity": { "type": "string", "enum": ["P0", "P1", "P2"] },
+          "shot_ids": { "type": ["array", "null"], "items": { "type": "string" } },
+          "description": { "type": "string" },
+          "fix_suggestion": { "type": ["string", "null"] },
+          "fix_applied": { "type": ["boolean", "null"] },
+          "accepted_by_user": { "type": ["boolean", "null"] },
+          "resolution_status": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

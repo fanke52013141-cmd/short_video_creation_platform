@@ -21,6 +21,11 @@
           "boundary_reason",
           "camera",
           "frame_strategy",
+          "previous_shot_id",
+          "continuity_relation",
+          "start_state",
+          "end_state",
+          "recommended_generation",
           "abstract_terms_detected",
           "concretization_evidence",
           "prompt_cn"
@@ -53,6 +58,17 @@
           },
           "boundary_reason": { "type": "string" },
           "continuity_risk": { "type": ["string", "object", "null"] },
+          "previous_shot_id": { "type": ["string", "null"], "pattern": "^SHOT_[0-9]{3}$" },
+          "continuity_relation": {
+            "type": "string",
+            "enum": ["sequence_start", "hard_cut", "match_action", "same_continuous_shot"]
+          },
+          "start_state": { "type": ["object", "string"] },
+          "end_state": { "type": ["object", "string"] },
+          "recommended_generation": {
+            "type": "string",
+            "enum": ["independent_clip", "merge_with_previous", "previous_last_frame", "video_extend"]
+          },
           "camera": { "type": ["string", "object"] },
           "shot_size": { "type": ["string", "null"] },
           "movement": { "type": ["string", "object", "null"] },

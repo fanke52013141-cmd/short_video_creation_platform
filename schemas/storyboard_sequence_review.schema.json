@@ -2,8 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Storyboard Sequence Review",
   "type": "object",
-  "required": ["status", "concretization_check_passed", "issues"],
+  "required": ["reviewer", "status", "concretization_check_passed", "checked_shots", "adjacent_checks", "issues"],
   "properties": {
+    "reviewer": { "type": "string", "enum": ["ai"] },
     "status": { "type": "string", "enum": ["pass", "revise_required"] },
     "max_shot_duration_seconds": { "type": ["integer", "number", "null"] },
     "duration_check_passed": { "type": ["boolean", "null"] },
@@ -15,6 +16,23 @@
     "checked_windows_1shot": { "type": ["array", "integer"] },
     "checked_windows_2shot": { "type": ["array", "integer"] },
     "checked_windows_3shot": { "type": ["array", "integer"] },
+    "adjacent_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["shot_ids", "shot_boundary_passed", "continuity_passed", "suggested_generation", "notes"],
+        "properties": {
+          "shot_ids": { "type": "array", "items": { "type": "string" } },
+          "shot_boundary_passed": { "type": "boolean" },
+          "continuity_passed": { "type": "boolean" },
+          "suggested_generation": {
+            "type": "string",
+            "enum": ["independent_clip", "merge_with_previous", "previous_last_frame", "video_extend"]
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    },
     "abstract_prompt_issues": {
       "type": ["array", "null"],
       "items": {

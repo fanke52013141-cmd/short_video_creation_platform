@@ -14,6 +14,7 @@
         "audio_references_ready_for_final": { "type": ["boolean", "null"] },
         "seedance_task_type_check_passed": { "type": ["boolean", "null"] },
         "seedance_prompt_surface_check_passed": { "type": ["boolean", "null"] },
+        "video_prompt_review_passed": { "type": ["boolean", "null"] },
         "external_handoff_preserved_task_type": { "type": ["boolean", "null"] },
         "generated_media_task_type_review_passed": { "type": ["boolean", "null"] },
         "generated_media_no_unresolved_p0": { "type": ["boolean", "null"] },

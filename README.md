@@ -16,6 +16,7 @@
 - 有台词、旁白、录音留言的人声镜头必须绑定音色参考。
 - 视频提示词必须逐 shot 循环生成单文件，再汇总成总文件。
 - 分镜生成后必须做相邻镜头逻辑审查，检查 1-shot、2-shot、3-shot 窗口中的空间、道具、人物、声音和因果连续性。
+- 视频提示词生成后在同一步骤内做一次 AI 总检；连续动作不能拆成两个互不相关的独立生成任务。
 - 外部生成结果必须回填 manifest，并经过 `generated_media_review` 审查后才能最终交付。
 
 ## 推荐试跑顺序
@@ -30,13 +31,13 @@
 8. 分别运行角色、场景、道具提示词 Skill。
 9. 运行 `skills/image_generation_executor.md` 或按外部模式填写 `image_result_manifest.json`。
 10. 建立音色参考清单；有台词的角色必须提供或标记音色参考。
-11. 运行 `skills/shot_video_prompt_generator.md`，逐 shot 循环生成中文视频提示词，再汇总。
+11. 运行 `skills/shot_video_prompt_generator.md`，逐 shot 生成提示词与 JSON，并在同一步骤内输出 `video_prompt_review.json`。
 12. 运行 `skills/external_generation_handoff.md` 整理外部视频生成和剪辑交接包。
 13. 将视频提示词复制到即梦 / Seedance 等外部视频工具生成素材。
 14. 将外部生成结果填入 `outputs/06_external_results/shot_result_manifest.json`。
 15. 运行 `skills/generated_media_review.md` 审查外部生成结果。
 16. 运行 `skills/continuity_review.md` 做最终一致性审查。
-17. 运行 `skills/production_package_builder.md` 汇总最终生产包。
+17. 运行 `python scripts/build_resource_package.py <RUN>`，再运行 `skills/production_package_builder.md` 完成最终生产包。
 
 ## 校验
 

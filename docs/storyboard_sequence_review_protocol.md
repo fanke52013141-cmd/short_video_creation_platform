@@ -197,12 +197,23 @@ JSON 必须包含：
 
 ```json
 {
+  "reviewer": "ai",
   "status": "pass | revise_required",
   "max_shot_duration_seconds": 15,
   "duration_check_passed": true,
   "shot_boundary_check_passed": true,
   "concretization_check_passed": true,
   "storytelling_quality_check_passed": true,
+  "checked_shots": ["SHOT_001", "SHOT_002"],
+  "adjacent_checks": [
+    {
+      "shot_ids": ["SHOT_001", "SHOT_002"],
+      "shot_boundary_passed": true,
+      "continuity_passed": true,
+      "suggested_generation": "previous_last_frame",
+      "notes": "动作匹配切镜，下一镜承接上一镜尾帧。"
+    }
+  ],
   "issues": [
     {
       "id": "SEQ_001",
@@ -227,3 +238,4 @@ JSON 必须包含：
 - 有任何 `P0` 时，不能进入 `asset_manifest_builder`。
 - 有任何未处理 `P1` 时，必须由用户确认是否接受。
 - 只有 `duration_check_passed=true`、`shot_boundary_check_passed=true`、`concretization_check_passed=true` 且 `status=pass`，或用户明确接受 P1 风险，才能继续。
+- `reviewer` 必须为 `ai`；`checked_shots` 和 `adjacent_checks` 必须无遗漏覆盖完整镜头顺序。

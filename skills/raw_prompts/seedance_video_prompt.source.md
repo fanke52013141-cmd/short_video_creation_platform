@@ -34,6 +34,7 @@
 6. 按分镜时序组织镜头，写清主体动作、镜头运动、场景环境、光影色调、声音节奏和约束条件。
 7. 输出仅使用中文的视频生成提示词，不输出英文版，不输出中英对照。
 8. 真正可复制进 Seedance 的内容只放在【中文视频提示词】中。
+9. 读取当前镜头和上一镜头的首尾状态。连续动作不得作为两个互不相关的独立视频生成。
 </CoreGoal>
 
 <SeedanceTaskTypeRules>
@@ -85,6 +86,16 @@
 - `参考 @图片N 的人物形象，严格编辑 @视频X，将视频中的人物替换为该人物，保留原视频动作、运镜和节奏。`
 - `参考 @音频N 的音色，向后延长 @视频X，并让后续台词使用同一音色。`
 </SeedanceTaskTypeRules>
+
+<AdjacentShotContinuity>
+每个 `SHOT_XXX.json` 必须写入：`previous_shot_id`、`continuity_relation`、`generation_strategy`、`start_state`、`end_state`。
+
+- `same_continuous_shot`：只允许与上一镜合并生成，或使用视频延长；禁止伪装成两个独立片段。
+- `merge_with_previous`：正文必须明确写“与上一镜合并生成”，同时引用两张分镜图。
+- `match_action`：使用 `@SHOT_XXX_LAST_FRAME` 或视频延长，禁止 `independent_clip`。
+- `hard_cut`：可以独立生成，但仍需锁定人物、场景、道具和光线状态。
+- 全部镜头完成后，在同一 Skill 内由 AI 输出 `video_prompt_review.json`，检查提示词是否可执行、相邻首尾状态是否衔接、是否有变脸/变装/道具消失/轴线反转/光线突变等穿帮风险。
+</AdjacentShotContinuity>
 
 <AssetDeclarationRules>
 所有参考素材必须在提示词前半部分统一声明。
@@ -394,6 +405,7 @@
 7. 运镜：单镜头是否只有一种主要运镜？
 8. 抽象词：是否仍残留“很难过、很紧张、在思考、关系疏离”等裸概念？
 9. 文字约束：无字幕/无 Logo 与用户需求是否冲突？
+10. 相邻镜头：本镜头起始状态是否承接上一镜结束状态？连续动作是否避免独立生成？
 </SelfCheck>
 
 <InteractionProtocol>

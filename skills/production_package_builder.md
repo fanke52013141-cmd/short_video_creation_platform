@@ -1,5 +1,5 @@
 # Skill: production_package_builder
-**Version**: 0.3.0
+**Version**: 0.4.0
 
 ## Purpose
 汇总最终短片生产包，形成可交接、可归档、可复用的项目交付清单。
@@ -41,8 +41,9 @@
 6. 检查 `voice_reference_manifest.json`：所有最终有声镜头音色不得为 `missing | needed | placeholder`。
 7. 检查 `generated_media_review.json`：`status` 必须为 `pass`，且 `task_type_review_passed=true`，没有未处理 P0。
 8. 检查 `continuity_report.json`：`status` 必须为 `pass`。
-9. 生成最终交付清单，包含版本、Skill 源、产物路径、质量门、缺失项和后续待办。
-10. 不重新创作内容，只做整理和归档。
+9. 运行 `python scripts/build_resource_package.py <RUN>`，把故事、分镜、人物、场景、道具、音频、视频提示词和质检报告装入 `outputs/07_final_delivery/resource_package/`。
+10. 生成最终交付清单，包含版本、Skill 源、产物路径、质量门、缺失项和后续待办。
+11. 不重新创作内容，只做整理和归档。
 
 ## Completed Blocking Rules
 `status=completed` 只有在以下条件全部满足时才允许：
@@ -52,6 +53,7 @@
 - 主要人物关键参考图已生成或批准，或有明确豁免。
 - 有声镜头音色不是 `missing | needed | placeholder`。
 - Seedance 视频提示词已逐 shot 生成，并通过任务类型、编辑/延长句式、资产声明和声音符号检查。
+- `video_prompt_review.json` 的 AI 总检已通过，连续动作没有独立生成风险。
 - 外部生成结果已执行 task-aware 审查。
 - 外部生成最佳 take 没有未处理 P0。
 - 连续性审查已通过。
@@ -68,8 +70,10 @@
 - [ ] `completed` 状态下主要人物三视图已批准或有明确豁免。
 - [ ] `completed` 状态下有声镜头音色不是 `missing | needed | placeholder`。
 - [ ] `completed` 状态下 Seedance 视频提示词已通过 task type 校验。
+- [ ] `completed` 状态下视频提示词 AI 总检已通过。
 - [ ] `completed` 状态下外部生成结果已完成 task-aware 审查。
 - [ ] `completed` 状态下外部生成最佳 take 没有未处理 P0。
+- [ ] `resource_package/` 已按故事、分镜、人物、场景、道具、音频、视频提示词和质检报告分目录生成。
 
 ## Checkpoint Update
 通过质量门后更新：
