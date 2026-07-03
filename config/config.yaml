@@ -1,6 +1,6 @@
 project:
   name: "ai_short_film_pipeline"
-  version: "0.5.0"
+  version: "0.5.1"
   description: "将想法转化为 AI 短片生产包的 Skill-Oriented 工作流"
 
 runtime:
@@ -36,20 +36,20 @@ model_defaults:
 skill_versions:
   story_generation: "1.0.1"
   art_direction: "1.0.1"
-  storyboard_director: "1.3.0"
+  storyboard_director: "1.4.0"
   storyboard_static_frame_variant: "1.0.0"
-  storyboard_sequence_review: "0.4.0"
+  storyboard_sequence_review: "0.5.0"
   asset_manifest_builder: "0.5.0"
   character_prompt_generator: "1.2.0"
   scene_prompt_generator: "1.1.0"
   prop_prompt_generator: "1.1.0"
   image_generation_executor: "0.2.0"
   voice_reference_manifest_builder: "0.2.0"
-  shot_video_prompt_generator: "1.4.0"
+  shot_video_prompt_generator: "1.5.0"
   external_generation_handoff: "0.5.0"
   generated_media_review: "0.2.0"
   continuity_review: "0.5.0"
-  production_package_builder: "0.3.0"
+  production_package_builder: "0.4.0"
 
 paths:
   active_run_dir: "./local_runs/YYYY-MM-DD/project_slug"
@@ -71,11 +71,13 @@ paths:
   audio_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets/audio"
   video_prompt_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/05_video_prompts"
   shot_prompt_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/05_video_prompts/shots"
+  video_prompt_review_file: "./local_runs/YYYY-MM-DD/project_slug/outputs/05_video_prompts/video_prompt_review.json"
   external_results_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/06_external_results"
   image_result_manifest_file: "./local_runs/YYYY-MM-DD/project_slug/outputs/06_external_results/image_result_manifest.json"
   shot_result_manifest_file: "./local_runs/YYYY-MM-DD/project_slug/outputs/06_external_results/shot_result_manifest.json"
   generated_media_review_file: "./local_runs/YYYY-MM-DD/project_slug/outputs/06_external_results/generated_media_review.md"
   final_delivery_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/07_final_delivery"
+  resource_package_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/07_final_delivery/resource_package"
 
 prompt_sources:
   story_generation: "./skills/raw_prompts/story_generation.source.md"
@@ -95,6 +97,7 @@ schemas:
   asset_manifest: "./schemas/asset_manifest.schema.json"
   voice_reference_manifest: "./schemas/voice_reference_manifest.schema.json"
   shot_video_prompt: "./schemas/shot_video_prompt.schema.json"
+  video_prompt_review: "./schemas/video_prompt_review.schema.json"
   image_result_manifest: "./schemas/image_result_manifest.schema.json"
   shot_result_manifest: "./schemas/shot_result_manifest.schema.json"
   generated_media_review: "./schemas/generated_media_review.schema.json"
@@ -255,6 +258,8 @@ quality_gates:
   require_approved_image_references_only: true
   require_audio_reference_for_dialogue_shots: true
   require_per_shot_video_prompt_files: true
+  require_video_prompt_ai_review: true
+  block_independent_generation_for_continuous_shots: true
   allow_env_reference_only_when_spatial_expansion_needed: true
   forbid_prop_reference_in_video_prompts_by_default: true
   require_external_handoff_preserve_task_type: true

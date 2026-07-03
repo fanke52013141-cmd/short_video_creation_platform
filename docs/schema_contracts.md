@@ -128,6 +128,10 @@ Markdown 版 `SHOT_XXX.md` 必须包含：
 
 ## 最终包契约
 
+`outputs/05_video_prompts/video_prompt_review.json` 必须满足 `schemas/video_prompt_review.schema.json`。它属于现有视频提示词阶段内部产物，必须由 AI 完成并覆盖全部镜头及全部相邻镜头。
+
+`status=completed` 时还必须存在 `outputs/07_final_delivery/resource_package/`，其中按故事、分镜、人物、场景、道具、音频、视频提示词和质检报告分目录保存。
+
 `final_package_manifest.json` 必须包含 `quality_gates`，至少记录：
 
 - `storyboard_concretization_check_passed`

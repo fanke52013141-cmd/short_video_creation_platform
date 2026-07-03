@@ -1,5 +1,5 @@
 # Skill: storyboard_sequence_review
-**Version**: 0.4.0
+**Version**: 0.5.0
 
 ## Purpose
 在分镜生成后，对全片分镜做镜头边界、单镜头时长、相邻镜头逻辑、全片连续性和画面具体化程度审查，发现会导致穿帮、空间跳变、道具凭空出现、人物状态断裂、声音来源不明、母题误用、镜头边界伪拆分、抽象提示词空泛和 AI 视频生成不一致的问题。
@@ -34,16 +34,17 @@
 ## Procedure
 1. 读取 `docs/storyboard_sequence_review_protocol.md`。
 2. 读取故事、风格圣经和完整分镜。
-3. 建立 shot 顺序表，包含每个 shot 的时长、场景、景别、人物、道具、声音、帧策略、镜头边界类型、镜头边界理由、画面提示词和四译法证据。
-4. 对每个 shot 做单镜头自洽检查。
-5. 对每个 shot 做时长检查：`duration_seconds` 必须 `> 0` 且 `<= 15`。
-6. 对每个 shot 做镜头边界检查：确认它是独立镜头单位，而不是连续镜头硬拆。
-7. 对每个 shot 做四译法检查：确认抽象情绪、氛围、事件和关系已转译为画面证据。
-8. 用 `SHOT_N-1 + SHOT_N` 做 2-shot 相邻检查。
-9. 用 `SHOT_N-1 + SHOT_N + SHOT_N+1` 做 3-shot 小段落检查。
-10. 检查全片母题、时间线、人物状态、道具位置、声音来源和抽象提示词残留是否连续。
-11. 给每个问题标记 `P0`、`P1` 或 `P2`。
-12. 输出 Markdown 审查报告和 JSON 机器可读报告。
+3. 本审查必须由 AI 执行，JSON 写入 `reviewer=ai`。
+4. 建立 shot 顺序表，包含每个 shot 的时长、场景、人物、道具、镜头边界、首尾状态和推荐生成方式。
+5. 对每个 shot 做单镜头自洽检查。
+6. 对每个 shot 做时长检查：`duration_seconds` 必须 `> 0` 且 `<= 15`。
+7. 对每个 shot 做镜头边界检查：确认它是独立镜头单位，而不是连续镜头硬拆。
+8. 对每个 shot 做四译法检查：确认抽象情绪、氛围、事件和关系已转译为画面证据。
+9. 用 `SHOT_N-1 + SHOT_N` 做 2-shot 相邻检查。
+10. 用 `SHOT_N-1 + SHOT_N + SHOT_N+1` 做 3-shot 小段落检查。
+11. 检查全片母题、时间线、人物状态、道具位置、声音来源和抽象提示词残留是否连续。
+12. 给每个问题标记 `P0`、`P1` 或 `P2`。
+13. 输出 Markdown 审查报告和 JSON 机器可读报告。
 
 ## Required Checks
 - 时长：任何 shot 超过 15 秒，标记 `P0`。
@@ -76,6 +77,8 @@
 - [ ] 所有 `P1` 都有明确修正建议或用户接受说明。
 - [ ] 每个 P1 在 JSON 中包含 `fix_applied=true`、`accepted_by_user=true` 或等价已解决状态。
 - [ ] 发现人声但无音色准备的镜头被标记给后续音色阶段。
+- [ ] `checked_shots` 按顺序覆盖全部镜头，`adjacent_checks` 覆盖全部相邻镜头且没有缺口。
+- [ ] 每组相邻镜头都给出 `independent_clip | merge_with_previous | previous_last_frame | video_extend` 之一。
 
 ## Checkpoint Update
 通过质量门后更新：

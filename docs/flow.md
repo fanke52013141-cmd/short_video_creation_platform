@@ -196,7 +196,8 @@
   - optional reference media
 - Output:
   - `RUN/outputs/05_video_prompts/shots/SHOT_XXX.md`
-  - `RUN/outputs/05_video_prompts/shots/SHOT_XXX.json` when structured prompt output is available
+  - `RUN/outputs/05_video_prompts/shots/SHOT_XXX.json`（每个镜头必需）
+  - `RUN/outputs/05_video_prompts/video_prompt_review.json`（本阶段内的 AI 总检，不增加新阶段）
   - `RUN/outputs/05_video_prompts/shot_video_prompt_index.md`
   - `RUN/outputs/05_video_prompts/shot_video_prompts.md`
   - `RUN/outputs/05_video_prompts/video_prompt_asset_reference.md`
@@ -207,6 +208,7 @@
   - 有人声时必须 `@AUDIO`，无人声时不 `@AUDIO`。
   - `@ENV` 只在镜头运动需要扩展分镜图外空间时使用，并写明原因。
   - 道具只写入画面描述，不 `@PROP`。
+  - 连续动作镜头必须合并、使用上一镜尾帧或视频延长，不得独立盲生成。
 
 ## 10. External Generation Handoff
 
@@ -260,6 +262,7 @@
 - Output:
   - `RUN/outputs/07_final_delivery/final_package_manifest.json`
   - `RUN/outputs/07_final_delivery/README.md`
+  - `RUN/outputs/07_final_delivery/resource_package/`，由 `scripts/build_resource_package.py` 按资产类型生成。
 - Schema: `schemas/final_package_manifest.schema.json`
 - Status:
   - `completed`

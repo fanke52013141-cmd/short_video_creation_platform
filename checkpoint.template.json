@@ -52,6 +52,7 @@
     "single_shot_dir": "./outputs/05_video_prompts/shots",
     "aggregate_file": "./outputs/05_video_prompts/shot_video_prompts.md",
     "asset_reference_file": "./outputs/05_video_prompts/video_prompt_asset_reference.md",
+    "review_file": "./outputs/05_video_prompts/video_prompt_review.json",
     "requires_audio_for_dialogue": true,
     "env_reference_policy": "conditional_by_camera_motion",
     "prop_reference_policy": "describe_only_no_at_prop"
@@ -72,6 +73,7 @@
     "require_character_three_view_for_main_characters": true,
     "require_audio_reference_for_dialogue_shots": true,
     "require_per_shot_video_prompt_files": true,
+    "require_video_prompt_ai_review": true,
     "require_generated_media_review_before_completed": true,
     "allow_draft_with_known_gaps": true
   },

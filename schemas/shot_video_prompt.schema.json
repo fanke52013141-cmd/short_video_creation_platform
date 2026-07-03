@@ -6,6 +6,11 @@
     "shot_id",
     "duration_seconds",
     "task_type",
+    "previous_shot_id",
+    "continuity_relation",
+    "generation_strategy",
+    "start_state",
+    "end_state",
     "storyboard_reference",
     "character_references",
     "audio_reference_decision",
@@ -31,6 +36,17 @@
       "type": ["string", "null"],
       "enum": ["reference", "strict_edit", "extend_forward", "extend_backward", "pipeline", "combined", null]
     },
+    "previous_shot_id": { "type": ["string", "null"], "pattern": "^SHOT_[0-9]{3}$" },
+    "continuity_relation": {
+      "type": "string",
+      "enum": ["sequence_start", "hard_cut", "match_action", "same_continuous_shot"]
+    },
+    "generation_strategy": {
+      "type": "string",
+      "enum": ["independent_clip", "merge_with_previous", "previous_last_frame", "video_extend"]
+    },
+    "start_state": { "type": ["object", "string"] },
+    "end_state": { "type": ["object", "string"] },
     "storyboard_reference": { "type": "string" },
     "character_references": { "type": "array", "items": { "type": "string" } },
     "external_references": {

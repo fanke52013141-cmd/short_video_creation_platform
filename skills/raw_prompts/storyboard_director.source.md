@@ -66,6 +66,10 @@
 - `shot_boundary_type`
 - `boundary_reason`
 - `continuity_risk`
+- `previous_shot_id`
+- `continuity_relation`：`sequence_start | hard_cut | match_action | same_continuous_shot`
+- `start_state` 与 `end_state`：人物位置/姿态、道具状态、运动方向、光线。
+- `recommended_generation`：`independent_clip | merge_with_previous | previous_last_frame | video_extend`
 
 </NonNegotiableShotRules>
 
@@ -333,6 +337,11 @@
 - `shot_boundary_type`
 - `boundary_reason`
 - `continuity_risk`
+- `previous_shot_id`
+- `continuity_relation`
+- `start_state`
+- `end_state`
+- `recommended_generation`
 - `camera`
 - `shot_size`
 - `movement`
@@ -342,6 +351,11 @@
 - `concretization_evidence`
 - `prompt_cn`
 - `continuity_notes`
+
+连续性规则：
+- 首镜头使用 `previous_shot_id=null`、`continuity_relation=sequence_start`。
+- 同一机位和同一运动路径上的连续动作如果被误拆，使用 `same_continuous_shot` 并推荐 `merge_with_previous`。
+- 合法动作匹配切镜使用 `match_action`，推荐 `previous_last_frame` 或 `video_extend`，不得推荐 `independent_clip`。
 
 `concretization_evidence` 推荐结构：
 

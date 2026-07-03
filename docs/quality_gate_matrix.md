@@ -13,8 +13,8 @@
 | Prop Assets | 母题道具锚点稳定 | P1 |
 | Image Results | 图片结果或缺失原因已记录 | P1 |
 | Audio | 有声镜头音色 ready 或 marked missing | final P0 |
-| Video Prompts | 逐 shot 文件齐全，中文-only，无默认 `@PROP` | P0 |
+| Video Prompts | 逐 shot Markdown/JSON 齐全，AI 总检通过，连续动作未独立生成 | P0 |
 | External Handoff | 每个 shot 有可复制提示词和素材清单 | P0 |
 | Generated Media Review | 最佳 take 无 P0 | final P0 |
 | Continuity Review | 文本和生成结果一致性通过 | final P0 |
-| Final Package | 无假完成，缺失项明确 | P0 |
+| Final Package | 无假完成，资源按类型进入 `resource_package/` | P0 |
