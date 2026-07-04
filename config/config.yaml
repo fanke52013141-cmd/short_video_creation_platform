@@ -11,6 +11,9 @@ runtime:
   require_user_confirmation_between_major_phases: true
   image_generation_mode_default: "external_manual"
   allowed_image_generation_modes:
+    - "jimeng_web_manual"
+    - "chatgpt_web"
+    - "codex_direct"
     - "external_manual"
   video_generation_mode_default: "jimeng_canvas_manual"
 
@@ -22,7 +25,7 @@ skill_versions:
   character_prompt_generator: "2.1.0"
   scene_prompt_generator: "2.1.0"
   prop_prompt_generator: "2.1.0"
-  image_generation_executor: "1.0.0"
+  image_generation_executor: "1.1.0"
   storyboard_prompt_generator: "1.0.0"
   video_prompt_generator: "2.3.0"
 
@@ -55,6 +58,8 @@ paths:
   storyboard_prompts: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboard_prompts.md"
   video_prompts: "./local_runs/YYYY-MM-DD/project_slug/outputs/video_prompts.md"
   video_prompts_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/video_prompts.json"
+  image_generation_queue_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/image_generation_queue.json"
+  image_generation_queue_md: "./local_runs/YYYY-MM-DD/project_slug/outputs/image_generation_queue.md"
 
 prompt_sources:
   story_generation: "./skills/raw_prompts/story_generation.source.md"
@@ -179,6 +184,28 @@ asset_policy:
     inherited_reference_props_do_not_describe: true
     remove_extra_prop_by_direct_instruction_only: true
 
+image_generation_policy:
+  one_task_one_image: true
+  forbid_collage: true
+  forbid_contact_sheet: true
+  forbid_character_sheet: true
+  allowed_generation_modes:
+    - "jimeng_web_manual"
+    - "chatgpt_web"
+    - "codex_direct"
+    - "external_manual"
+  required_task_fields:
+    - "task_id"
+    - "parent_asset_name"
+    - "asset_type"
+    - "reference_role"
+    - "prompt_path"
+    - "generation_mode"
+    - "output_path"
+    - "output_count"
+    - "no_collage"
+  output_count: 1
+
 video_prompt_policy:
   output_language: "zh"
   markdown_output_required: true
@@ -249,6 +276,12 @@ external_services:
   jimeng:
     execution_mode: "manual_web"
     role: "asset_images_storyboard_images_and_canvas_video_generation"
+  chatgpt:
+    execution_mode: "web_image_generation"
+    role: "optional_asset_image_generation"
+  codex:
+    execution_mode: "direct_image_generation_when_available"
+    role: "optional_asset_image_generation"
 
 final_handoff:
   included:
