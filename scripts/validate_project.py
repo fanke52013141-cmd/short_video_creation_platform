@@ -28,6 +28,7 @@ PHASE_ALIASES = {
 REQUIRED_STYLE_HEADINGS = ["整体色调", "光线风格", "构图倾向", "禁止出现的视觉元素"]
 REQUIRED_VIDEO_PROMPT_SECTIONS = ["【自检通过项】", "【资产声明区】", "【中文视频提示词】"]
 HIGH_INTENSITY_TERMS = re.compile(r"奔跑|跳跃|翻滚|剧烈打斗|打斗|快速追逐|追逐|摔倒|撞击|飞跃|爆炸")
+OPERATION_TASK_TYPES = {"video_edit", "video_extend", "combined_task"}
 
 
 def fail(message: str) -> None:
@@ -45,9 +46,12 @@ def warn(message: str) -> None:
 
 def read_json(path: Path) -> dict[str, Any]:
     try:
-        return json.loads(path.read_text(encoding="utf-8-sig"))
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError as exc:
         fail(f"Invalid JSON: {path} ({exc})")
+    if not isinstance(data, dict):
+        fail(f"JSON root must be object: {path}")
+    return data
 
 
 def require_file(path: Path) -> None:
@@ -109,6 +113,11 @@ def validate_schema_subset(data: Any, schema: dict[str, Any], label: str) -> Non
             fail(f"{label}: {path} value {value!r} not in enum {node['enum']}")
         if isinstance(value, str) and "pattern" in node and not re.search(node["pattern"], value):
             fail(f"{label}: {path} value {value!r} does not match {node['pattern']}")
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            if "maximum" in node and value > node["maximum"]:
+                fail(f"{label}: {path} value {value!r} is greater than maximum {node['maximum']}")
+            if "minimum" in node and value < node["minimum"]:
+                fail(f"{label}: {path} value {value!r} is less than minimum {node['minimum']}")
         if isinstance(value, dict):
             for required_key in node.get("required", []):
                 if required_key not in value:
@@ -295,9 +304,7 @@ def _declared_assets_by_role(text: str, role: str) -> list[str]:
     return pattern.findall(text)
 
 
-def validate_operation_object_usage(text: str) -> None:
-    edit_assets = _declared_assets_by_role(text, "编辑对象")
-    extend_assets = _declared_assets_by_role(text, "延长对象")
+def _validate_operation_object_text(text: str, edit_assets: list[str], extend_assets: list[str]) -> None:
     for asset in edit_assets:
         if f"参考@{asset}" in text:
             fail(f"edit object @{asset} must not be referenced with 参考@")
@@ -308,6 +315,67 @@ def validate_operation_object_usage(text: str) -> None:
             fail(f"extend object @{asset} must not be referenced with 参考@")
         if not re.search(rf"向前延长\s*@{re.escape(asset)}|向后延长\s*@{re.escape(asset)}", text):
             fail(f"extend object @{asset} must be used with 向前延长/向后延长 @{asset}")
+
+
+def validate_operation_object_usage(text: str) -> None:
+    _validate_operation_object_text(
+        text,
+        _declared_assets_by_role(text, "编辑对象"),
+        _declared_assets_by_role(text, "延长对象"),
+    )
+
+
+def validate_video_prompt_plan(run_dir: Path, storyboard: dict[str, Any]) -> dict[str, Any]:
+    plan = validate_schema_file(outputs(run_dir) / "video_prompts.json", "video_prompt.schema.json")
+    videos = plan.get("videos", [])
+    if not videos:
+        fail("video_prompts.json has no videos")
+    valid_shots = [shot["shot_id"] for shot in storyboard.get("shots", [])]
+    valid_shot_set = set(valid_shots)
+    covered_shots: list[str] = []
+    video_ids = [video.get("video_id") for video in videos]
+    if len(video_ids) != len(set(video_ids)):
+        fail("video_prompts.json has duplicate video_id values")
+    for index, video in enumerate(videos, start=1):
+        expected_video_id = f"V{index:03d}"
+        video_id = video.get("video_id")
+        if video_id != expected_video_id:
+            fail(f"video sequence must be contiguous: expected {expected_video_id}, got {video_id}")
+        duration = video.get("duration_seconds")
+        if not isinstance(duration, (int, float)) or isinstance(duration, bool):
+            fail(f"{video_id} duration_seconds must be numeric")
+        if duration <= 0 or duration > MAX_SHOT_DURATION_SECONDS:
+            fail(f"{video_id} duration_seconds must be > 0 and <= {MAX_SHOT_DURATION_SECONDS}")
+        source_shots = video.get("source_shots", [])
+        unknown = sorted(set(source_shots) - valid_shot_set)
+        if unknown:
+            fail(f"{video_id} references unknown source_shots: {', '.join(unknown)}")
+        covered_shots.extend(source_shots)
+
+        prompt_cn = video.get("prompt_cn", "")
+        if "English Prompt" in prompt_cn or "中英对照" in prompt_cn:
+            fail(f"{video_id} prompt_cn must be Chinese-only")
+        if "@PROP_" in prompt_cn or "PROP_" in prompt_cn:
+            fail(f"{video_id} prop assets must be described in the body, not referenced as @PROP")
+        if video.get("uses_previous_storyboard_anchor") is True and "参考@上一分镜_站位" not in prompt_cn:
+            fail(f"{video_id} uses_previous_storyboard_anchor=true but prompt_cn is missing anchor text")
+        if video.get("risk_notice_required") is True and "【生成风险提示】" not in prompt_cn:
+            fail(f"{video_id} risk_notice_required=true but prompt_cn is missing 【生成风险提示】")
+        declared_assets = video.get("declared_assets", []) or []
+        edit_assets = [item["asset_name"] for item in declared_assets if item.get("role") == "edit_object"]
+        extend_assets = [item["asset_name"] for item in declared_assets if item.get("role") == "extend_object"]
+        if video.get("task_type") in OPERATION_TASK_TYPES and not (edit_assets or extend_assets or video.get("operation_objects")):
+            fail(f"{video_id} operation task requires declared edit/extend operation objects")
+        _validate_operation_object_text(prompt_cn, edit_assets, extend_assets)
+
+    duplicate_shots = sorted({shot for shot in covered_shots if covered_shots.count(shot) > 1})
+    if duplicate_shots:
+        fail("video_prompts.json covers source shots more than once: " + ", ".join(duplicate_shots))
+    missing_shots = sorted(valid_shot_set - set(covered_shots))
+    if missing_shots:
+        fail("video_prompts.json missing source shots: " + ", ".join(missing_shots))
+    ok(f"video prompt plan videos: {len(videos)}")
+    return plan
 
 
 def validate_video_prompts(run_dir: Path) -> None:
@@ -338,6 +406,7 @@ def validate_video_prompts(run_dir: Path) -> None:
     validate_operation_object_usage(text)
     if "画面保持无字幕" not in text or "Logo" not in text or "水印" not in text:
         fail("video_prompts.md must include no-subtitle/no-logo/no-watermark constraints")
+    validate_video_prompt_plan(run_dir, storyboard)
     ok("video prompts")
 
 
