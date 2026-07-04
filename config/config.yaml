@@ -21,9 +21,9 @@ skill_versions:
   character_prompt_generator: "2.4.0"
   scene_prompt_generator: "2.3.0"
   prop_prompt_generator: "2.3.0"
-  image_generation_executor: "1.2.0"
+  image_generation_executor: "1.3.0"
   storyboard_prompt_generator: "1.1.0"
-  video_prompt_generator: "2.4.0"
+  video_prompt_generator: "2.5.0"
 
 phase_order:
   - story_generation
