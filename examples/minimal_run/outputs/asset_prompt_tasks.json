@@ -1,0 +1,55 @@
+{
+  "tasks": [
+    {
+      "task_id": "PROMPT_CHARACTER_林小满_FACE",
+      "parent_asset_name": "林小满",
+      "asset_type": "character",
+      "prompt_role": "face_closeup",
+      "style_bible_path": "./outputs/style_bible.md",
+      "asset_payload": {
+        "seedance_label": "林小满",
+        "definition_sentence": "将生成的人脸大头特写图和全身妆造图统一定义为林小满。",
+        "visual_anchors": ["黑色中长发", "深色针织衫"],
+        "generation_brief": "年轻女性林小满，黑色中长发，深色针织衫，气质克制安静。",
+        "usage_context": "家庭情绪短片主角，后续常出现接电话、停顿、抿唇等克制动作。",
+        "notes": "常规表情和动作不拆新人物资产"
+      },
+      "reference_bindings": [],
+      "output_prompt_path": "./outputs/assets/characters/林小满_人脸大头特写.md"
+    },
+    {
+      "task_id": "PROMPT_CHARACTER_林小满_FULL_BODY",
+      "parent_asset_name": "林小满",
+      "asset_type": "character",
+      "prompt_role": "full_body_styling",
+      "style_bible_path": "./outputs/style_bible.md",
+      "asset_payload": {
+        "seedance_label": "林小满",
+        "definition_sentence": "将生成的人脸大头特写图和全身妆造图统一定义为林小满。",
+        "visual_anchors": ["黑色中长发", "深色针织衫"],
+        "generation_brief": "年轻女性林小满，黑色中长发，深色针织衫，气质克制安静。",
+        "usage_context": "家庭情绪短片主角，后续常出现接电话、停顿、抿唇等克制动作。",
+        "notes": "常规表情和动作不拆新人物资产"
+      },
+      "reference_bindings": [],
+      "output_prompt_path": "./outputs/assets/characters/林小满_全身妆造.md"
+    },
+    {
+      "task_id": "PROMPT_SCENE_雨夜客厅场景_REFERENCE",
+      "parent_asset_name": "雨夜客厅场景",
+      "asset_type": "scene",
+      "prompt_role": "scene_reference",
+      "style_bible_path": "./outputs/style_bible.md",
+      "asset_payload": {
+        "seedance_label": "雨夜客厅场景",
+        "definition_sentence": "将生成的客厅场景参考图定义为雨夜客厅场景。",
+        "visual_anchors": ["沙发", "茶几", "雨窗", "暖黄台灯"],
+        "generation_brief": "客厅空间，沙发、茶几、窗户和台灯构成稳定空间结构。",
+        "usage_context": "用于中景、近景和手部特写的家庭情绪戏。",
+        "notes": "光线变化由后续提示词控制，不拆新场景"
+      },
+      "reference_bindings": [],
+      "output_prompt_path": "./outputs/assets/scenes/雨夜客厅场景.md"
+    }
+  ]
+}
