@@ -2,68 +2,52 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Story",
   "type": "object",
-  "required": [
-    "title_candidates",
-    "logline",
-    "duration_minutes",
-    "genre",
-    "theme_question",
-    "characters",
-    "locations",
-    "beats",
-    "visual_moments",
-    "production_constraints"
-  ],
+  "required": ["title", "logline", "scenes", "characters", "plot_segments"],
   "properties": {
-    "story_generation_mode": {
-      "type": "string",
-      "enum": [
-        "complete_story_preservation",
-        "draft_diagnosis_optimization",
-        "exploration_question",
-        "structure_building",
-        "full_story_development"
-      ]
-    },
-    "completeness_assessment": {
-      "type": "string",
-      "enum": [
-        "complete_story",
-        "partial_draft",
-        "basic_direction",
-        "vague_idea",
-        "full_development_requested"
-      ]
-    },
-    "preservation_policy": {
-      "type": ["object", "string", "null"]
-    },
-    "preserved_elements": {
-      "type": ["object", "array", "null"]
-    },
-    "optimized_elements": {
-      "type": ["object", "array", "null"]
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "needs_user_answer",
-        "draft_diagnosed",
-        "story_structured",
-        "story_optimized",
-        "ready_for_art_direction"
-      ]
-    },
-    "title_candidates": { "type": "array", "items": { "type": "string" } },
+    "title": { "type": "string" },
     "logline": { "type": "string" },
-    "duration_minutes": { "type": ["number", "string"] },
-    "genre": { "type": "string" },
-    "theme_question": { "type": "string" },
-    "characters": { "type": "array", "items": { "type": "object" } },
-    "locations": { "type": "array", "items": { "type": "object" } },
-    "beats": { "type": "array", "items": { "type": "object" } },
-    "visual_moments": { "type": "array", "items": { "type": ["string", "object"] } },
-    "dialogue_or_voiceover_intent": { "type": ["string", "array", "object", "null"] },
-    "production_constraints": { "type": ["object", "array"] }
+    "duration_minutes": { "type": ["number", "string", "null"] },
+    "genre": { "type": ["string", "null"] },
+    "theme": { "type": ["string", "null"] },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scene_id", "name"],
+        "properties": {
+          "scene_id": { "type": "string" },
+          "name": { "type": "string" },
+          "time": { "type": ["string", "null"] },
+          "location_desc": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "characters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "feature_name": { "type": ["string", "null"] },
+          "visual_anchors": { "type": ["array", "string", "null"], "items": { "type": "string" } },
+          "role": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "plot_segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["segment_id", "summary"],
+        "properties": {
+          "segment_id": { "type": "string" },
+          "summary": { "type": "string" },
+          "scene_id": { "type": ["string", "null"] },
+          "characters": { "type": ["array", "null"], "items": { "type": "string" } }
+        }
+      }
+    },
+    "production_notes": { "type": ["array", "string", "object", "null"] }
   }
 }
