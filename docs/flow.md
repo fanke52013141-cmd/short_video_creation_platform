@@ -2,9 +2,7 @@
 
 路径约定：仓库根目录保存流程资产；真实创作在 `local_runs/YYYY-MM-DD/project_slug/` 中执行。下文的 `RUN` 代表这个 active run 目录。
 
-执行边界：CodeX 负责前期文本资产、提示词、分镜、图片生成分支选择、交接清单、生成结果记录和一致性检查。图片生成可以选择外部手动生成或 CodeX 内部生成；视频生成和剪辑默认在外部工具中手动完成。
-
-运行状态：真实项目状态写入 `RUN/checkpoint.json`，阶段状态遵守 `docs/phase_state_machine.md`。核心 JSON 产物必须符合 `docs/schema_contracts.md` 中列出的 schema。
+执行边界：本仓库负责剧本、风格圣经、分镜、资产清单、资产提示词、分镜生图提示词和最终视频提示词。图片与视频生成在即梦网页端人工执行；流程终点是进入即梦画布生产。
 
 ## 0. Initialize Local Run
 
@@ -12,10 +10,10 @@
 - Output:
   - `RUN/checkpoint.json`
   - `RUN/inputs/idea_brief.md`
-  - `RUN/production_status.csv`
-  - `RUN/outputs/04_assets/audio/voice_reference_manifest.json`
-  - `RUN/outputs/06_external_results/image_result_manifest.json`
-  - `RUN/outputs/06_external_results/shot_result_manifest.template.json`
+  - `RUN/outputs/assets/characters/`
+  - `RUN/outputs/assets/scenes/`
+  - `RUN/outputs/assets/props/`
+  - `RUN/outputs/storyboards/`
 
 ## 1. Idea To Story
 
@@ -23,245 +21,136 @@
 - Source prompt: `skills/raw_prompts/story_generation.source.md`
 - Input: `RUN/inputs/idea_brief.md`
 - Output:
-  - `RUN/outputs/01_story/story.md`
-  - `RUN/outputs/01_story/story.json`
+  - `RUN/outputs/story.md`
+  - `RUN/outputs/story.json`
 - Schema: `schemas/story.schema.json`
+- Contract: `story.json` 只保留下游必要字段：场景列表、角色列表、剧情段落和生产备注。
 
-## 2. Story To Visual Direction
+## 2. Story To One-Page Style Bible
 
 - Skill: `art_direction`
 - Source prompt: `skills/raw_prompts/art_direction.source.md`
 - Input:
-  - `RUN/outputs/01_story/story.md`
-  - `RUN/outputs/01_story/story.json`
+  - `RUN/outputs/story.md`
 - Output:
-  - `RUN/outputs/02_art_direction/style_bible.md`
-  - `RUN/outputs/02_art_direction/art_direction.json`
-- Schema: `schemas/art_direction.schema.json`
+  - `RUN/outputs/style_bible.md`
+- Contract: 不输出 `art_direction.json`。`style_bible.md` 必须一页以内，只允许定义整体色调、光线风格、构图倾向和禁止出现的视觉元素。
 
 ## 3. Story And Style To Storyboard
 
 - Skill: `storyboard_director`
-- Primary source prompt: `skills/raw_prompts/storyboard_director.source.md`
-- Optional variant: `skills/raw_prompts/storyboard_static_frame_variant.source.md`
+- Source prompt: `skills/raw_prompts/storyboard_director.source.md`
 - Input:
-  - `RUN/outputs/01_story/story.md`
-  - `RUN/outputs/01_story/story.json`
-  - `RUN/outputs/02_art_direction/style_bible.md`
-  - `RUN/outputs/02_art_direction/art_direction.json`
+  - `RUN/outputs/story.md`
+  - `RUN/outputs/style_bible.md`
 - Output:
-  - `RUN/outputs/03_storyboard/storyboard.md`
-  - `RUN/outputs/03_storyboard/storyboard.json`
-  - `RUN/outputs/03_storyboard/draft_asset_sheet.json`
+  - `RUN/outputs/storyboard.json`
 - Schema: `schemas/storyboard.schema.json`
-- Next phase: `storyboard_sequence_review`
+- Shot fields:
+  - `shot_id`: `S001`、`S002`...
+  - `scene_id`: 关联场景
+  - `duration_seconds`: 建议时长，必须 `>0` 且 `<=15`
+  - `framing`: 景别
+  - `camera_move`: 运镜
+  - `action_desc`: 具象动作描述
+  - `characters_in_shot`: 出现角色名，使用特征名，不使用 `CharA`
+  - `location`: 场景名
+- Boundary: 导演不得输出资产草表、资产 ID、提示词、音色或外部交接内容。
+- Quality Gate: 分镜阶段内部完成相邻逻辑检查；不再存在独立 `storyboard_sequence_review` 节点。
 
-## 4. Storyboard Sequence Review
+## 4. Storyboard To Asset Manifest And Shot Map
 
-- Skill: `storyboard_sequence_review`
-- Protocol: `docs/storyboard_sequence_review_protocol.md`
+- Skill: `asset_executor`
 - Input:
-  - `RUN/outputs/01_story/story.json`
-  - `RUN/outputs/02_art_direction/style_bible.md`
-  - `RUN/outputs/03_storyboard/storyboard.md`
-  - `RUN/outputs/03_storyboard/storyboard.json`
-  - `RUN/outputs/03_storyboard/keyframes/*.png` when available
+  - `RUN/outputs/story.md`
+  - `RUN/outputs/storyboard.json`
 - Output:
-  - `RUN/outputs/03_storyboard/storyboard_sequence_review.md`
-  - `RUN/outputs/03_storyboard/storyboard_sequence_review.json`
-- Schema: `schemas/storyboard_sequence_review.schema.json`
-- Rules:
-  - 必须检查 1-shot、2-shot、3-shot 滑动窗口。
-  - 有未处理 P0 时不能进入资产清单阶段。
-  - 有 P1 时必须修正或由用户明确接受风险。
+  - `RUN/outputs/asset_manifest.json`
+  - `RUN/outputs/shot_asset_map.json`
+- Schemas:
+  - `schemas/asset_manifest.schema.json`
+  - `schemas/shot_asset_map.schema.json`
+- Responsibilities:
+  1. 遍历故事和分镜，提取所有需要生产的角色、场景、道具资产。
+  2. 为每个资产定义“特征 + 状态”命名。
+  3. 建立每个 shot 对应哪些资产的映射关系。
 
-## 5. Storyboard To Canonical Asset Manifest
+## 5. Asset Prompt Generation
 
-- Skill: `asset_manifest_builder`
+三路可并行执行，互不依赖。
+
+### 5-A Character Prompts
+
+- Skill: `character_prompt_generator`
 - Input:
-  - `RUN/outputs/03_storyboard/storyboard.json`
-  - `RUN/outputs/03_storyboard/draft_asset_sheet.json`
-  - `RUN/outputs/03_storyboard/storyboard_sequence_review.json`
-  - `RUN/outputs/02_art_direction/style_bible.md`
+  - `RUN/outputs/story.md`
+  - 从 `asset_manifest.json` 切出的单个角色及其全部状态
 - Output:
-  - `RUN/outputs/04_assets/asset_manifest.json`
-  - `RUN/outputs/04_assets/asset_manifest.md`
-- Schema: `schemas/asset_manifest.schema.json`
-- Character variant rules:
-  - `CHAR_XXX` 是角色身份母体；`CHAR_XXX_A/B/C` 是该角色的持续性视觉状态。
-  - 角色状态变体只在资产清单阶段决定；后续角色提示词阶段不得临时拆分或新增状态。
-  - 明显年龄变化、完整服装变化、身份装束变化、持续脏污/血迹/破损、可见且持续的伤痕、明显发型/体态/变异必须拆成独立状态。
-  - 表情、动作、镜头角度、光线、临时持有道具、单镜头短暂汗水或轻微污渍不得拆成角色状态。
-  - 每个要生成的角色状态变体必须包含 `variant_id`、`trigger`、`appearance_change_type`、`visual_changes`、`appears_in_shots`、`generation_required`、`three_view_required`、`must_keep`。
-- Prop registration rules:
-  - 只有需要跨镜头稳定、承担叙事功能、反复出现、被特写展示、发生状态变化，或承载文字/符号/母题信息的道具，才创建独立 `PROP_XXX`。
-  - 反复出现、明线/暗线道具、视觉母题、角色身份绑定道具、特写道具、状态变化道具、文字/照片/符号道具、复杂造型道具，必须注册为 `canonical_prop`。
-  - 只出现一次、无叙事功能、无状态变化、无特写、无需跨镜头保持一致的普通物件，不创建独立 `PROP_XXX`；只写入分镜提示词、场景提示词或单镜头视频提示词。
-  - 场景陈设类物件应写入 `ENV_XXX`，除非其中某个物件被剧情单独拿出来使用、特写或反复出现。
-  - 每个 `generation_required=true` 的道具必须包含 `prop_category`、`asset_tier=canonical_prop`、`reason_to_generate`、`must_not_change`。
-  - 文字类道具必须包含 `text_content`、`text_visibility`、`text_generation_strategy` 和 `blank_area_required`；重要文字优先后期叠字或留白。
+  - `RUN/outputs/assets/characters/{角色资产名}.md`
 
-## 6. Asset Prompt Generation
+### 5-B Scene Prompts
 
-- Character Skill: `character_prompt_generator`
-- Scene Skill: `scene_prompt_generator`
-- Prop Skill: `prop_prompt_generator`
-- Prop source prompt: `skills/raw_prompts/prop_prompt_generator.source.md`
+- Skill: `scene_prompt_generator`
 - Input:
-  - `RUN/outputs/04_assets/asset_manifest.json`
-  - `RUN/outputs/02_art_direction/style_bible.md`
+  - `RUN/outputs/story.md`
+  - 从 `asset_manifest.json` 切出的单个场景
 - Output:
-  - `RUN/outputs/04_assets/characters/*.md`
-  - `RUN/outputs/04_assets/characters/*.json`
-  - `RUN/outputs/04_assets/scenes/*.md`
-  - `RUN/outputs/04_assets/scenes/*.json`
-  - `RUN/outputs/04_assets/props/*.md`
-  - `RUN/outputs/04_assets/props/*.json`
-- Character prompt rules:
-  - 角色提示词阶段只处理 `asset_manifest.json` 已登记的角色和状态变体。
-  - 每个 `generation_required=true` 的主要角色状态变体都必须生成角色转面参考图提示词。
-  - `three_view_required=true` 的状态必须包含面部特写、正面全身、侧面全身、背面全身。
-  - 不得把多个年龄、职业装束、战损状态、伤痕状态或脏污状态放进同一张最终人物资产图。
-  - 每个状态必须保留 `must_keep` 身份锚点，并避免混入 `must_not_mix_with` 中的其他状态。
-- Scene prompt rules:
-  - 每个 `ENV_XXX` 必须生成 Key Plate 中景图提示词，作为后续视频镜头默认引用图。
-  - Scene Sheet 四宫格概览图只在复杂、核心、反复出现、多角度拍摄或有角色移动路径的场景中生成。
-  - 四宫格用于场景设计审查和空间布局确认，不作为默认视频引用图。
-- Prop prompt rules:
-  - 道具提示词阶段只处理 `asset_manifest.json` 中 `asset_tier=canonical_prop` 且 `generation_required=true` 的道具。
-  - `scene_dressing` 应进入场景提示词，不生成独立道具图。
-  - `shot_description_only` 应进入分镜或视频提示词，不生成独立道具图。
-  - 每个需要生成的道具必须输出标准资产图提示词；`detail_prompt_required=true` 时额外输出细节/特写提示词。
-  - 不默认要求视频阶段使用 `@PROP`；视频阶段默认只在正文描述道具。
-- Rules:
-  - 角色、场景、道具所需提示词都完成后，才将 checkpoint 阶段 `asset_prompt_generation` 标记为完成。
+  - `RUN/outputs/assets/scenes/{场景资产名}.md`
 
-## 7. Image Generation Queue And Results
+### 5-C Prop Prompts
 
-- Skill: `image_generation_executor`
-- Protocol: `docs/generation_mode_protocol.md`
-- Required decision:
-  - `external_manual`: 只输出图片生成队列、提示词和结果登记表，由用户在外部网页端生成图片。
-  - `internal_codex`: CodeX 使用同一图片生成队列直接生成图片并保存到本地 run。
-- Output:
-  - `RUN/outputs/04_assets/image_generation_queue.json`
-  - `RUN/outputs/04_assets/final_images/**/*.png` when generated
-  - `RUN/outputs/generated_image_index.md` when generated
-  - `RUN/outputs/06_external_results/image_result_manifest.json`
-- Schema: `schemas/image_result_manifest.schema.json`
-- Queue priority:
-  - `must_generate`: 缺失会阻断最终 `completed`。
-  - `optional_generate`: 缺失不阻断流程，但必须记录 known gap。
-  - `skip_generation`: 不生成独立图片，只写入分镜/场景/视频正文描述。
-- Image role rules:
-  - 角色转面参考图：`character_turnaround`。
-  - 角色单人立绘：`character_full_body`。
-  - 场景 Key Plate：`scene_key_plate`，默认可作为视频参考图。
-  - 场景 Scene Sheet：`scene_sheet`，用于设计审查，不作为默认视频参考图。
-  - 道具标准资产图：`prop_standard_asset`。
-  - 道具细节/特写图：`prop_detail_closeup`。
-- Note:
-  - 所有图片和外部生成结果都属于本地 run，不进入仓库。
-  - `blocking_if_missing=true` 且状态为 `missing | rejected | needs_regeneration` 时，最终包不得标记为 `completed`。
-  - 主要人物转面参考图缺失时，不得把该角色状态声明为可稳定视频参考。
-  - 场景图片生成优先生成 `ENV_XXX_KEY_PLATE`；`ENV_XXX_SCENE_SHEET` 只在 `scene_sheet_required=true` 时生成。
-  - 道具图片只生成 `generation_required=true` 的 canonical prop；普通一次性物件不生成独立道具图。
-
-## 8. Audio Reference Collection
-
-- Skill: `voice_reference_manifest_builder`
-- Protocol: `docs/audio_reference_protocol.md`
+- Skill: `prop_prompt_generator`
 - Input:
-  - `RUN/outputs/03_storyboard/storyboard.json`
-  - `RUN/outputs/04_assets/asset_manifest.json`
-  - user-provided audio references when available
+  - `RUN/outputs/story.md`
+  - 从 `asset_manifest.json` 切出的单个道具
 - Output:
-  - `RUN/outputs/04_assets/audio/voice_reference_manifest.json`
-  - `RUN/outputs/04_assets/audio/voice_reference_assets.md`
-- Schema: `schemas/voice_reference_manifest.schema.json`
-- Rules:
-  - 有台词、旁白、录音留言或可听见人声的 shot 必须绑定 `@AUDIO`。
-  - 缺少音色参考时，必须向用户索要或标记 `missing`，不得假装最终完成。
+  - `RUN/outputs/assets/props/{道具资产名}.md`
 
-## 9. Shot Video Prompt Generation
+用户随后在即梦生成资产图片，并回填到对应资产目录。
 
-- Skill: `shot_video_prompt_generator`
-- Source prompt: `skills/raw_prompts/seedance_video_prompt.source.md`
+## 6. Storyboard Image Prompt Generation
+
+- Skill: `storyboard_prompt_generator`
 - Input:
-  - `RUN/outputs/03_storyboard/storyboard.json`
-  - `RUN/outputs/03_storyboard/keyframes/*.png` when available
-  - `RUN/outputs/04_assets/asset_manifest.json`
-  - `RUN/outputs/04_assets/audio/voice_reference_manifest.json`
-  - `RUN/outputs/04_assets/**/*.md`
-  - optional reference media
+  - `RUN/outputs/storyboard.json`
+  - `RUN/outputs/style_bible.md`
+  - `RUN/outputs/shot_asset_map.json`
+  - `RUN/outputs/assets/**` 中已有资产参考图
 - Output:
-  - `RUN/outputs/05_video_prompts/shots/SHOT_XXX.md`
-  - `RUN/outputs/05_video_prompts/shots/SHOT_XXX.json` when structured prompt output is available
-  - `RUN/outputs/05_video_prompts/shot_video_prompt_index.md`
-  - `RUN/outputs/05_video_prompts/shot_video_prompts.md`
-  - `RUN/outputs/05_video_prompts/video_prompt_asset_reference.md`
-- Schema: `schemas/shot_video_prompt.schema.json`
-- Rules:
-  - 必须逐 shot 循环生成单文件，再汇总总文件。
-  - 只输出中文视频提示词。
-  - 有人声时必须 `@AUDIO`，无人声时不 `@AUDIO`。
-  - `@ENV` 只在镜头运动需要扩展分镜图外空间时使用，并写明原因。
-  - 道具只写入画面描述，不 `@PROP`。
+  - `RUN/outputs/storyboard_prompts.md`
+- Responsibility: 把导演分镜的叙事语言转化为 AI 生图语言。导演分镜不是生图提示词，不得直接复制为图片提示词。
 
-## 10. External Generation Handoff
+用户随后在即梦生成分镜参考图，并回填到 `RUN/outputs/storyboards/S001.png`、`S002.png` 等。
 
-- Skill: `external_generation_handoff`
-- Image generation: only included when `generation_modes.image_generation = external_manual`.
-- Video generation: manually execute shot prompts in Jimeng / Seedance web or selected video platform.
-- Editing: manually assemble clips in Jianying / CapCut.
-- Handoff outputs:
-  - `RUN/outputs/06_external_results/external_generation_handoff.md`
-  - `RUN/outputs/06_external_results/image_result_manifest.json`
-  - `RUN/outputs/06_external_results/shot_result_manifest.template.json`
-  - `RUN/outputs/06_external_results/edit_notes.md`
-- Optional local notes after external execution:
-  - `RUN/outputs/06_external_results/external_generation_notes.md`
-  - `RUN/outputs/06_external_results/shot_result_manifest.json`
+## 7. Video Prompt Generation
 
-## 11. Generated Media Review
-
-- Skill: `generated_media_review`
-- Protocol: `docs/generated_media_review_protocol.md`
+- Skill: `video_prompt_generator`
 - Input:
-  - `RUN/outputs/06_external_results/image_result_manifest.json`
-  - `RUN/outputs/06_external_results/shot_result_manifest.json`
-  - optional external generation notes and local screenshots/videos
+  - `RUN/outputs/storyboard.json`
+  - `RUN/outputs/storyboards/`
+  - `RUN/outputs/shot_asset_map.json`
+  - `RUN/outputs/assets/`
 - Output:
-  - `RUN/outputs/06_external_results/generated_media_review.md`
-  - `RUN/outputs/06_external_results/generated_media_review.json`
-- Schema: `schemas/generated_media_review.schema.json`
-- Rule:
-  - 被选为 best take 的镜头不得有未处理 P0。
+  - `RUN/outputs/video_prompts.md`
+- Merge rule: 相邻 shot 只有同时满足以下三项才允许合并为一个 `V###`：
+  1. 同一 `scene_id`。
+  2. 合并后时长之和 `<=15s`。
+  3. 动作描述连续，无场景切换、无时间跳跃。
+- Anchor rule:
+  - 同一场景内连续多镜头，每个视频提示词必须引入 `参考@上一分镜_站位，保持人物空间关系、朝向和相对位置不变`。
+  - 场景切换时不引入上一分镜，避免错误约束。
+- Prop rule: 道具资产不使用 `@PROP`，只写入视频提示词正文描述。
 
-## 12. Continuity Review
+## Final Jimeng Canvas Handoff
 
-- Review Skill: `continuity_review`
-- Input:
-  - `RUN/outputs/05_video_prompts/shot_video_prompts.md`
-  - `RUN/outputs/06_external_results/generated_media_review.json` when available
-  - optional external generation notes
-- Output:
-  - `RUN/outputs/07_final_delivery/continuity_report.md`
-  - `RUN/outputs/07_final_delivery/continuity_report.json`
-- Schema: `schemas/continuity_report.schema.json`
+只交付以下内容：
 
-## 13. Production Package
+| 交付物 | 内容 | 说明 |
+|---|---|---|
+| `outputs/story.md` | 完整剧本 | 供导演在即梦画布理解叙事 |
+| `outputs/video_prompts.md` | 完整视频提示词 | 逐条复制到即梦使用 |
+| `outputs/assets/characters/` | 全部有效角色资产 | 废弃/被替换的图片不包含 |
+| `outputs/assets/scenes/` | 全部有效场景资产 | 废弃/被替换的图片不包含 |
+| `outputs/storyboards/` | 全部分镜参考图 | 用于视频生成时的首帧/站位参考 |
 
-- Skill: `production_package_builder`
-- Input:
-  - `RUN/checkpoint.json`
-  - `RUN/outputs/07_final_delivery/continuity_report.md`
-  - `RUN/outputs/06_external_results/generated_media_review.md` when available
-- Output:
-  - `RUN/outputs/07_final_delivery/final_package_manifest.json`
-  - `RUN/outputs/07_final_delivery/README.md`
-- Schema: `schemas/final_package_manifest.schema.json`
-- Status:
-  - `completed`
-  - `completed_with_known_gaps`
-  - `revise_required`
+道具资产不单独交付，写入视频提示词正文描述。
