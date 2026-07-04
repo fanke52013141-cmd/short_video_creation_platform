@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Validate an AI short film local run.
+"""Validate a short-video creation local run.
 
 Usage:
-  python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug
-  python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase video
-  python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase final
+  python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase initialized
+  python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase all
 """
 
 from __future__ import annotations
@@ -15,47 +14,18 @@ import re
 from pathlib import Path
 from typing import Any
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = REPO_ROOT / "schemas"
 MAX_SHOT_DURATION_SECONDS = 15
-BLOCKING_IMAGE_STATUSES = {"missing", "rejected", "needs_regeneration"}
-READY_IMAGE_STATUSES = {"generated", "approved"}
-READY_AUDIO_STATUSES = {"provided", "approved", "ready"}
-NOT_FINAL_AUDIO_STATUSES = {"missing", "needed", "placeholder"}
-
-ABSTRACT_TERMS = re.compile(
-    r"疲惫|压抑|紧张|孤独|温馨|神秘|犹豫|愤怒|委屈|亲密|疏离|对峙|等待|思考|难过|高级|克制|失控"
-)
-VISIBLE_EVIDENCE = re.compile(
-    r"眼|眉|嘴|唇|下颌|肩|手|拳|指|呼吸|视线|身体|距离|前景|后景|阴影|顶光|侧光|色调|滴答|嗡鸣|风声|脚步|回响|敲|捏|靠|低头|抬手|转身|停顿"
-)
-DIALOGUE_HINT = re.compile(r"对白|旁白|台词|留言|录音|电话|新闻|播报|低声|说：|说道|回答|问：|“[^”]+”")
-TASK_TYPES = {"pipeline_shot_generation", "multimodal_reference", "video_edit", "video_extend", "combined_task"}
-REQUIRED_SEEDANCE_SECTIONS = ["【引用决策】", "【资产声明区】", "【中文视频提示词】", "【自检通过项】"]
-
 PHASE_ALIASES = {
     "init": "initialized",
     "art_direction": "art",
-    "storyboard_sequence_review": "storyboard",
-    "asset_manifest": "assets",
-    "voice": "audio",
+    "asset_executor": "assets",
+    "asset_prompts": "asset_prompt_generation",
+    "storyboard_prompts": "storyboard_prompt_generation",
     "video": "video_prompts",
-    "handoff": "external",
-    "generated_media": "media_review",
 }
-
-PROP_GENERATION_REASONS = {
-    "repeated_appearance",
-    "story_clue",
-    "story_motif",
-    "character_identity_bound",
-    "close_up",
-    "state_change",
-    "text_or_symbol",
-    "complex_design",
-    "functional_story_action",
-}
+REQUIRED_STYLE_HEADINGS = ["整体色调", "光线风格", "构图倾向", "禁止出现的视觉元素"]
 
 
 def fail(message: str) -> None:
@@ -63,12 +33,12 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
-def warn(message: str) -> None:
-    print(f"WARN: {message}")
-
-
 def ok(message: str) -> None:
     print(f"OK: {message}")
+
+
+def warn(message: str) -> None:
+    print(f"WARN: {message}")
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -90,14 +60,6 @@ def require_dir(path: Path) -> None:
         fail(f"Required directory missing: {path}")
     if not path.is_dir():
         fail(f"Required path is not a directory: {path}")
-
-
-def as_list(value: Any) -> list[Any]:
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return value
-    return [value]
 
 
 def schema_type_matches(value: Any, expected: str) -> bool:
@@ -174,13 +136,31 @@ def normalize_phase(phase: str) -> str:
     return PHASE_ALIASES.get(phase, phase)
 
 
+def outputs(run_dir: Path) -> Path:
+    return run_dir / "outputs"
+
+
 def validate_checkpoint(run_dir: Path) -> dict[str, Any]:
     checkpoint_path = run_dir / "checkpoint.json"
     require_file(checkpoint_path)
     checkpoint = read_json(checkpoint_path)
+    required_order = [
+        "story_generation",
+        "art_direction",
+        "storyboard_director",
+        "asset_executor",
+        "asset_prompt_generation",
+        "storyboard_prompt_generator",
+        "video_prompt_generator",
+    ]
+    if checkpoint.get("phase_order") != required_order:
+        fail("checkpoint.phase_order does not match the simplified Jimeng pipeline")
+    if checkpoint.get("current_phase") not in ["initialized", *required_order]:
+        fail(f"unknown checkpoint.current_phase: {checkpoint.get('current_phase')}")
     completed = checkpoint.get("completed_phases", [])
-    if completed and "asset_manifest_builder" in completed and "storyboard_sequence_review" not in completed:
-        fail("asset_manifest_builder completed before storyboard_sequence_review")
+    for phase in completed:
+        if phase not in required_order:
+            fail(f"unknown completed phase: {phase}")
     ok("checkpoint exists")
     return checkpoint
 
@@ -189,346 +169,146 @@ def validate_initialized(run_dir: Path) -> None:
     validate_checkpoint(run_dir)
     required_dirs = [
         "inputs",
-        "outputs/01_story",
-        "outputs/02_art_direction",
-        "outputs/03_storyboard",
-        "outputs/04_assets/characters",
-        "outputs/04_assets/scenes",
-        "outputs/04_assets/props",
-        "outputs/04_assets/audio",
-        "outputs/05_video_prompts/shots",
-        "outputs/06_external_results",
-        "outputs/07_final_delivery",
+        "outputs/assets/characters",
+        "outputs/assets/scenes",
+        "outputs/assets/props",
+        "outputs/storyboards",
         "references",
         "logs",
     ]
     for rel in required_dirs:
         require_dir(run_dir / rel)
-    required_files = [
-        "inputs/idea_brief.md",
-        "checkpoint.json",
-        "production_status.csv",
-        "outputs/04_assets/audio/voice_reference_manifest.json",
-        "outputs/04_assets/image_generation_queue.json",
-        "outputs/06_external_results/image_result_manifest.json",
-        "outputs/06_external_results/shot_result_manifest.template.json",
-    ]
-    for rel in required_files:
-        require_file(run_dir / rel)
+    require_file(run_dir / "inputs/idea_brief.md")
     ok("initialized run structure")
 
 
-def validate_story(run_dir: Path) -> None:
-    require_file(run_dir / "outputs/01_story/story.md")
-    validate_schema_file(run_dir / "outputs/01_story/story.json", "story.schema.json")
+def validate_story(run_dir: Path) -> dict[str, Any]:
+    require_file(outputs(run_dir) / "story.md")
+    return validate_schema_file(outputs(run_dir) / "story.json", "story.schema.json")
 
 
 def validate_art(run_dir: Path) -> None:
-    require_file(run_dir / "outputs/02_art_direction/style_bible.md")
-    validate_schema_file(run_dir / "outputs/02_art_direction/art_direction.json", "art_direction.schema.json")
+    style_path = outputs(run_dir) / "style_bible.md"
+    require_file(style_path)
+    text = style_path.read_text(encoding="utf-8")
+    for heading in REQUIRED_STYLE_HEADINGS:
+        if heading not in text:
+            fail(f"style_bible.md missing required section: {heading}")
+    non_empty_lines = [line for line in text.splitlines() if line.strip()]
+    if len(non_empty_lines) > 80:
+        fail("style_bible.md is too long; keep it within one page")
+    if (outputs(run_dir) / "art_direction.json").exists():
+        fail("art_direction.json is deprecated; use style_bible.md only")
+    ok("style bible")
 
 
-def unresolved_issues(review: dict[str, Any], severity: str) -> list[dict[str, Any]]:
-    unresolved: list[dict[str, Any]] = []
-    for item in review.get("issues", []) or []:
-        if item.get("severity") != severity:
-            continue
-        if item.get("fix_applied") is True or item.get("accepted_by_user") is True:
-            continue
-        if str(item.get("resolution_status", "")).lower() in {"fixed", "accepted", "resolved"}:
-            continue
-        unresolved.append(item)
-    return unresolved
-
-
-def evidence_has_content(value: Any) -> bool:
-    if isinstance(value, str):
-        return bool(value.strip())
-    if isinstance(value, list):
-        return any(evidence_has_content(item) for item in value)
-    if isinstance(value, dict):
-        return any(evidence_has_content(item) for item in value.values())
-    return False
-
-
-def validate_shot_contract(shot: dict[str, Any]) -> None:
-    shot_id = shot.get("id") or "<missing id>"
-    duration = shot.get("duration_seconds")
-    if not isinstance(duration, (int, float)) or isinstance(duration, bool):
-        fail(f"{shot_id} duration_seconds must be a number")
-    if duration <= 0 or duration > MAX_SHOT_DURATION_SECONDS:
-        fail(f"{shot_id} duration_seconds must be > 0 and <= {MAX_SHOT_DURATION_SECONDS}")
-    if len(str(shot.get("boundary_reason", "")).strip()) < 8:
-        fail(f"{shot_id} boundary_reason is missing or too thin")
-    prompt_cn = str(shot.get("prompt_cn", ""))
-    terms = shot.get("abstract_terms_detected")
-    evidence = shot.get("concretization_evidence")
-    if terms is None:
-        fail(f"{shot_id} missing abstract_terms_detected")
-    if evidence is None or not evidence_has_content(evidence):
-        fail(f"{shot_id} missing concretization_evidence")
-    if ABSTRACT_TERMS.search(prompt_cn) and not VISIBLE_EVIDENCE.search(prompt_cn):
-        fail(f"{shot_id} contains abstract terms but lacks visible/audio evidence in prompt_cn")
-
-
-def validate_storyboard(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
-    storyboard = validate_schema_file(run_dir / "outputs/03_storyboard/storyboard.json", "storyboard.schema.json")
-    require_file(run_dir / "outputs/03_storyboard/storyboard.md")
-    review = validate_schema_file(run_dir / "outputs/03_storyboard/storyboard_sequence_review.json", "storyboard_sequence_review.schema.json")
-    require_file(run_dir / "outputs/03_storyboard/storyboard_sequence_review.md")
+def validate_storyboard(run_dir: Path) -> dict[str, Any]:
+    storyboard = validate_schema_file(outputs(run_dir) / "storyboard.json", "storyboard.schema.json")
     shots = storyboard.get("shots", [])
     if not shots:
         fail("storyboard.json has no shots")
-    shot_ids = [shot.get("id") for shot in shots]
+    shot_ids = [shot.get("shot_id") for shot in shots]
     if len(shot_ids) != len(set(shot_ids)):
-        fail("storyboard.json has duplicate shot ids")
-    for shot in shots:
-        validate_shot_contract(shot)
-    if review.get("duration_check_passed") is False:
-        fail("storyboard sequence review duration_check_passed=false")
-    if review.get("shot_boundary_check_passed") is False:
-        fail("storyboard sequence review shot_boundary_check_passed=false")
-    if review.get("concretization_check_passed") is not True:
-        fail("storyboard sequence review concretization_check_passed is not true")
-    if review.get("key_turning_point_visual_evidence_check_passed") is False:
-        fail("key turning point visual evidence check failed")
-    if review.get("storytelling_quality_check_passed") is False:
-        fail("storyboard sequence review storytelling_quality_check_passed=false")
-    p0_unresolved = unresolved_issues(review, "P0")
-    if p0_unresolved:
-        fail(f"storyboard sequence review has unresolved P0 issues: {len(p0_unresolved)}")
-    p1_unresolved = unresolved_issues(review, "P1")
-    if p1_unresolved:
-        fail(f"storyboard sequence review has unresolved P1 issues: {len(p1_unresolved)}")
+        fail("storyboard.json has duplicate shot_id values")
+    for index, shot in enumerate(shots, start=1):
+        expected = f"S{index:03d}"
+        if shot.get("shot_id") != expected:
+            fail(f"shot sequence must be contiguous: expected {expected}, got {shot.get('shot_id')}")
+        duration = shot.get("duration_seconds")
+        if not isinstance(duration, (int, float)) or isinstance(duration, bool):
+            fail(f"{expected} duration_seconds must be numeric")
+        if duration <= 0 or duration > MAX_SHOT_DURATION_SECONDS:
+            fail(f"{expected} duration_seconds must be > 0 and <= {MAX_SHOT_DURATION_SECONDS}")
+        if re.search(r"CHAR_|ENV_|PROP_|AUDIO_", json.dumps(shot, ensure_ascii=False)):
+            fail(f"{expected} contains legacy abstract asset IDs; use feature/state names only")
     ok(f"storyboard shots: {len(shots)}")
-    ok("storyboard concretization checks")
-    return storyboard, review
+    return storyboard
 
 
-def collect_storyboard_asset_refs(storyboard: dict[str, Any]) -> dict[str, set[str]]:
-    refs = {"characters": set(), "scenes": set(), "props": set(), "audio": set()}
-    for shot in storyboard.get("shots", []):
-        if shot.get("scene_id"):
-            refs["scenes"].add(shot["scene_id"])
-        for item in shot.get("character_ids", []) or []:
-            refs["characters"].add(item)
-        for item in shot.get("prop_ids", []) or []:
-            refs["props"].add(item)
-        audio = shot.get("audio_id") or shot.get("audio_reference_id")
-        if audio:
-            refs["audio"].add(audio)
-    return refs
+def _asset_names(manifest: dict[str, Any]) -> set[str]:
+    names: set[str] = set()
+    for group in ("characters", "scenes", "props"):
+        for item in manifest.get(group, []) or []:
+            name = item.get("asset_name")
+            if name:
+                names.add(name)
+    return names
 
 
-def validate_assets(run_dir: Path) -> dict[str, Any]:
-    storyboard, _ = validate_storyboard(run_dir)
-    manifest = validate_schema_file(run_dir / "outputs/04_assets/asset_manifest.json", "asset_manifest.schema.json")
-    ids_by_group = {
-        "characters": {item.get("id") for item in manifest.get("characters", []) if item.get("id")},
-        "scenes": {item.get("id") for item in manifest.get("scenes", []) if item.get("id")},
-        "props": {item.get("id") for item in manifest.get("props", []) if item.get("id")},
-        "audio": {item.get("id") for item in manifest.get("audio", []) if item.get("id")},
+def validate_assets(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    storyboard = validate_storyboard(run_dir)
+    manifest = validate_schema_file(outputs(run_dir) / "asset_manifest.json", "asset_manifest.schema.json")
+    shot_map = validate_schema_file(outputs(run_dir) / "shot_asset_map.json", "shot_asset_map.schema.json")
+    names = _asset_names(manifest)
+    if len(names) != sum(len(manifest.get(group, []) or []) for group in ("characters", "scenes", "props")):
+        fail("asset_manifest.json has duplicate asset_name values")
+    if any(re.match(r"^(CHAR|ENV|PROP|AUDIO)_[0-9]{3}", name) for name in names):
+        fail("asset names must use feature/state naming, not CHAR_/ENV_/PROP_ IDs")
+    valid_shots = {shot["shot_id"] for shot in storyboard.get("shots", [])}
+    mapped_shots = {item.get("shot_id") for item in shot_map.get("shot_assets", [])}
+    missing_maps = valid_shots - mapped_shots
+    if missing_maps:
+        fail("shot_asset_map.json missing shots: " + ", ".join(sorted(missing_maps)))
+    for item in shot_map.get("shot_assets", []) or []:
+        for group in ("characters", "scenes", "props"):
+            missing = sorted(set(item.get(group, []) or []) - names)
+            if missing:
+                fail(f"{item.get('shot_id')} references unknown assets in {group}: {', '.join(missing)}")
+    ok(f"asset manifest assets: {len(names)}")
+    return manifest, shot_map
+
+
+def validate_asset_prompt_generation(run_dir: Path) -> None:
+    manifest, _ = validate_assets(run_dir)
+    prompt_dirs = {
+        "characters": outputs(run_dir) / "assets" / "characters",
+        "scenes": outputs(run_dir) / "assets" / "scenes",
+        "props": outputs(run_dir) / "assets" / "props",
     }
-    all_ids = [item for ids in ids_by_group.values() for item in ids]
-    if len(all_ids) != len(set(all_ids)):
-        fail("duplicate asset ids across asset groups")
-    refs = collect_storyboard_asset_refs(storyboard)
-    missing = []
-    for group, required_ids in refs.items():
-        missing.extend(f"{group}:{asset_id}" for asset_id in sorted(required_ids - ids_by_group[group]))
-    if missing:
-        fail("storyboard references missing from asset_manifest.json: " + ", ".join(missing))
-    for prop in manifest.get("props", []) or []:
-        prop_id = prop.get("id", "<missing prop>")
-        if prop.get("generation_required") is True:
-            if prop.get("asset_tier") != "canonical_prop":
-                fail(f"{prop_id} generation_required=true but asset_tier is not canonical_prop")
-            reasons = set(as_list(prop.get("reason_to_generate")))
-            if not reasons:
-                fail(f"{prop_id} generation_required=true but missing reason_to_generate")
-            unknown = reasons - PROP_GENERATION_REASONS
-            if unknown:
-                fail(f"{prop_id} has unknown reason_to_generate values: {sorted(unknown)}")
-            if not as_list(prop.get("must_not_change")):
-                fail(f"{prop_id} generation_required=true but missing must_not_change")
-        if prop.get("asset_tier") in {"scene_dressing", "shot_description_only"} and prop.get("generation_required") is True:
-            fail(f"{prop_id} non-canonical prop tier cannot be generation_required=true")
-    ok("asset manifest references and prop policy")
-    return manifest
+    for group, directory in prompt_dirs.items():
+        required_assets = [
+            item["asset_name"]
+            for item in manifest.get(group, []) or []
+            if item.get("generation_required") is True
+        ]
+        for asset_name in required_assets:
+            expected = directory / f"{asset_name}.md"
+            if not expected.exists():
+                warn(f"missing prompt file for {asset_name}: {expected}")
+    ok("asset prompt directories checked")
 
 
-def validate_image_result_manifest(run_dir: Path, enforce_no_blocking_missing: bool = False) -> dict[str, Any]:
-    manifest = validate_schema_file(run_dir / "outputs/06_external_results/image_result_manifest.json", "image_result_manifest.schema.json")
-    queue_path = run_dir / "outputs/04_assets/image_generation_queue.json"
-    if queue_path.exists():
-        queue = read_json(queue_path)
-        queue_items = queue.get("image_queue", queue.get("queue", []))
-        if isinstance(queue_items, list):
-            must_queue_ids = {item.get("queue_id") for item in queue_items if item.get("generation_priority") == "must_generate" and item.get("queue_id")}
-            result_queue_ids = {item.get("queue_id") for item in manifest.get("image_results", []) if item.get("queue_id")}
-            missing_queue_ids = sorted(must_queue_ids - result_queue_ids)
-            if missing_queue_ids:
-                fail("must_generate queue items missing from image_result_manifest.json: " + ", ".join(missing_queue_ids))
-    blocking_missing = []
-    for item in manifest.get("image_results", []) or []:
-        asset_id = item.get("asset_id", "<missing asset_id>")
-        role = item.get("image_role")
-        status = item.get("status")
-        if item.get("generation_priority") == "must_generate" and item.get("blocking_if_missing") is not True:
-            fail(f"{asset_id}/{role} must_generate requires blocking_if_missing=true")
-        if item.get("generation_priority") == "skip_generation" and status != "not_required":
-            fail(f"{asset_id}/{role} skip_generation must use status=not_required")
-        if item.get("blocking_if_missing") is True and status in BLOCKING_IMAGE_STATUSES:
-            blocking_missing.append(f"{asset_id}/{role}:{status}")
-        if item.get("used_as_video_reference") is True and status not in READY_IMAGE_STATUSES:
-            fail(f"{asset_id}/{role} is marked used_as_video_reference but status is {status}")
-    if enforce_no_blocking_missing and blocking_missing:
-        fail("final completed is blocked by required image results: " + ", ".join(blocking_missing))
-    if blocking_missing:
-        warn(f"blocking image results not ready: {len(blocking_missing)}")
-    ok(f"image results: {len(manifest.get('image_results', []))}")
-    return manifest
-
-
-def validate_audio(run_dir: Path, enforce_final_ready: bool = False) -> dict[str, Any]:
-    voice_manifest = validate_schema_file(run_dir / "outputs/04_assets/audio/voice_reference_manifest.json", "voice_reference_manifest.schema.json")
-    for item in voice_manifest.get("voice_references", []) or []:
-        status = str(item.get("status", "")).lower()
-        audio_id = item.get("id", "<missing audio id>")
-        if enforce_final_ready and status in NOT_FINAL_AUDIO_STATUSES:
-            fail(f"{audio_id} audio reference is {status}; final completed is not allowed")
-    ok(f"voice references: {len(voice_manifest.get('voice_references', []))}")
-    return voice_manifest
-
-
-def shot_has_dialogue(shot: dict[str, Any]) -> bool:
-    text = " ".join(str(shot.get(key, "")) for key in ("audio_emotion", "audio_intent", "prompt_cn", "narrative_function"))
-    return bool(DIALOGUE_HINT.search(text))
-
-
-def extract_cn_prompt(text: str) -> str:
-    if "【中文视频提示词】" not in text:
-        return ""
-    content = text.split("【中文视频提示词】", 1)[1]
-    if "【自检通过项】" in content:
-        content = content.split("【自检通过项】", 1)[0]
-    return content.strip()
-
-
-def declared_task_type(text: str) -> str | None:
-    for task_type in TASK_TYPES:
-        if task_type in text:
-            return task_type
-    match = re.search(r"任务类型[：:]\s*([a-z_]+)", text)
-    if match and match.group(1) in TASK_TYPES:
-        return match.group(1)
-    return None
-
-
-def validate_seedance_shot_file(shot: dict[str, Any], shot_file: Path) -> None:
-    require_file(shot_file)
-    shot_id = shot.get("id")
-    text = shot_file.read_text(encoding="utf-8")
-    for section in REQUIRED_SEEDANCE_SECTIONS:
-        if section not in text:
-            fail(f"{shot_id} missing required section: {section}")
-    if "【English Prompt】" in text or "English Prompt" in text or "中英对照" in text:
-        fail(f"{shot_id} contains forbidden English/bilingual block")
-    if f"@{shot_id}_STORYBOARD" not in text:
-        fail(f"{shot_id} missing @{shot_id}_STORYBOARD reference")
-    if "@PROP_" in text:
-        fail(f"{shot_id} contains @PROP reference; props must be described in prompt body")
-    task_type = declared_task_type(text)
-    if not task_type:
-        fail(f"{shot_id} missing Seedance task type declaration")
-    cn_prompt = extract_cn_prompt(text)
-    if not cn_prompt:
-        fail(f"{shot_id} has empty 中文视频提示词 section")
-    if task_type == "video_edit" and not re.search(r"严格编辑\s*@视频\d+", cn_prompt):
-        fail(f"{shot_id} video_edit must use '严格编辑 @视频N'")
-    if task_type == "video_extend" and not re.search(r"向前延长\s*@视频\d+|向后延长\s*@视频\d+", cn_prompt):
-        fail(f"{shot_id} video_extend must use '向前延长 @视频N' or '向后延长 @视频N'")
-    if task_type == "combined_task":
-        has_reference = re.search(r"参考\s*@(?:图片|视频|音频)\d+", cn_prompt)
-        has_operation = re.search(r"严格编辑\s*@视频\d+|向前延长\s*@视频\d+|向后延长\s*@视频\d+", cn_prompt)
-        if not has_reference or not has_operation:
-            fail(f"{shot_id} combined_task must include both reference and edit/extend operation")
-    if shot_has_dialogue(shot) and "@AUDIO_" not in text:
-        fail(f"{shot_id} appears to contain voice/dialogue but has no @AUDIO reference")
-    if ("@AUDIO_" in text or re.search(r"@音频\d+", text)) and ("说道" in cn_prompt or "台词" in text) and "{" not in cn_prompt:
-        fail(f"{shot_id} dialogue should use Seedance braces like {{台词内容}}")
-    if "场景：" not in text:
-        fail(f"{shot_id} missing scene reference decision")
-    if "音色：" not in text:
-        fail(f"{shot_id} missing audio reference decision")
+def validate_storyboard_prompt_generation(run_dir: Path) -> None:
+    validate_assets(run_dir)
+    require_file(outputs(run_dir) / "storyboard_prompts.md")
+    text = (outputs(run_dir) / "storyboard_prompts.md").read_text(encoding="utf-8")
+    for shot in read_json(outputs(run_dir) / "storyboard.json").get("shots", []):
+        if shot["shot_id"] not in text:
+            fail(f"storyboard_prompts.md missing {shot['shot_id']}")
+    ok("storyboard prompts")
 
 
 def validate_video_prompts(run_dir: Path) -> None:
-    storyboard, _ = validate_storyboard(run_dir)
-    validate_audio(run_dir)
-    validate_image_result_manifest(run_dir, enforce_no_blocking_missing=False)
-    video_prompt_path = run_dir / "outputs/05_video_prompts/shot_video_prompts.md"
-    single_shot_dir = run_dir / "outputs/05_video_prompts/shots"
-    reference_path = run_dir / "outputs/05_video_prompts/video_prompt_asset_reference.md"
-    require_file(video_prompt_path)
-    require_dir(single_shot_dir)
-    require_file(reference_path)
-    prompt_text = video_prompt_path.read_text(encoding="utf-8")
-    shots = storyboard.get("shots", [])
-    if "【English Prompt】" in prompt_text or "English Prompt" in prompt_text:
+    storyboard = validate_storyboard(run_dir)
+    require_file(outputs(run_dir) / "video_prompts.md")
+    text = (outputs(run_dir) / "video_prompts.md").read_text(encoding="utf-8")
+    if "English Prompt" in text or "【English Prompt】" in text:
         fail("English Prompt blocks are not allowed")
-    if "@PROP_" in prompt_text:
-        fail("@PROP references are not allowed by default")
-    single_shot_files = sorted(single_shot_dir.glob("SHOT_*.md"))
-    if len(single_shot_files) != len(shots):
-        fail(f"single shot file count {len(single_shot_files)} does not match shot count {len(shots)}")
-    for shot in shots:
-        shot_id = shot.get("id")
-        validate_seedance_shot_file(shot, single_shot_dir / f"{shot_id}.md")
-        shot_json = single_shot_dir / f"{shot_id}.json"
-        if shot_json.exists():
-            validate_schema_file(shot_json, "shot_video_prompt.schema.json")
-    ok(f"Seedance shot prompts: {len(shots)}")
-
-
-def validate_external(run_dir: Path) -> None:
-    require_file(run_dir / "outputs/06_external_results/external_generation_handoff.md")
-    require_file(run_dir / "outputs/06_external_results/shot_result_manifest.template.json")
-    require_file(run_dir / "outputs/06_external_results/edit_notes.md")
-    validate_image_result_manifest(run_dir, enforce_no_blocking_missing=False)
-    ok("external generation handoff")
-
-
-def validate_media_review(run_dir: Path) -> None:
-    review = validate_schema_file(run_dir / "outputs/06_external_results/generated_media_review.json", "generated_media_review.schema.json")
-    require_file(run_dir / "outputs/06_external_results/generated_media_review.md")
-    if review.get("status") == "pass" and unresolved_issues(review, "P0"):
-        fail("generated media review has unresolved P0 while status=pass")
-    ok("generated media review")
-
-
-def validate_final(run_dir: Path) -> None:
-    validate_schema_file(run_dir / "outputs/07_final_delivery/continuity_report.json", "continuity_report.schema.json")
-    require_file(run_dir / "outputs/07_final_delivery/continuity_report.md")
-    manifest_path = run_dir / "outputs/07_final_delivery/final_package_manifest.json"
-    if manifest_path.exists():
-        manifest = validate_schema_file(manifest_path, "final_package_manifest.schema.json")
-        if manifest.get("status") == "completed":
-            checkpoint = validate_checkpoint(run_dir)
-            if checkpoint.get("known_gaps"):
-                fail("final package is completed but checkpoint.known_gaps is not empty")
-            if checkpoint.get("blocking_issues"):
-                fail("final package is completed but checkpoint.blocking_issues is not empty")
-            validate_image_result_manifest(run_dir, enforce_no_blocking_missing=True)
-            validate_audio(run_dir, enforce_final_ready=True)
-            media_review_path = run_dir / "outputs/06_external_results/generated_media_review.json"
-            if media_review_path.exists():
-                media_review = read_json(media_review_path)
-                if media_review.get("status") != "pass":
-                    fail("final completed requires generated_media_review status=pass")
-                if unresolved_issues(media_review, "P0"):
-                    fail("final completed blocked by generated media P0 issues")
-    ok("final delivery")
+    if "@PROP_" in text or "PROP_" in text:
+        fail("prop assets must be described in the prompt body, not referenced as @PROP")
+    if not re.search(r"\bV[0-9]{3}\b", text):
+        fail("video_prompts.md must contain V### prompt ids")
+    for match in re.finditer(r"时长[：:]\s*([0-9]+(?:\.[0-9]+)?)\s*s", text):
+        if float(match.group(1)) > MAX_SHOT_DURATION_SECONDS:
+            fail("single video prompt duration must be <= 15s")
+    same_scene_pairs = 0
+    shots = storyboard.get("shots", [])
+    for prev, current in zip(shots, shots[1:]):
+        if prev.get("scene_id") == current.get("scene_id"):
+            same_scene_pairs += 1
+    if same_scene_pairs and "参考@上一分镜_站位" not in text:
+        fail("same-scene continuity requires 参考@上一分镜_站位 anchor rule")
+    ok("video prompts")
 
 
 def validate_all(run_dir: Path) -> None:
@@ -536,23 +316,33 @@ def validate_all(run_dir: Path) -> None:
     validate_story(run_dir)
     validate_art(run_dir)
     validate_assets(run_dir)
+    validate_asset_prompt_generation(run_dir)
+    validate_storyboard_prompt_generation(run_dir)
     validate_video_prompts(run_dir)
-    validate_external(run_dir)
-    validate_media_review(run_dir)
-    validate_final(run_dir)
-    ok("production_status.csv exists" if (run_dir / "production_status.csv").exists() else "production_status.csv optional")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Validate an AI short film local run.")
+    parser = argparse.ArgumentParser(description="Validate a simplified Jimeng short-video local run.")
     parser.add_argument("run_dir", help="Local run directory")
     parser.add_argument(
         "--phase",
         default="all",
         choices=[
-            "initialized", "init", "story", "art", "art_direction", "storyboard", "storyboard_sequence_review",
-            "assets", "asset_manifest", "audio", "voice", "video_prompts", "video", "external", "handoff",
-            "media_review", "generated_media", "final", "all",
+            "initialized",
+            "init",
+            "story",
+            "art",
+            "art_direction",
+            "storyboard",
+            "assets",
+            "asset_executor",
+            "asset_prompt_generation",
+            "asset_prompts",
+            "storyboard_prompt_generation",
+            "storyboard_prompts",
+            "video_prompts",
+            "video",
+            "all",
         ],
         help="Validation phase",
     )
@@ -567,11 +357,9 @@ def main() -> None:
         "art": validate_art,
         "storyboard": validate_storyboard,
         "assets": validate_assets,
-        "audio": validate_audio,
+        "asset_prompt_generation": validate_asset_prompt_generation,
+        "storyboard_prompt_generation": validate_storyboard_prompt_generation,
         "video_prompts": validate_video_prompts,
-        "external": validate_external,
-        "media_review": validate_media_review,
-        "final": validate_final,
         "all": validate_all,
     }
     validators[phase](run_dir)
