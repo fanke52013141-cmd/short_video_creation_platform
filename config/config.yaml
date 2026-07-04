@@ -17,7 +17,7 @@ runtime:
 skill_versions:
   story_generation: "3.0.0"
   art_direction: "2.1.0"
-  storyboard_director: "2.1.0"
+  storyboard_director: "2.2.0"
   asset_executor: "1.0.0"
   character_prompt_generator: "2.0.0"
   scene_prompt_generator: "2.0.0"
@@ -97,6 +97,7 @@ storyboard_policy:
   max_shot_duration_seconds: 15
   director_outputs_assets: false
   director_owns_composition: true
+  director_creates_scene_id: true
   required_shot_fields:
     - shot_id
     - scene_id
@@ -104,8 +105,13 @@ storyboard_policy:
     - framing
     - camera_move
     - action_desc
+  forbidden_shot_fields:
     - characters_in_shot
     - location
+    - character_ids
+    - prop_ids
+    - asset_ids
+    - prompt_cn
 
 style_bible_policy:
   one_page_only: true
