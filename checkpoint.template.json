@@ -1,97 +1,57 @@
 {
   "project": {
-    "name": "ai_short_film_pipeline",
+    "name": "short_video_creation_platform",
     "slug": "__PROJECT_SLUG__",
     "title": "",
     "created_at": "__CREATED_AT__",
     "run_dir": "__RUN_DIR__"
   },
-  "schema_version": "1.1",
+  "schema_version": "2.0",
   "last_updated": "__CREATED_AT__",
   "current_phase": "initialized",
-  "phase_index": 0,
+  "completed_phases": [],
   "phase_order": [
     "story_generation",
     "art_direction",
     "storyboard_director",
-    "storyboard_sequence_review",
-    "asset_manifest_builder",
+    "asset_executor",
     "asset_prompt_generation",
-    "image_generation_executor",
-    "voice_reference_manifest_builder",
-    "shot_video_prompt_generator",
-    "external_generation_handoff",
-    "generated_media_review",
-    "continuity_review",
-    "production_package_builder"
+    "storyboard_prompt_generator",
+    "video_prompt_generator"
   ],
-  "total_phases": 13,
-  "completed_phases": [],
-  "phases": {
-    "story_generation": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" },
-    "art_direction": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" },
-    "storyboard_director": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" },
-    "storyboard_sequence_review": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" },
-    "asset_manifest_builder": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" },
-    "asset_prompt_generation": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" },
-    "image_generation_executor": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" },
-    "voice_reference_manifest_builder": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" },
-    "shot_video_prompt_generator": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" },
-    "external_generation_handoff": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" },
-    "generated_media_review": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" },
-    "continuity_review": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" },
-    "production_package_builder": { "status": "not_started", "artifacts": {}, "approved_by_user": false, "updated_at": "" }
+  "total_phases": 7,
+  "artifacts": {
+    "idea_brief": "./inputs/idea_brief.md",
+    "story_md": "./outputs/story.md",
+    "story_json": "./outputs/story.json",
+    "style_bible": "./outputs/style_bible.md",
+    "storyboard_json": "./outputs/storyboard.json",
+    "asset_manifest": "./outputs/asset_manifest.json",
+    "shot_asset_map": "./outputs/shot_asset_map.json",
+    "asset_dirs": {
+      "characters": "./outputs/assets/characters",
+      "scenes": "./outputs/assets/scenes",
+      "props": "./outputs/assets/props"
+    },
+    "storyboard_prompts": "./outputs/storyboard_prompts.md",
+    "storyboards": "./outputs/storyboards",
+    "video_prompts": "./outputs/video_prompts.md"
   },
   "generation_modes": {
-    "image_generation": "ask_user",
-    "video_generation": "external_manual",
-    "editing": "external_manual"
-  },
-  "video_prompt_generation": {
-    "mode": "per_shot_loop",
-    "single_shot_dir": "./outputs/05_video_prompts/shots",
-    "aggregate_file": "./outputs/05_video_prompts/shot_video_prompts.md",
-    "asset_reference_file": "./outputs/05_video_prompts/video_prompt_asset_reference.md",
-    "requires_audio_for_dialogue": true,
-    "env_reference_policy": "conditional_by_camera_motion",
-    "prop_reference_policy": "describe_only_no_at_prop"
-  },
-  "storyboard_sequence_review": {
-    "required": true,
-    "review_file": "./outputs/03_storyboard/storyboard_sequence_review.md",
-    "review_json_file": "./outputs/03_storyboard/storyboard_sequence_review.json",
-    "window_sizes": [1, 2, 3],
-    "blocks_next_phase_on_p0": true,
-    "blocks_next_phase_on_unresolved_p1": true
+    "image_generation": "external_manual",
+    "video_generation": "jimeng_canvas_manual"
   },
   "quality_gates": {
-    "require_phase_order": true,
-    "require_schema_validation": true,
-    "require_asset_id_resolution": true,
-    "require_storyboard_sequence_review_before_assets": true,
-    "require_character_three_view_for_main_characters": true,
-    "require_audio_reference_for_dialogue_shots": true,
-    "require_per_shot_video_prompt_files": true,
-    "require_generated_media_review_before_completed": true,
-    "allow_draft_with_known_gaps": true
-  },
-  "artifacts": {},
-  "known_gaps": [],
-  "blocking_issues": [],
-  "production_status": {
-    "file": "./production_status.csv",
-    "notes": "Local run status table. Do not commit real project status to repository."
-  },
-  "asset_registry": {
-    "characters": [],
-    "scenes": [],
-    "props": [],
-    "audio": []
+    "style_bible_one_page": true,
+    "storyboard_shot_duration_lte_15s": true,
+    "director_does_not_define_assets": true,
+    "asset_executor_is_single_asset_source": true,
+    "video_prompt_merge_rule_required": true,
+    "previous_storyboard_anchor_required_for_same_scene_continuity": true
   },
   "next_phase": {
     "skill": "story_generation",
-    "input_from": "./inputs/idea_brief.md",
-    "notes": "Runtime checkpoint generated from checkpoint.template.json."
+    "input_from": "./inputs/idea_brief.md"
   },
   "status": "in_progress"
 }
