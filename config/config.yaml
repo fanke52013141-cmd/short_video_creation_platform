@@ -1,6 +1,6 @@
 project:
   name: "short_video_creation_platform"
-  version: "1.0.2"
+  version: "1.0.3"
   description: "将用户想法转化为即梦画布生产前置交付包的 Skill 工作流"
 
 runtime:
@@ -15,7 +15,7 @@ runtime:
   video_generation_mode_default: "jimeng_canvas_manual"
 
 skill_versions:
-  story_generation: "2.0.0"
+  story_generation: "3.0.0"
   art_direction: "2.0.0"
   storyboard_director: "2.0.0"
   asset_executor: "1.0.0"
@@ -44,7 +44,6 @@ paths:
   checkpoint_template_file: "./checkpoint.template.json"
   checkpoint_file: "./local_runs/YYYY-MM-DD/project_slug/checkpoint.json"
   story_md: "./local_runs/YYYY-MM-DD/project_slug/outputs/story.md"
-  story_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/story.json"
   style_bible: "./local_runs/YYYY-MM-DD/project_slug/outputs/style_bible.md"
   storyboard_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboard.json"
   asset_manifest: "./local_runs/YYYY-MM-DD/project_slug/outputs/asset_manifest.json"
@@ -67,7 +66,6 @@ prompt_sources:
   video_prompt_generator: "./skills/raw_prompts/seedance_video_prompt.source.md"
 
 schemas:
-  story: "./schemas/story.schema.json"
   storyboard: "./schemas/storyboard.schema.json"
   asset_manifest: "./schemas/asset_manifest.schema.json"
   shot_asset_map: "./schemas/shot_asset_map.schema.json"
@@ -84,6 +82,16 @@ naming_policy:
     - "CHAR_001"
     - "ENV_001"
     - "PROP_001"
+
+story_generation_policy:
+  markdown_output_only: true
+  forbidden_outputs:
+    - "outputs/story.json"
+    - "outputs/story_index.json"
+  structure_later:
+    storyboard: "storyboard_director"
+    assets: "asset_executor"
+    video_plan: "video_prompt_generator"
 
 storyboard_policy:
   max_shot_duration_seconds: 15
@@ -178,6 +186,8 @@ final_handoff:
     - "outputs/assets/scenes/"
     - "outputs/storyboards/"
   excluded:
+    - "outputs/story.json"
+    - "outputs/story_index.json"
     - "outputs/assets/props/ as standalone delivery"
     - "external result manifests"
     - "generated media review"
