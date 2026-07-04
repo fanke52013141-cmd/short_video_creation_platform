@@ -29,13 +29,13 @@ local_runs/YYYY-MM-DD/project_slug/notes.md
 
 | Phase | Status | Artifact | Notes |
 | -- | -- | -- | -- |
-| story_generation | pending | `outputs/story.md`, `outputs/story.json` |  |
+| story_generation | pending | `outputs/story.md` | 只做剧本，不输出 JSON |
 | art_direction | pending | `outputs/style_bible.md` | 一页以内 |
-| storyboard_director | pending | `outputs/storyboard.json` | 只做分镜 |
+| storyboard_director | pending | `outputs/storyboard.json` | 只做分镜结构化 |
 | asset_executor | pending | `outputs/asset_manifest.json`, `outputs/shot_asset_map.json` | 资产唯一来源 |
 | asset_prompt_generation | pending | `outputs/assets/**.md` | 三路并行 |
 | storyboard_prompt_generator | pending | `outputs/storyboard_prompts.md` | 生成分镜参考图提示词 |
-| video_prompt_generator | pending | `outputs/video_prompts.md` | 最终复制到即梦 |
+| video_prompt_generator | pending | `outputs/video_prompts.md`, `outputs/video_prompts.json` | 最终复制到即梦 |
 
 ## Manual Jimeng Steps
 
@@ -46,13 +46,14 @@ local_runs/YYYY-MM-DD/project_slug/notes.md
    - `outputs/assets/props/`
 3. 分镜提示词完成后，在即梦生成分镜参考图。
 4. 将分镜图回填到 `outputs/storyboards/S001.png`、`S002.png` 等。
-5. 运行 `video_prompt_generator` 生成最终 `video_prompts.md`。
+5. 运行 `video_prompt_generator` 生成最终 `video_prompts.md` 和 `video_prompts.json`。
 6. 将最终交付物带入即梦画布。
 
 ## Final Handoff Checklist
 
 - [ ] `outputs/story.md`
 - [ ] `outputs/video_prompts.md`
+- [ ] `outputs/video_prompts.json`
 - [ ] `outputs/assets/characters/` 中只保留有效角色资产
 - [ ] `outputs/assets/scenes/` 中只保留有效场景资产
 - [ ] `outputs/storyboards/` 中包含全部有效分镜参考图
