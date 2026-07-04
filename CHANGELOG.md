@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-07-04 - v1.0.1
+
+### Changed
+- [skill] 将 `video_prompt_generator` 升级到 2.1.0，补入 Seedance 2.0 多模态多参考任务体系。
+- [skill] 新增任务类型规则：`pipeline_shot_generation`、`multimodal_reference`、`video_edit`、`video_extend`、`combined_task`、`track_stitch`。
+- [skill] 新增素材角色识别：首帧、尾帧、关键帧、人物资产、场景资产、风格参考、声音参考、配乐参考、环境音参考、动作参考、整体参考、编辑对象、延长对象。
+- [skill] 强化硬规则：编辑对象与延长对象正文中禁止写 `参考@资产名`，必须分别使用 `严格编辑 @资产名`、`向前延长 @资产名` 或 `向后延长 @资产名`。
+- [script] `validate_project.py` 增加视频提示词静态检查：必需 `【自检通过项】`、`【资产声明区】`、`【中文视频提示词】`，禁止英文/中英对照，检查编辑/延长对象误用，检查高强度动作风险提示和防字幕/Logo/水印约束。
+- [config] 更新 `video_prompt_policy`，记录多参考素材角色、操作对象规则、必需输出段落和高强度动作风险提示规则。
+- [docs] 更新 `docs/flow.md` 的视频提示词阶段说明。
+
+### Reason
+- 即梦 / Seedance 2.0 的多参考素材任务中，最容易出错的是把待编辑/待延长视频误写成参考素材。本次更新把“参考类素材”和“操作对象类素材”拆成硬规则。
+- 多图片、音频、视频输入会分别锁定不同维度，提示词应只补足未锁定维度，避免重复描述或互相冲突。
+
+### Validation
+- 已在本地构建新版 `validate_project.py` 并通过 Python 语法编译检查。
+
 ## 2026-07-04 - v1.0.0
 
 ### Changed
