@@ -26,6 +26,7 @@
     "storyboard_json": "./outputs/storyboard.json",
     "asset_manifest": "./outputs/asset_manifest.json",
     "shot_asset_map": "./outputs/shot_asset_map.json",
+    "asset_prompt_tasks": "./outputs/asset_prompt_tasks.json",
     "storyboard_prompts": "./outputs/storyboard_prompts.md",
     "video_prompts": "./outputs/video_prompts.md",
     "video_prompts_json": "./outputs/video_prompts.json"
@@ -37,6 +38,7 @@
     "seedance_stable_asset_naming": true,
     "character_state_split_forbidden": true,
     "scene_light_time_split_forbidden": true,
+    "asset_prompt_task_minimal_input": true,
     "video_prompt_merge_decision_required": true
   },
   "status": "ready_for_jimeng_canvas"
