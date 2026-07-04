@@ -11,9 +11,9 @@
 - `story.md`：完整剧本。
 - `style_bible.md`：一页以内的视觉风格约束。
 - `storyboard.json`：导演分镜序列。
-- `asset_manifest.json`：按“特征 + 状态”命名的资产清单。
-- `shot_asset_map.json`：分镜与资产映射。
-- 角色、场景、道具图片生成提示词。
+- `asset_manifest.json`：Seedance 主体、场景、关键道具命名与素材绑定清单。
+- `shot_asset_map.json`：分镜与稳定资产名的映射。
+- 角色、场景、必要道具图片生成提示词。
 - `storyboard_prompts.md`：分镜参考图生成提示词。
 - `video_prompts.md`：最终可复制到即梦的视频提示词。
 - `video_prompts.json`：结构化视频提示词计划。
@@ -35,8 +35,8 @@
 4. 用户与剧本专家反复讨论、修改、润色，直到用户确认剧本可以进入下一阶段。
 5. 触发 `art_direction`：艺术总监读取用户确认的 `story.md`。如果用户已有艺术风格或参考图，优先继承并补全执行规则；如果用户没有明确视觉方向，先给候选方案让用户选择。用户确认后产出 `outputs/style_bible.md`。
 6. 用户确认视觉方向后，触发 `storyboard_director`。导演读取 `story.md` 与 `style_bible.md`，负责具体构图、景别、镜头调度和分镜结构化，产出 `outputs/storyboard.json`。
-7. 用户确认分镜序列后，触发 `asset_executor`，产出 `outputs/asset_manifest.json` 与 `outputs/shot_asset_map.json`。资产执行官负责人物、场景、道具和资产拆分。
-8. 并行触发 `character_prompt_generator`、`scene_prompt_generator`、`prop_prompt_generator`，分别处理单个角色、单个场景、单个道具的提示词。
+7. 用户确认分镜序列后，触发 `asset_executor`，产出 `outputs/asset_manifest.json` 与 `outputs/shot_asset_map.json`。资产执行官负责 Seedance 主体/场景/关键道具命名、素材绑定和 shot 映射。
+8. 并行触发 `character_prompt_generator`、`scene_prompt_generator`、`prop_prompt_generator`，分别处理单个人物主体、单个场景、单个必要道具的提示词。
 9. 用户在即梦生成资产图片，并回填到 `outputs/assets/`。
 10. 触发 `storyboard_prompt_generator`，读取分镜、风格圣经和资产参考图，产出 `outputs/storyboard_prompts.md`。
 11. 用户在即梦生成分镜参考图，并回填到 `outputs/storyboards/`。
@@ -52,7 +52,10 @@
 - `art_direction` 不负责具体构图；构图、景别、机位和镜头调度属于 `storyboard_director`。
 - `art_direction` 不输出 `art_direction.json`，不输出“构图倾向”硬字段，不输出独立“禁止出现的视觉元素”字段。
 - `storyboard_director` 只输出分镜序列，不定义资产、不生成提示词、不处理音色。
-- `asset_executor` 是人物、场景、道具拆分以及资产清单和分镜资产映射的唯一来源。
+- `asset_executor` 是人物、场景、道具命名、素材绑定、生成决策和分镜资产映射的唯一来源。
+- 人物不因表情、动作、姿态拆成多个资产；同一人物跨多张参考图必须共用同一个人物名。
+- 场景不因普通光线、时间、天气变化拆资产；只有空间结构、地点或叙事空间变化才新建场景。
+- 道具只管控核心剧情道具；普通背景物件不强行生成独立资产。
 - 角色、场景、道具提示词生成器一次只处理一个对象，避免上下文污染。
 - `storyboard_prompt_generator` 把导演叙事语言改写为 AI 生图语言。
 - `video_prompt_generator` 可合并连续分镜，但必须同时满足：同一 `scene_id`、相邻 shot 时长之和不超过 15 秒、动作连续且无时间跳跃。
@@ -67,8 +70,8 @@
 - 艺术方向阶段出现具体构图、分镜、景别表或机位设计时，返回 `art_direction` 删除越界内容，交给 `storyboard_director`。
 - 艺术方向阶段在用户没有视觉方向时直接定稿，返回 `art_direction` 先给候选方案。
 - JSON 不符合 schema 时，先修复对应阶段 JSON，不让下游猜字段。
-- 分镜中出现 `CHAR_001`、`ENV_001`、`PROP_001` 等抽象资产 ID 时，返回 `storyboard_director` 改为特征名或场景名。
-- 资产命名冲突时，返回 `asset_executor` 统一命名。
+- 分镜中出现 `CHAR_001`、`ENV_001`、`PROP_001` 等抽象资产 ID 时，返回 `storyboard_director` 删除资产字段。
+- 资产命名因状态变化过度拆分时，返回 `asset_executor` 合并为稳定主体/场景名。
 - 风格漂移时，返回 `art_direction` 修订 `style_bible.md`，不得在视频提示词阶段临时覆盖。
 
 ## Constraints
