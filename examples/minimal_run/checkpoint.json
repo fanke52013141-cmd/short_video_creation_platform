@@ -1,0 +1,35 @@
+{
+  "schema_version": "2.0",
+  "project_slug": "minimal_run",
+  "current_phase": "video_prompt_generator",
+  "completed_phases": [
+    "story_generation",
+    "art_direction",
+    "storyboard_director",
+    "asset_executor",
+    "asset_prompt_generation",
+    "storyboard_prompt_generator",
+    "video_prompt_generator"
+  ],
+  "phase_order": [
+    "story_generation",
+    "art_direction",
+    "storyboard_director",
+    "asset_executor",
+    "asset_prompt_generation",
+    "storyboard_prompt_generator",
+    "video_prompt_generator"
+  ],
+  "artifacts": {
+    "story_md": "./outputs/story.md",
+    "story_json": "./outputs/story.json",
+    "style_bible": "./outputs/style_bible.md",
+    "storyboard_json": "./outputs/storyboard.json",
+    "asset_manifest": "./outputs/asset_manifest.json",
+    "shot_asset_map": "./outputs/shot_asset_map.json",
+    "storyboard_prompts": "./outputs/storyboard_prompts.md",
+    "video_prompts": "./outputs/video_prompts.md",
+    "video_prompts_json": "./outputs/video_prompts.json"
+  },
+  "status": "ready_for_jimeng_canvas"
+}
