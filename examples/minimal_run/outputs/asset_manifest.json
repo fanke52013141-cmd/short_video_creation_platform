@@ -1,0 +1,34 @@
+{
+  "naming_policy": "特征 + 状态中文命名",
+  "characters": [
+    {
+      "asset_name": "黑发女孩_克制_正面",
+      "asset_type": "character",
+      "base_name": "林小满",
+      "feature": "黑发、深色针织衫",
+      "state": "克制",
+      "angle_or_view": "正面",
+      "visual_anchors": ["黑色中长发", "深色针织衫"],
+      "appears_in_shots": ["S001", "S002"],
+      "generation_required": true,
+      "prompt_scope": "single_character_all_states",
+      "notes": "人物外观由资产图锁定"
+    }
+  ],
+  "scenes": [
+    {
+      "asset_name": "雨夜客厅_冷暖对比_安静",
+      "asset_type": "scene",
+      "base_name": "雨夜客厅",
+      "feature": "窗外雨夜、室内暖灯",
+      "state": "安静",
+      "angle_or_view": "中景",
+      "visual_anchors": ["雨窗", "暖黄台灯", "沙发"],
+      "appears_in_shots": ["S001", "S002"],
+      "generation_required": true,
+      "prompt_scope": "single_scene",
+      "notes": "场景基调由资产图锁定"
+    }
+  ],
+  "props": []
+}
