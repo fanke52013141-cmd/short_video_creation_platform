@@ -193,9 +193,15 @@ def validate_initialized(run_dir: Path) -> None:
     ok("initialized run structure")
 
 
-def validate_story(run_dir: Path) -> dict[str, Any]:
-    require_file(outputs(run_dir) / "story.md")
-    return validate_schema_file(outputs(run_dir) / "story.json", "story.schema.json")
+def validate_story(run_dir: Path) -> None:
+    story_path = outputs(run_dir) / "story.md"
+    require_file(story_path)
+    text = story_path.read_text(encoding="utf-8").strip()
+    if len(text) < 80:
+        fail("story.md is too short to be a usable script/story output")
+    if (outputs(run_dir) / "story.json").exists():
+        fail("story.json is deprecated; story_generation must output story.md only")
+    ok("story markdown")
 
 
 def validate_art(run_dir: Path) -> None:
