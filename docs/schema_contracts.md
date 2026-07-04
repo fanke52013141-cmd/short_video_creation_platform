@@ -78,16 +78,32 @@
 
 每个资产至少包含：
 
-- `asset_name`: 使用“特征 + 状态”命名，例如 `少女_默然_正面`。
+- `asset_name`: Seedance 稳定调用名，例如 `林小满`、`主体1`、`雨夜客厅场景`、`手机`。
 - `asset_type`: `character | scene | prop`。
 - `appears_in_shots`: 该资产出现的分镜 ID。
 - `generation_required`: 是否需要生成独立资产图。
 
-资产命名禁止使用 `CHAR_001`、`ENV_001`、`PROP_001` 作为主标识。此类编号不符合本流程的可读交付目标。
+推荐补充字段：
+
+- `naming_strategy`: `numbered_subject | custom_concrete_name | simple_scene_number | concrete_scene_name | key_prop_name`。
+- `seedance_label`: 提示词中的稳定主体 / 场景 / 道具标签。
+- `definition_sentence`: 对用户素材的前置定义句，例如“将图片1中穿红裙、戴草帽的女性定义为主体1”。
+- `reference_bindings`: 同一主体或场景绑定的图片 / 视频 / 生成资产。
+- `required_reference_set`: 人物通常为 `face_closeup + full_body_styling`，场景通常为 `scene_reference`。
+- `handling_policy`: 说明是绑定现有参考、生成身份资产组、生成场景参考、正文控制道具、沿用参考道具、删除道具还是生成独立道具。
+
+命名规则：
+
+- 人物不得使用 `CHAR_001` 作为主名称。
+- 场景不得使用 `ENV_001` 作为主名称。
+- 道具不得使用 `PROP_001` 作为主名称。
+- 人物不因表情、动作、姿态、角度拆成多个资产。
+- 场景不因普通光线、时间、天气变化拆成多个资产。
+- 道具只保留核心剧情道具；普通背景物件不强行生成独立资产。
 
 ## shot_asset_map.json 契约
 
-`shot_asset_map.json` 是分镜与资产之间的唯一映射表。每条记录至少包含：
+`shot_asset_map.json` 是分镜与稳定资产名之间的唯一映射表。每条记录至少包含：
 
 - `shot_id`
 - `characters`
@@ -96,15 +112,24 @@
 
 其中 `characters`、`scenes`、`props` 中的值必须全部存在于 `asset_manifest.json` 的 `asset_name`。
 
+`shot_asset_map.json` 不写动作、不写提示词、不写素材分析。
+
 ## 视频提示词契约
 
 `video_prompts.md` 是最终人工复制到即梦的主交付文件。`video_prompts.json` 是同一组 `V###` 的结构化计划，用于校验和后续自动化。
 
-每个视频提示词使用 `V###` 命名。一个 `V###` 可以对应一个或多个 `S###`，但合并必须同时满足：
+每个视频提示词使用 `V###` 命名。一个 `V###` 可以对应一个或多个连续 `S###`。合并对象是 `S###`，不是 `SC###`；`SC###` 只是合并边界。
 
-1. 同一 `scene_id`。
-2. 合并后时长之和 `<=15s`。
-3. 动作描述连续，无场景切换、无时间跳跃。
+合并必须满足：
+
+1. `source_shots` 连续。
+2. 同一 `scene_id`。
+3. 合并后时长之和 `<=15s`。
+4. 动作、情绪或空间关系连续，无场景切换、无时间跳跃。
+
+强连续动作优先合并，避免手部、道具、姿态和情绪穿帮。景别变化不是禁止合并的理由。
+
+每条 `V###` 必须包含 `merge_decision`，说明合并或不合并的策略、原因和连续性风险。
 
 同一场景内连续多镜头必须引入：
 
@@ -119,6 +144,7 @@
 - 剧本阶段先保证剧本质量，不承担结构化抽取。
 - 艺术方向阶段先保证用户确认的视觉边界，不承担具体构图。
 - 导演阶段只做镜头结构化和场景分组，不做资产拆分。
+- 资产阶段只做 Seedance 稳定命名、素材绑定、生成决策和 shot 映射，不写提示词。
 - JSON 只在导演、资产执行、视频计划等明确需要机器校验的阶段出现。
 - 新增影响下游读取的字段时，应同步更新 schema、Skill 文档和 `scripts/validate_project.py`。
 - 旧项目不满足当前契约时，应重新初始化或标记为 legacy，不要伪装通过。
