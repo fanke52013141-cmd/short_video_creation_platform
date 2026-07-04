@@ -23,8 +23,8 @@ local_runs/YYYY-MM-DD/project_slug/notes.md
 
 ## Generation Modes
 
-- Asset image generation: `external_manual`，默认在即梦网页端生成。
-- Storyboard image generation: `external_manual`，默认在即梦网页端生成。
+- Asset image generation: `jimeng_web_manual | chatgpt_web | codex_direct | external_manual`
+- Storyboard image generation: `jimeng_web_manual | chatgpt_web | codex_direct | external_manual`
 - Video generation: `jimeng_canvas_manual`。
 
 ## Phase Log
@@ -36,26 +36,31 @@ local_runs/YYYY-MM-DD/project_slug/notes.md
 | storyboard_director | pending | `outputs/storyboard.json` | 负责具体构图、景别、镜头和分镜结构化 |
 | asset_executor | pending | `outputs/asset_manifest.json`, `outputs/shot_asset_map.json` | Seedance 稳定命名、素材绑定、生成决策和 shot 映射 |
 | asset_prompt_generation | pending | `outputs/assets/**.md` | 人物生成身份资产组；场景生成空间参考；道具只处理必要核心道具 |
+| image_generation_executor | optional | `outputs/image_generation_queue.json`, `outputs/image_generation_queue.md`, `outputs/assets/**.png` | 一个任务只生成一张图，禁止拼接图 |
 | storyboard_prompt_generator | pending | `outputs/storyboard_prompts.md` | 生成分镜参考图提示词 |
 | video_prompt_generator | pending | `outputs/video_prompts.md`, `outputs/video_prompts.json` | 最终复制到即梦；每条 V### 记录 merge_decision |
 
-## Manual Jimeng Steps
+## Asset Image Generation Steps
 
-1. 资产提示词完成后，在即梦生成必要人物、场景、道具图片。
-2. 人物通常回填：
+1. 资产提示词完成后，运行或手动执行 `image_generation_executor`。
+2. 选择生成方式：即梦网页端、ChatGPT 网页端、Codex 直接生成或其他外部工具。
+3. 每个 `asset_image_task` 只生成一张图片。
+4. 禁止把人脸大头特写和全身妆造拼到一张图。
+5. 禁止场景四宫格、对比图、设定表、contact sheet。
+6. 人物通常回填：
    - 人脸/面部参考图
    - 全身妆造参考图
-3. 场景通常回填：
+7. 场景通常回填：
    - 稳定空间结构参考图
-4. 道具只有 `generation_required=true` 时才回填独立道具图；普通道具不需要。
-5. 将有效资产图片回填到：
+8. 道具只有 `generation_required=true` 时才回填独立道具图；普通道具不需要。
+9. 将有效资产图片回填到：
    - `outputs/assets/characters/`
    - `outputs/assets/scenes/`
    - `outputs/assets/props/`
-6. 分镜提示词完成后，在即梦生成分镜参考图。
-7. 将分镜图回填到 `outputs/storyboards/S001.png`、`S002.png` 等。
-8. 运行 `video_prompt_generator` 生成最终 `video_prompts.md` 和 `video_prompts.json`。
-9. 将最终交付物带入即梦画布。
+10. 分镜提示词完成后，生成分镜参考图。
+11. 将分镜图回填到 `outputs/storyboards/S001.png`、`S002.png` 等。
+12. 运行 `video_prompt_generator` 生成最终 `video_prompts.md` 和 `video_prompts.json`。
+13. 将最终交付物带入即梦画布。
 
 ## Final Handoff Checklist
 
