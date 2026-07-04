@@ -7,19 +7,23 @@
 - [process] 明确艺术总监先于导演出现，但只负责视觉方向；具体构图、景别、机位和镜头调度归 `storyboard_director`。
 - [skill] 将 `story_generation` 升级到 3.0.0，明确禁止在剧本阶段拆分镜头、角色状态、场景资产、道具资产或生成提示词。
 - [skill] 将 `art_direction` 升级到 2.1.0：用户有风格/参考图时优先继承并补全；用户没有明确视觉方向时先给候选方案，不直接定稿。
-- [skill] 将 `storyboard_director` 升级到 2.1.0：明确导演负责具体构图、景别、机位、镜头调度和分镜结构化。
+- [skill] 将 `storyboard_director` 升级到 2.2.0：明确导演只输出 `shot_id`、`scene_id`、`duration_seconds`、`framing`、`camera_move`、`action_desc`，不输出人物、地点或资产拆分字段。
 - [prompt] 更新 `skills/raw_prompts/story_generation.source.md`，删除机器可读故事输出要求，让模型专注剧本优化。
 - [prompt] 更新 `skills/raw_prompts/art_direction.source.md`，删除 `art_direction.json`、构图硬字段和独立“禁止出现的视觉元素”字段要求。
+- [prompt] 更新 `skills/raw_prompts/storyboard_director.source.md`，删除资产表、旧式资产 ID、复杂分镜提示词字段和多余 machine-readable 字段。
 - [script] `validate_project.py` 的 `story` 阶段只校验 `story.md`，并将存在 `story.json` 视为不合格。
 - [script] `validate_project.py` 的 `art` 阶段改为校验 `画面风格`、`整体色调`、`光线风格`、`AI 视觉执行要求`，并拒绝 `构图倾向` 硬字段。
+- [script] `validate_project.py` 的 `storyboard` 阶段拒绝 `characters_in_shot`、`location`、资产 ID 和提示词字段。
 - [schema] 删除已弃用的 `schemas/story.schema.json`；结构化从导演分镜阶段开始。
-- [docs] 更新 README、flow、schema contracts、local run 模板、Agent 和质量门，统一“剧本阶段 Markdown-only”和“构图归导演”的边界。
-- [examples] 更新 `examples/minimal_run/`，移除 `outputs/story.json`，扩展 `story.md`，并更新 `style_bible.md` 新格式。
+- [schema] 精简 `schemas/storyboard.schema.json`，删除 `characters_in_shot` 与 `location`。
+- [docs] 更新 README、schema contracts、local run 模板、Agent 和质量门，统一“剧本阶段 Markdown-only”“构图归导演”和“资产字段归 asset_executor”的边界。
+- [examples] 更新 `examples/minimal_run/`，移除 `outputs/story.json`，扩展 `story.md`，更新 `style_bible.md` 新格式，并精简 `storyboard.json`。
 
 ### Reason
 - 剧本优化阶段不应同时承担结构化抽取职责；否则会分散模型注意力，影响故事质量。
 - 艺术总监在分镜前无法也不应规定具体构图，只应提供画面风格、色调、光线和 AI 视觉执行规则。
-- 镜头结构化属于导演，资产拆分属于资产执行官，视频计划属于视频提示词生成器。
+- 导演阶段应只完成镜头结构化和场景分组；人物、场景、道具和资产拆分属于资产执行官。
+- 视频提示词需要 `duration_seconds` 与 `scene_id` 做合并判断，因此这两个字段必须保留。
 
 ### Validation
 - 待 CI 验证：`python scripts/validate_project.py examples/minimal_run --phase all`。
