@@ -4,8 +4,8 @@
 |---|---|---|
 | Idea Brief | 核心想法、时长、类型、限制不为空 | P0 |
 | Story | 剧本可读、人物动机清楚、适合 2-5 分钟；不得输出 `story.json` | P0 |
-| Art Direction | 不改故事，风格可执行，有禁用项 | P1 |
-| Storyboard | 每个 shot 有时长、动作、镜头；不得定义资产 | P0 |
+| Art Direction | 用户视觉方向优先；无明确方向时先给候选方案；最终 `style_bible.md` 只含画面风格、整体色调、光线风格、AI 视觉执行要求 | P1 |
+| Storyboard | 每个 shot 有时长、动作、具体构图/景别/镜头；不得定义资产 | P0 |
 | Asset Manifest | 分镜引用资产全部存在，无 ID 冲突 | P0 |
 | Character Assets | 主要人物身份锚点稳定 | P1 / final P0 |
 | Scene Assets | 核心场景空间关系明确 | P1 |
