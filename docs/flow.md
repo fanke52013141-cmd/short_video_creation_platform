@@ -30,15 +30,22 @@
   - 不写图片提示词或视频提示词。
 - Boundary: 镜头结构化由 `storyboard_director` 处理；人物、场景、道具和资产拆分由 `asset_executor` 处理。
 
-## 2. Story To One-Page Style Bible
+## 2. Story To User-Confirmed Style Bible
 
 - Skill: `art_direction`
 - Source prompt: `skills/raw_prompts/art_direction.source.md`
 - Input:
-  - `RUN/outputs/story.md`
+  - 用户已确认锁定的 `RUN/outputs/story.md`
+  - 可选：用户参考图、艺术风格、视觉偏好或禁用方向
 - Output:
   - `RUN/outputs/style_bible.md`
-- Contract: 不输出 `art_direction.json`。`style_bible.md` 必须一页以内，只允许定义整体色调、光线风格、构图倾向和禁止出现的视觉元素。
+- Contract:
+  - 不输出 `art_direction.json`。
+  - 如果用户已有艺术风格或参考图，优先继承并补全执行规则。
+  - 如果用户没有明确视觉方向，先提出 2-3 个候选方案，让用户选择，不直接定稿。
+  - 最终 `style_bible.md` 只定义画面风格、整体色调、光线风格和 AI 视觉执行要求。
+  - 具体构图、景别、机位和镜头调度由 `storyboard_director` 负责。
+  - 不输出独立 `构图倾向` 字段，不输出独立 `禁止出现的视觉元素` 字段。
 
 ## 3. Story And Style To Storyboard
 
@@ -59,7 +66,7 @@
   - `action_desc`: 具象动作描述
   - `characters_in_shot`: 出现角色名，使用特征名，不使用 `CharA`
   - `location`: 场景名
-- Boundary: 导演不得输出资产草表、资产 ID、提示词、音色或外部交接内容。
+- Boundary: 导演负责具体构图与镜头调度，但不得输出资产草表、资产 ID、提示词、音色或外部交接内容。
 - Quality Gate: 分镜阶段内部完成相邻逻辑检查；不再存在独立 `storyboard_sequence_review` 节点。
 
 ## 4. Storyboard To Asset Manifest And Shot Map
