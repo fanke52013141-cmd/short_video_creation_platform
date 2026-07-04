@@ -1,13 +1,9 @@
 project:
   name: "short_video_creation_platform"
   version: "1.0.3"
-  description: "将用户想法转化为即梦画布生产前置交付包的 Skill 工作流"
+  description: "短视频生产前置流程：剧本、风格、分镜、资产、分镜图和视频提示词"
 
 runtime:
-  mode: "draft"
-  max_retries: 2
-  timeout_seconds: 120
-  log_level: "info"
   require_user_confirmation_between_major_phases: true
   image_generation_mode_default: "external_manual"
   allowed_image_generation_modes:
@@ -39,27 +35,16 @@ phase_order:
   - video_prompt_generator
 
 paths:
-  active_run_dir: "./local_runs/YYYY-MM-DD/project_slug"
-  input_dir: "./local_runs/YYYY-MM-DD/project_slug/inputs"
-  output_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs"
-  reference_dir: "./local_runs/YYYY-MM-DD/project_slug/references"
-  log_dir: "./local_runs/YYYY-MM-DD/project_slug/logs"
-  checkpoint_template_file: "./checkpoint.template.json"
-  checkpoint_file: "./local_runs/YYYY-MM-DD/project_slug/checkpoint.json"
-  story_md: "./local_runs/YYYY-MM-DD/project_slug/outputs/story.md"
-  style_bible: "./local_runs/YYYY-MM-DD/project_slug/outputs/style_bible.md"
-  storyboard_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboard.json"
-  asset_manifest: "./local_runs/YYYY-MM-DD/project_slug/outputs/asset_manifest.json"
-  shot_asset_map: "./local_runs/YYYY-MM-DD/project_slug/outputs/shot_asset_map.json"
-  character_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/assets/characters"
-  scene_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/assets/scenes"
-  prop_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/assets/props"
-  storyboard_reference_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboards"
-  storyboard_prompts: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboard_prompts.md"
-  video_prompts: "./local_runs/YYYY-MM-DD/project_slug/outputs/video_prompts.md"
-  video_prompts_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/video_prompts.json"
-  image_generation_queue_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/image_generation_queue.json"
-  image_generation_queue_md: "./local_runs/YYYY-MM-DD/project_slug/outputs/image_generation_queue.md"
+  story_md: "./outputs/story.md"
+  style_bible: "./outputs/style_bible.md"
+  storyboard_json: "./outputs/storyboard.json"
+  asset_manifest: "./outputs/asset_manifest.json"
+  shot_asset_map: "./outputs/shot_asset_map.json"
+  assets_root: "./outputs/assets"
+  storyboard_reference_dir: "./outputs/storyboards"
+  storyboard_prompts: "./outputs/storyboard_prompts.md"
+  video_prompts: "./outputs/video_prompts.md"
+  video_prompts_json: "./outputs/video_prompts.json"
 
 prompt_sources:
   story_generation: "./skills/raw_prompts/story_generation.source.md"
@@ -75,44 +60,26 @@ schemas:
   storyboard: "./schemas/storyboard.schema.json"
   asset_manifest: "./schemas/asset_manifest.schema.json"
   shot_asset_map: "./schemas/shot_asset_map.schema.json"
-  reference_media: "./schemas/reference_media.schema.json"
   video_prompt: "./schemas/video_prompt.schema.json"
 
-naming_policy:
-  character:
-    model: "stable_name_plus_state"
-    pattern: "人物稳定名_状态"
-    examples:
-      - "林小满_雨夜接电话状态"
-      - "警察_追捕状态"
-    forbid_asset_ids_as_names: true
-  scene:
-    preferred: "concrete_scene_name"
-    fallback: "场景1/场景2"
-    light_time_weather_do_not_split: true
-    forbid_asset_ids_as_names: true
-  prop:
-    key_props_only: true
-    default_handling: "text_prompt_control"
-  storyboard: "S{三位数序号}"
-  scene_id: "SC{三位数序号}"
-  video: "V{三位数序号}"
-  forbid_abstract_asset_ids:
-    - "CHAR_001"
-    - "ENV_001"
-    - "PROP_001"
-
-story_generation_policy:
-  markdown_output_only: true
+story_policy:
+  output: "story.md"
   forbidden_outputs:
-    - "outputs/story.json"
-    - "outputs/story_index.json"
+    - "story.json"
+    - "story_index.json"
+
+style_bible_policy:
+  required_sections:
+    - "画面风格"
+    - "整体色调"
+    - "光线风格"
+    - "AI 视觉执行要求"
+  forbidden_sections:
+    - "构图倾向"
+    - "禁止出现的视觉元素"
 
 storyboard_policy:
   max_shot_duration_seconds: 15
-  director_outputs_assets: false
-  director_owns_composition: true
-  director_creates_scene_id: true
   required_shot_fields:
     - shot_id
     - scene_id
@@ -128,165 +95,53 @@ storyboard_policy:
     - asset_ids
     - prompt_cn
 
-style_bible_policy:
-  one_page_only: true
-  user_visual_direction_first: true
-  propose_options_when_open_direction: true
-  director_owns_composition: true
-  required_sections:
-    - "画面风格"
-    - "整体色调"
-    - "光线风格"
-    - "AI 视觉执行要求"
-  forbidden_sections:
-    - "构图倾向"
-    - "禁止出现的视觉元素"
-
 asset_policy:
-  naming_model: "asset_name_with_state_when_needed"
-  prompt_input_model: "story_style_asset_output_path"
-  prompt_generator_required_inputs:
-    - "story_md"
-    - "style_bible"
+  character_asset_name_pattern: "人物稳定名_状态"
+  character_image_output: "single_21x9_multi_view_image"
+  scene_split_only_for:
+    - "spatial_structure_change"
+    - "location_change"
+    - "story_space_change"
+  prop_default_handling: "text_prompt_control"
+  asset_prompt_inputs:
+    - "story.md"
+    - "style_bible.md"
     - "asset_type"
     - "asset_name"
     - "output_prompt_path"
-  prompt_generator_forbidden_inputs:
-    - "task_id"
-    - "asset_payload"
-    - "asset_prompt_tasks_json"
-    - "prompt_outputs_array"
-  character:
-    output_model: "single_21x9_character_state_asset_image"
-    asset_name_pattern: "人物稳定名_状态"
-    do_not_default_split_into:
-      - "face_closeup"
-      - "full_body_styling"
-  scene:
-    output_model: "single_scene_reference_image"
-    do_not_split_for:
-      - "light_change"
-      - "time_of_day_change"
-      - "weather_change"
-      - "color_temperature_change"
-    split_only_for:
-      - "spatial_structure_change"
-      - "location_change"
-      - "story_space_change"
-  prop:
-    generate_independent_only_when:
-      - "story_key_prop"
-      - "repeated_appearance"
-      - "closeup_required"
-      - "complex_shape"
-      - "state_change_needs_tracking"
-    default_handling: "text_prompt_control"
-
-image_generation_policy:
-  one_task_one_image_file: true
-  character_asset_image:
-    aspect_ratio: "21:9"
-    allowed_views_in_single_image:
-      - "closeup"
-      - "front_view"
-      - "side_view"
-      - "back_view"
-  scene_asset_image: "single_scene_reference_image"
-  prop_asset_image: "single_prop_reference_image_when_required"
-  allowed_generation_modes:
-    - "jimeng_web_manual"
-    - "chatgpt_web"
-    - "codex_direct"
-    - "external_manual"
-  required_task_fields:
-    - "asset_type"
-    - "asset_name"
-    - "prompt_path"
-    - "generation_mode"
-    - "output_image_path"
 
 storyboard_prompt_policy:
-  process_model: "one_shot_at_a_time"
-  required_inputs:
-    - "storyboard_json"
-    - "style_bible"
-    - "shot_asset_map"
-    - "asset_image_root"
-    - "storyboard_image_root"
-    - "shot_id"
-    - "output_prompt_path"
-  optional_inputs:
-    - "story_md"
-  previous_storyboard_reference:
-    allowed_only_when:
-      - "previous_shot_contiguous"
-      - "same_scene_id"
-      - "placement_relationship_continues"
-    reference_purpose: "placement_anchor"
-    inherit_only:
-      - "relative_position"
-      - "facing_direction"
-      - "spatial_scale"
-      - "scene_continuity"
+  required_per_shot_fields:
+    - "recommended_frame_role"
+    - "uses_previous_storyboard_reference"
   frame_roles:
     - "first_frame"
     - "last_frame"
     - "keyframe"
+  previous_reference_purpose: "placement_anchor"
+  previous_reference_scope: "same_scene_id_only"
 
 video_prompt_policy:
-  output_language: "zh"
-  markdown_output_required: true
-  json_output_required: true
   max_video_prompt_duration_seconds: 15
-  minimal_required_inputs:
-    - "storyboard_json"
-    - "storyboard_prompts_md"
-    - "storyboard_reference_dir"
-    - "shot_asset_map"
-    - "asset_reference_dir"
-  merge_policy:
-    merge_object: "continuous_shots_not_scene"
-    scene_id_is_boundary_only: true
-    hard_requirements:
-      - "shot_id_contiguous"
-      - "same_scene_id"
-      - "duration_sum_lte_15s"
-      - "no_scene_time_or_story_space_jump"
-    priority_rules:
-      - "merge_strong_action_continuity_first"
-      - "allow_merge_across_framing_change_if_action_continues"
-      - "force_split_when_scene_or_time_changes"
-      - "force_split_when_duration_exceeds_15s"
-      - "force_split_when_action_discontinuity_makes_prompt_ambiguous"
-    required_json_field: "merge_decision"
-  frame_role_resolution:
-    merged_video_first_source_shot: "first_frame"
-    merged_video_last_source_shot: "last_frame"
-    merged_video_middle_source_shots: "keyframe"
-    single_shot_default: "first_frame"
-  required_sections:
-    - "自检通过项"
-    - "资产声明区"
-    - "中文视频提示词"
+  required_inputs:
+    - "storyboard.json"
+    - "storyboard_prompts.md"
+    - "outputs/storyboards/"
+    - "shot_asset_map.json"
+    - "outputs/assets/"
+  merge_requirements:
+    - "shot_id_contiguous"
+    - "same_scene_id"
+    - "duration_sum_lte_15s"
+    - "no_scene_time_or_story_space_jump"
+  required_json_fields:
+    - "merge_decision"
+    - "frame_references"
   previous_storyboard_anchor: "参考@上一分镜_站位，保持人物空间关系、朝向和相对位置不变"
-  prop_policy: "describe_in_prompt_body_not_at_ref"
-  high_intensity_action_requires_risk_notice: true
-  no_text_logo_watermark_constraint_required: true
   forbidden_blocks:
     - "English Prompt"
     - "中英对照"
     - "@PROP"
-
-external_services:
-  jimeng:
-    execution_mode: "manual_web"
-    role: "asset_images_storyboard_images_and_canvas_video_generation"
-  chatgpt:
-    execution_mode: "web_image_generation"
-    role: "optional_asset_image_generation"
-  codex:
-    execution_mode: "direct_image_generation_when_available"
-    role: "optional_asset_image_generation"
 
 final_handoff:
   included:
@@ -296,10 +151,3 @@ final_handoff:
     - "outputs/assets/characters/"
     - "outputs/assets/scenes/"
     - "outputs/storyboards/"
-  excluded:
-    - "outputs/story.json"
-    - "outputs/story_index.json"
-    - "outputs/assets/props/ as standalone delivery"
-    - "external result manifests"
-    - "generated media review"
-    - "voice reference manifests"
