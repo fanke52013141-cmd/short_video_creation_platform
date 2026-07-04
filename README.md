@@ -9,6 +9,7 @@
 - 艺术先行：艺术总监先定画面风格、色调、光线和 AI 视觉执行要求；导演后续负责具体构图与分镜。
 - 最小必要输入：下游只读取当前阶段真正需要的文件。
 - 职责单一：导演只做镜头结构化，资产执行官只做资产提取和映射，视频提示词生成器只做可复制到即梦的提示词。
+- Seedance 友好：人物和场景使用稳定命名与素材绑定，不按表情、动作、普通光影变化拆资产。
 - 流程精简：流程终点是进入即梦画布生产，不在仓库内追加音色、外部结果、媒体审查和最终打包节点。
 - 交付清晰：最终交付给即梦画布的内容只包含剧本、视频提示词、有效角色资产、有效场景资产和分镜参考图。
 
@@ -20,7 +21,7 @@
 4. 用户与剧本专家反复讨论，直到用户确认剧本可以进入下一阶段。
 5. 运行 `skills/art_direction.md`：如果用户已有艺术风格或参考图，优先继承并补全执行规则；如果用户没有明确视觉方向，先给候选方案让用户选择。用户确认后产出 `outputs/style_bible.md`。
 6. 运行 `skills/storyboard_director.md`，由导演负责具体构图、景别、镜头调度和分镜结构化，产出 `outputs/storyboard.json`。
-7. 运行 `skills/asset_executor.md`，由资产执行官负责人物、场景、道具拆分，产出 `outputs/asset_manifest.json` 和 `outputs/shot_asset_map.json`。
+7. 运行 `skills/asset_executor.md`，由资产执行官负责 Seedance 主体/场景/关键道具命名、素材绑定和 shot 映射，产出 `outputs/asset_manifest.json` 和 `outputs/shot_asset_map.json`。
 8. 并行运行 `skills/character_prompt_generator.md`、`skills/scene_prompt_generator.md`、`skills/prop_prompt_generator.md`。
 9. 去即梦生成资产图片，并回填到 `outputs/assets/characters/`、`outputs/assets/scenes/`、`outputs/assets/props/`。
 10. 运行 `skills/storyboard_prompt_generator.md`，产出 `outputs/storyboard_prompts.md`。
@@ -49,10 +50,13 @@ outputs/
 
 ## 命名规范
 
-- 角色：`{外貌特征}_{情绪状态}_{角度}`，例如 `少女_默然_正面`。
-- 场景：`{地点名}_{时间/光线}_{氛围}`，例如 `破旧公寓_深夜_冷白灯光`。
-- 道具：`{物品名}_{视角/状态}`，例如 `旧皮箱_正面`。
+- 人物：优先使用剧本中的唯一稳定人名或身份标签，例如 `林小满`、`警察`；无明确名称时用 `主体1`、`主体2`。禁止用 `CHAR_001` 当人物名。
+- 人物素材：同一人物绑定人脸大头特写和全身妆造图；表情、动作、姿态不拆新人物资产。
+- 场景：优先使用具象场景名，例如 `雨夜客厅场景`；无明确名称时用 `场景1`、`场景2`。禁止用 `ENV_001` 当场景名。
+- 场景素材：普通光线、时间、天气变化不拆新场景；只有空间结构、地点或叙事空间变化才新建场景资产。
+- 道具：只管控核心剧情道具；普通背景物件不强行生成独立资产。
 - 分镜：`S{三位数序号}`，例如 `S001`。
+- 场景/时空单元：`SC{三位数序号}`，例如 `SC001`。
 - 视频提示词：`V{三位数序号}`，例如 `V001`，可合并多个连续分镜。
 
 ## 校验
