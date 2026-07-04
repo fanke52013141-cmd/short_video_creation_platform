@@ -7,68 +7,60 @@ local_runs/YYYY-MM-DD/project_slug/notes.md
 ```
 
 ## Project
+
 - Slug:
 - Date:
 - Owner:
 - Goal:
 
 ## Input
+
 - Idea brief:
 - References:
 - Constraints:
 
 ## Generation Modes
-- Image generation: `ask_user | external_manual | internal_codex`
-- Video generation: `external_manual`
-- Editing: `external_manual`
 
-进入图片阶段前必须确认 image generation 模式。视频生成和剪辑默认外部执行。
+- Asset image generation: `external_manual`，默认在即梦网页端生成。
+- Storyboard image generation: `external_manual`，默认在即梦网页端生成。
+- Video generation: `jimeng_canvas_manual`。
 
 ## Phase Log
 
 | Phase | Status | Artifact | Notes |
 | -- | -- | -- | -- |
-| story_generation | pending |  |  |
-| art_direction | pending |  |  |
-| storyboard_director | pending |  |  |
-| storyboard_sequence_review | pending |  |  |
-| asset_manifest_builder | pending |  |  |
-| asset_prompt_generation | pending |  |  |
-| image_generation_executor | pending |  |  |
-| voice_reference_manifest_builder | pending |  |  |
-| shot_video_prompt_generator | pending |  |  |
-| external_generation_handoff | pending |  |  |
-| generated_media_review | pending |  |  |
-| continuity_review | pending |  |  |
-| production_package_builder | pending |  |  |
+| story_generation | pending | `outputs/story.md`, `outputs/story.json` |  |
+| art_direction | pending | `outputs/style_bible.md` | 一页以内 |
+| storyboard_director | pending | `outputs/storyboard.json` | 只做分镜 |
+| asset_executor | pending | `outputs/asset_manifest.json`, `outputs/shot_asset_map.json` | 资产唯一来源 |
+| asset_prompt_generation | pending | `outputs/assets/**.md` | 三路并行 |
+| storyboard_prompt_generator | pending | `outputs/storyboard_prompts.md` | 生成分镜参考图提示词 |
+| video_prompt_generator | pending | `outputs/video_prompts.md` | 最终复制到即梦 |
 
-## Production Status
-用 `production_status.csv` 跟踪每个 shot 的分镜连续性、音色、场景引用决策、提示词、图片、视频、最佳版本和返修问题。
+## Manual Jimeng Steps
 
-## Storyboard Sequence Review
-- Review file: `outputs/03_storyboard/storyboard_sequence_review.md`
-- JSON file: `outputs/03_storyboard/storyboard_sequence_review.json`
-- 必须用 1-shot、2-shot、3-shot 窗口检查相邻镜头逻辑。
-- 有 P0 问题时先修分镜，不进入资产生成。
+1. 资产提示词完成后，在即梦生成角色、场景、道具图片。
+2. 将有效资产图片回填到：
+   - `outputs/assets/characters/`
+   - `outputs/assets/scenes/`
+   - `outputs/assets/props/`
+3. 分镜提示词完成后，在即梦生成分镜参考图。
+4. 将分镜图回填到 `outputs/storyboards/S001.png`、`S002.png` 等。
+5. 运行 `video_prompt_generator` 生成最终 `video_prompts.md`。
+6. 将最终交付物带入即梦画布。
 
-## Video Prompt Loop
-- Single shot prompt dir: `outputs/05_video_prompts/shots/`
-- Aggregate prompt file: `outputs/05_video_prompts/shot_video_prompts.md`
-- 每个 shot 必须先生成单条文件，通过自检后再汇总。
+## Final Handoff Checklist
 
-## Audio References
-- Manifest: `outputs/04_assets/audio/voice_reference_manifest.json`
-- 有台词、旁白、录音留言或可听见人声的 shot 必须绑定音色参考。
+- [ ] `outputs/story.md`
+- [ ] `outputs/video_prompts.md`
+- [ ] `outputs/assets/characters/` 中只保留有效角色资产
+- [ ] `outputs/assets/scenes/` 中只保留有效场景资产
+- [ ] `outputs/storyboards/` 中包含全部有效分镜参考图
 
-## External Results
-- Image result manifest: `outputs/06_external_results/image_result_manifest.json`
-- Shot result manifest template: `outputs/06_external_results/shot_result_manifest.template.json`
-- Shot result manifest after generation: `outputs/06_external_results/shot_result_manifest.json`
-- Generated media review: `outputs/06_external_results/generated_media_review.md`
-
-外部平台生成图片或视频后，必须把结果文件名、链接、版本、最佳 take、问题和返修建议记录到 manifest。
+道具资产不作为单独最终交付目录；道具信息写入 `video_prompts.md` 正文。
 
 ## Validation
+
 初始化后运行：
 
 ```text
@@ -82,9 +74,11 @@ python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase al
 ```
 
 ## Problems Found
-- 
+
+-
 
 ## Reusable Improvements
+
 记录可以反哺仓库的流程问题，不记录具体私有创作内容。
 
-- 
+-
