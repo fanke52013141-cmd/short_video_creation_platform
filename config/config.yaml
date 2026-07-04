@@ -1,7 +1,7 @@
 project:
-  name: "ai_short_film_pipeline"
-  version: "0.5.0"
-  description: "将想法转化为 AI 短片生产包的 Skill-Oriented 工作流"
+  name: "short_video_creation_platform"
+  version: "1.0.0"
+  description: "将用户想法转化为即梦画布生产前置交付包的 Skill 工作流"
 
 runtime:
   mode: "draft"
@@ -9,262 +9,132 @@ runtime:
   timeout_seconds: 120
   log_level: "info"
   require_user_confirmation_between_major_phases: true
-  image_generation_mode_default: "ask_user"
+  image_generation_mode_default: "external_manual"
   allowed_image_generation_modes:
     - "external_manual"
-    - "internal_codex"
-  video_generation_mode_default: "external_manual"
-  editing_mode_default: "external_manual"
-
-model_defaults:
-  text_provider: "to_be_configured"
-  text_model_name: "to_be_configured"
-  image_provider: "to_be_configured"
-  image_model_name: "to_be_configured"
-  video_provider: "jimeng_seedance_2_0"
-  video_model_name: "Seedance 2.0"
-  temperature:
-    story_generation: 0.7
-    art_direction: 0.45
-    storyboard_director: 0.55
-    storyboard_sequence_review: 0.2
-    asset_prompt_generation: 0.45
-    video_prompt_generation: 0.35
-    continuity_review: 0.2
-  max_tokens: 8000
+  video_generation_mode_default: "jimeng_canvas_manual"
 
 skill_versions:
-  story_generation: "1.0.1"
-  art_direction: "1.0.1"
-  storyboard_director: "1.3.0"
-  storyboard_static_frame_variant: "1.0.0"
-  storyboard_sequence_review: "0.4.0"
-  asset_manifest_builder: "0.5.0"
-  character_prompt_generator: "1.2.0"
-  scene_prompt_generator: "1.1.0"
-  prop_prompt_generator: "1.1.0"
-  image_generation_executor: "0.2.0"
-  voice_reference_manifest_builder: "0.2.0"
-  shot_video_prompt_generator: "1.4.0"
-  external_generation_handoff: "0.5.0"
-  generated_media_review: "0.2.0"
-  continuity_review: "0.5.0"
-  production_package_builder: "0.3.0"
+  story_generation: "2.0.0"
+  art_direction: "2.0.0"
+  storyboard_director: "2.0.0"
+  asset_executor: "1.0.0"
+  character_prompt_generator: "2.0.0"
+  scene_prompt_generator: "2.0.0"
+  prop_prompt_generator: "2.0.0"
+  image_generation_executor: "1.0.0"
+  storyboard_prompt_generator: "1.0.0"
+  video_prompt_generator: "2.0.0"
+
+phase_order:
+  - story_generation
+  - art_direction
+  - storyboard_director
+  - asset_executor
+  - asset_prompt_generation
+  - storyboard_prompt_generator
+  - video_prompt_generator
 
 paths:
   active_run_dir: "./local_runs/YYYY-MM-DD/project_slug"
   input_dir: "./local_runs/YYYY-MM-DD/project_slug/inputs"
-  local_runs_dir: "./local_runs"
-  raw_prompt_dir: "./skills/raw_prompts"
   output_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs"
   reference_dir: "./local_runs/YYYY-MM-DD/project_slug/references"
   log_dir: "./local_runs/YYYY-MM-DD/project_slug/logs"
   checkpoint_template_file: "./checkpoint.template.json"
   checkpoint_file: "./local_runs/YYYY-MM-DD/project_slug/checkpoint.json"
-  story_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/01_story"
-  art_direction_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/02_art_direction"
-  storyboard_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/03_storyboard"
-  storyboard_sequence_review_file: "./local_runs/YYYY-MM-DD/project_slug/outputs/03_storyboard/storyboard_sequence_review.md"
-  asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets"
-  image_generation_queue_file: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets/image_generation_queue.json"
-  final_image_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets/final_images"
-  audio_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/04_assets/audio"
-  video_prompt_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/05_video_prompts"
-  shot_prompt_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/05_video_prompts/shots"
-  external_results_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/06_external_results"
-  image_result_manifest_file: "./local_runs/YYYY-MM-DD/project_slug/outputs/06_external_results/image_result_manifest.json"
-  shot_result_manifest_file: "./local_runs/YYYY-MM-DD/project_slug/outputs/06_external_results/shot_result_manifest.json"
-  generated_media_review_file: "./local_runs/YYYY-MM-DD/project_slug/outputs/06_external_results/generated_media_review.md"
-  final_delivery_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/07_final_delivery"
+  story_md: "./local_runs/YYYY-MM-DD/project_slug/outputs/story.md"
+  story_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/story.json"
+  style_bible: "./local_runs/YYYY-MM-DD/project_slug/outputs/style_bible.md"
+  storyboard_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboard.json"
+  asset_manifest: "./local_runs/YYYY-MM-DD/project_slug/outputs/asset_manifest.json"
+  shot_asset_map: "./local_runs/YYYY-MM-DD/project_slug/outputs/shot_asset_map.json"
+  character_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/assets/characters"
+  scene_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/assets/scenes"
+  prop_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/assets/props"
+  storyboard_reference_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboards"
+  storyboard_prompts: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboard_prompts.md"
+  video_prompts: "./local_runs/YYYY-MM-DD/project_slug/outputs/video_prompts.md"
 
 prompt_sources:
   story_generation: "./skills/raw_prompts/story_generation.source.md"
   art_direction: "./skills/raw_prompts/art_direction.source.md"
   storyboard_director: "./skills/raw_prompts/storyboard_director.source.md"
-  storyboard_static_frame_variant: "./skills/raw_prompts/storyboard_static_frame_variant.source.md"
   character_prompt_generator: "./skills/raw_prompts/character_prompt_generator.source.md"
   scene_prompt_generator: "./skills/raw_prompts/scene_prompt_generator.source.md"
   prop_prompt_generator: "./skills/raw_prompts/prop_prompt_generator.source.md"
-  shot_video_prompt_generator: "./skills/raw_prompts/seedance_video_prompt.source.md"
+  video_prompt_generator: "./skills/raw_prompts/seedance_video_prompt.source.md"
 
 schemas:
   story: "./schemas/story.schema.json"
-  art_direction: "./schemas/art_direction.schema.json"
   storyboard: "./schemas/storyboard.schema.json"
-  storyboard_sequence_review: "./schemas/storyboard_sequence_review.schema.json"
   asset_manifest: "./schemas/asset_manifest.schema.json"
-  voice_reference_manifest: "./schemas/voice_reference_manifest.schema.json"
-  shot_video_prompt: "./schemas/shot_video_prompt.schema.json"
-  image_result_manifest: "./schemas/image_result_manifest.schema.json"
-  shot_result_manifest: "./schemas/shot_result_manifest.schema.json"
-  generated_media_review: "./schemas/generated_media_review.schema.json"
-  continuity_report: "./schemas/continuity_report.schema.json"
-  final_package_manifest: "./schemas/final_package_manifest.schema.json"
+  shot_asset_map: "./schemas/shot_asset_map.schema.json"
+  video_prompt: "./schemas/video_prompt.schema.json"
 
-asset_id_policy:
-  character_prefix: "CHAR"
-  scene_prefix: "ENV"
-  prop_prefix: "PROP"
-  audio_prefix: "AUDIO"
-  style_prefix: "STYLE"
-  numbering: "001"
-  variant_suffix: "A, B, C"
+naming_policy:
+  character: "{外貌特征}_{情绪状态}_{角度}"
+  scene: "{地点名}_{时间/光线}_{氛围}"
+  prop: "{物品名}_{视角/状态}"
+  storyboard: "S{三位数序号}"
+  video: "V{三位数序号}"
+  forbid_abstract_asset_ids:
+    - "CHAR_001"
+    - "ENV_001"
+    - "PROP_001"
 
-output_formats:
-  human_readable: "markdown"
-  machine_readable: "json"
-  video_prompt_language: "zh"
-  asset_prompt_language: "zh"
-  video_prompt_generation_mode: "per_shot_loop"
-
-image_generation_policy:
-  priority_classes:
-    - "must_generate"
-    - "optional_generate"
-    - "skip_generation"
-  image_roles:
-    - "character_turnaround"
-    - "character_full_body"
-    - "scene_key_plate"
-    - "scene_sheet"
-    - "prop_standard_asset"
-    - "prop_detail_closeup"
-  blocking_statuses:
-    - "missing"
-    - "rejected"
-    - "needs_regeneration"
-  completed_requires_no_blocking_missing_images: true
-  scene_reference_priority: "key_plate"
-  prop_reference_default: "describe_in_prompt_not_at_ref"
-
-storyboard_generation_policy:
+storyboard_policy:
   max_shot_duration_seconds: 15
-  concretization_translation_required: true
-  abstract_terms_must_have_visual_evidence: true
-  critical_turning_points_require_visible_evidence: true
-  concrete_evidence_dimensions:
-    - "emotion_to_microexpression"
-    - "atmosphere_to_light_and_sound"
-    - "event_to_action"
-    - "relationship_to_space"
+  director_outputs_assets: false
+  required_shot_fields:
+    - shot_id
+    - scene_id
+    - duration_seconds
+    - framing
+    - camera_move
+    - action_desc
+    - characters_in_shot
+    - location
+
+style_bible_policy:
+  one_page_only: true
+  tone_keywords_max: 3
+  lighting_sentence_max: 1
+  composition_sentence_max: 1
+  required_sections:
+    - "整体色调"
+    - "光线风格"
+    - "构图倾向"
+    - "禁止出现的视觉元素"
 
 video_prompt_policy:
-  task_type_required: true
-  default_task_type: "pipeline_shot_generation"
-  allowed_task_types:
-    - "pipeline_shot_generation"
-    - "multimodal_reference"
-    - "video_edit"
-    - "video_extend"
-    - "combined_task"
-  require_strict_edit_phrase: true
-  require_extend_direction_phrase: true
-  require_asset_declaration_consistency: true
-  require_seedance_sound_symbols: true
-  require_single_primary_camera_movement: true
-  require_approved_image_references_only: true
-  prop_reference_policy: "describe_in_prompt_not_at_ref"
-  output_sections:
-    - "引用决策"
-    - "资产声明区"
-    - "中文视频提示词"
-    - "自检通过项"
-
-completion_policy:
-  completed_requires_storyboard_concretization_check: true
-  completed_requires_no_blocking_image_results: true
-  completed_requires_audio_references_ready: true
-  completed_requires_seedance_prompt_validation: true
-  completed_requires_external_task_type_review: true
-  completed_requires_continuity_review_passed: true
-  completed_forbidden_audio_statuses:
-    - "missing"
-    - "needed"
-    - "placeholder"
-  completed_forbidden_image_statuses:
-    - "missing"
-    - "rejected"
-    - "needs_regeneration"
+  output_language: "zh"
+  max_video_prompt_duration_seconds: 15
+  merge_conditions:
+    same_scene_id: true
+    duration_sum_lte_15s: true
+    action_continuity_required: true
+  previous_storyboard_anchor: "参考@上一分镜_站位，保持人物空间关系、朝向和相对位置不变"
+  previous_storyboard_anchor_scope: "same_scene_continuity_only"
+  prop_policy: "describe_in_prompt_body_not_at_ref"
+  forbidden_blocks:
+    - "English Prompt"
+    - "@PROP"
 
 external_services:
-  seedance:
-    enabled: false
+  jimeng:
     execution_mode: "manual_web"
-    api_key_env: "SEEDANCE_API_KEY"
-    base_url: ""
-    output_resolution: "to_be_configured"
-    duration_seconds_default: 5
-  image_generation:
-    enabled: false
-    execution_mode: "manual_web"
-    api_key_env: "IMAGE_API_KEY"
-    base_url: ""
+    role: "asset_images_storyboard_images_and_canvas_video_generation"
 
-external_workflow:
-  image_generation:
-    mode_selection_required: true
-    supported_modes:
-      external_manual: "Codex outputs image prompts, an image generation queue, and handoff instructions; user generates images in external web tools."
-      internal_codex: "Codex uses the same image generation queue to generate images and saves results to the local run."
-    suggested_tools:
-      - "CodeX/ChatGPT web image generation"
-      - "other external image tools"
-    codex_output: "asset prompts, image_generation_queue.json, image_result_manifest.json; optionally generated local images when user selects internal_codex"
-  video_generation:
-    executed_outside_codex: true
-    suggested_tools:
-      - "Jimeng / Seedance web"
-    codex_output: "shot-level Chinese video prompts and reference declarations only"
-  editing:
-    executed_outside_codex: true
-    suggested_tools:
-      - "Jianying / CapCut"
-    codex_output: "edit decision notes and shot manifest only"
-
-quality_gates:
-  require_phase_order: true
-  require_schema_validation: true
-  require_asset_id_resolution: true
-  require_style_bible_before_storyboard: true
-  require_storyboard_before_video_prompts: true
-  require_storyboard_sequence_review_before_assets: true
-  block_assets_on_unresolved_p1: true
-  require_storyboard_concretization_translation: true
-  require_storyboard_concretization_review: true
-  block_key_turning_points_without_visual_evidence: true
-  require_character_three_view_for_main_characters: true
-  require_character_identity_anchors: true
-  require_character_variant_triggers: true
-  require_character_variant_must_keep: true
-  require_asset_manifest_character_variant_policy: true
-  require_prop_generation_decision: true
-  require_prop_generation_reason: true
-  require_prop_must_not_change_for_generated_props: true
-  require_text_prop_generation_strategy: true
-  forbid_unnecessary_prop_assets: true
-  require_image_generation_queue: true
-  require_image_generation_priority: true
-  require_image_blocking_flags: true
-  require_image_results_for_must_generate: true
-  block_completed_on_missing_required_images: true
-  require_seedance_task_type_detection: true
-  require_seedance_strict_edit_phrase: true
-  require_seedance_extend_phrase: true
-  require_seedance_asset_declaration_consistency: true
-  require_seedance_sound_symbols: true
-  require_approved_image_references_only: true
-  require_audio_reference_for_dialogue_shots: true
-  require_per_shot_video_prompt_files: true
-  allow_env_reference_only_when_spatial_expansion_needed: true
-  forbid_prop_reference_in_video_prompts_by_default: true
-  require_external_handoff_preserve_task_type: true
-  require_generated_media_review_before_completed: true
-  require_generated_media_task_type_review: true
-  require_continuity_review_before_final_delivery: true
-  require_final_package_quality_gates: true
-  max_storyboard_shot_duration_seconds: 15
-  require_storyboard_shot_boundary_reason: true
-  block_artificial_continuous_shot_splitting: true
-  require_scene_key_plate_prompt: true
-  scene_sheet_generation_policy: "required_for_complex_or_recurring_scenes"
-  scene_reference_priority: "key_plate"
+final_handoff:
+  included:
+    - "outputs/story.md"
+    - "outputs/video_prompts.md"
+    - "outputs/assets/characters/"
+    - "outputs/assets/scenes/"
+    - "outputs/storyboards/"
+  excluded:
+    - "outputs/assets/props/ as standalone delivery"
+    - "external result manifests"
+    - "generated media review"
+    - "voice reference manifests"
