@@ -16,7 +16,7 @@ runtime:
 skill_versions:
   story_generation: "3.0.0"
   art_direction: "2.1.0"
-  storyboard_director: "2.2.0"
+  storyboard_director: "2.3.0"
   asset_executor: "1.4.0"
   character_prompt_generator: "2.4.0"
   scene_prompt_generator: "2.3.0"
