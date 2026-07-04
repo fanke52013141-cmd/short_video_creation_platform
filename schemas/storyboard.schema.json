@@ -4,87 +4,30 @@
   "type": "object",
   "required": ["shots"],
   "properties": {
-    "max_shot_duration_seconds": { "type": ["integer", "number"] },
-    "shot_boundary_policy": { "type": ["object", "string", "null"] },
-    "concretization_translation_policy": { "type": ["object", "string", "null"] },
     "shots": {
       "type": "array",
       "items": {
         "type": "object",
         "required": [
-          "id",
-          "duration_seconds",
+          "shot_id",
           "scene_id",
-          "character_ids",
-          "narrative_function",
-          "shot_boundary_type",
-          "boundary_reason",
-          "camera",
-          "frame_strategy",
-          "abstract_terms_detected",
-          "concretization_evidence",
-          "prompt_cn"
+          "duration_seconds",
+          "framing",
+          "camera_move",
+          "action_desc",
+          "characters_in_shot",
+          "location"
         ],
         "properties": {
-          "id": { "type": "string", "pattern": "^SHOT_[0-9]{3}$" },
+          "shot_id": { "type": "string", "pattern": "^S[0-9]{3}$" },
+          "scene_id": { "type": "string" },
           "duration_seconds": { "type": ["integer", "number"] },
-          "scene_id": { "type": ["string", "null"] },
-          "character_ids": { "type": "array", "items": { "type": "string" } },
-          "prop_ids": { "type": "array", "items": { "type": "string" } },
-          "audio_intent": { "type": ["string", "object", "null"] },
-          "narrative_function": { "type": "string" },
-          "shot_boundary_type": {
-            "type": "string",
-            "enum": [
-              "shot_size_change",
-              "camera_position_change",
-              "perspective_change",
-              "focus_change",
-              "subject_change",
-              "space_change",
-              "time_change",
-              "reaction_shot",
-              "insert_shot",
-              "information_reveal",
-              "montage_cut",
-              "establishing_shot",
-              "other"
-            ]
-          },
-          "boundary_reason": { "type": "string" },
-          "continuity_risk": { "type": ["string", "object", "null"] },
-          "camera": { "type": ["string", "object"] },
-          "shot_size": { "type": ["string", "null"] },
-          "movement": { "type": ["string", "object", "null"] },
-          "frame_strategy": { "type": ["string", "object"] },
-          "transition": { "type": ["string", "null"] },
-          "abstract_terms_detected": {
-            "type": ["array", "string", "null"],
-            "items": { "type": "string" }
-          },
-          "concretization_evidence": {
-            "type": ["object", "string"],
-            "properties": {
-              "emotion_evidence": {
-                "type": ["array", "string", "null"],
-                "items": { "type": "string" }
-              },
-              "atmosphere_evidence": {
-                "type": ["array", "string", "null"],
-                "items": { "type": "string" }
-              },
-              "event_evidence": {
-                "type": ["array", "string", "null"],
-                "items": { "type": "string" }
-              },
-              "relationship_evidence": {
-                "type": ["array", "string", "null"],
-                "items": { "type": "string" }
-              }
-            }
-          },
-          "prompt_cn": { "type": "string" },
-          "continuity_notes": { "type": ["string", "array", "null"] }
+          "framing": { "type": "string" },
+          "camera_move": { "type": "string" },
+          "action_desc": { "type": "string" },
+          "characters_in_shot": { "type": "array", "items": { "type": "string" } },
+          "location": { "type": "string" },
+          "quality_gate": { "type": ["object", "null"] }
         }
       }
     }
