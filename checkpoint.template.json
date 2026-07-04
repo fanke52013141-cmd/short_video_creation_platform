@@ -51,6 +51,8 @@
     "director_does_not_define_assets": true,
     "asset_executor_is_single_asset_source": true,
     "video_prompt_merge_rule_required": true,
+    "video_prompt_merge_decision_required": true,
+    "strong_action_continuity_merge_preferred": true,
     "previous_storyboard_anchor_required_for_same_scene_continuity": true
   },
   "next_phase": {
