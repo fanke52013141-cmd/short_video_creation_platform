@@ -2,7 +2,7 @@
 
 路径约定：仓库根目录保存流程资产；真实创作在 `local_runs/YYYY-MM-DD/project_slug/` 中执行。下文的 `RUN` 代表这个 active run 目录。
 
-执行边界：本仓库负责剧本、风格圣经、分镜、资产清单、资产提示词、分镜生图提示词和最终视频提示词。图片与视频生成在即梦网页端人工执行；流程终点是进入即梦画布生产。
+执行边界：本仓库负责剧本、风格圣经、导演分镜、资产清单、资产提示词、分镜生图提示词和最终视频提示词。图片与视频生成在即梦网页端人工执行；流程终点是进入即梦画布生产。
 
 ## 0. Initialize Local Run
 
@@ -22,9 +22,13 @@
 - Input: `RUN/inputs/idea_brief.md`
 - Output:
   - `RUN/outputs/story.md`
-  - `RUN/outputs/story.json`
-- Schema: `schemas/story.schema.json`
-- Contract: `story.json` 只保留下游必要字段：场景列表、角色列表、剧情段落和生产备注。
+- Contract:
+  - 只优化剧本。
+  - 不输出 `story.json`。
+  - 不拆镜头。
+  - 不拆角色、场景、道具或资产。
+  - 不写图片提示词或视频提示词。
+- Boundary: 镜头结构化由 `storyboard_director` 处理；人物、场景、道具和资产拆分由 `asset_executor` 处理。
 
 ## 2. Story To One-Page Style Bible
 
@@ -71,7 +75,7 @@
   - `schemas/asset_manifest.schema.json`
   - `schemas/shot_asset_map.schema.json`
 - Responsibilities:
-  1. 遍历故事和分镜，提取所有需要生产的角色、场景、道具资产。
+  1. 遍历故事和分镜，提取所有需要生产或描述的角色、场景、道具资产。
   2. 为每个资产定义“特征 + 状态”命名。
   3. 建立每个 shot 对应哪些资产的映射关系。
 
@@ -133,6 +137,7 @@
   - 可选 `reference_media`：用户额外提供的图片、音频、视频素材及其角色
 - Output:
   - `RUN/outputs/video_prompts.md`
+  - `RUN/outputs/video_prompts.json`
 - Supported task types:
   - `pipeline_shot_generation`: 默认分镜流水线生成。
   - `multimodal_reference`: 多图片 / 音频 / 视频参考生成新视频。
@@ -165,6 +170,7 @@
 |---|---|---|
 | `outputs/story.md` | 完整剧本 | 供导演在即梦画布理解叙事 |
 | `outputs/video_prompts.md` | 完整视频提示词 | 逐条复制到即梦使用 |
+| `outputs/video_prompts.json` | 结构化视频计划 | 用于校验和后续自动化 |
 | `outputs/assets/characters/` | 全部有效角色资产 | 废弃/被替换的图片不包含 |
 | `outputs/assets/scenes/` | 全部有效场景资产 | 废弃/被替换的图片不包含 |
 | `outputs/storyboards/` | 全部分镜参考图 | 用于视频生成时的首帧/站位参考 |
