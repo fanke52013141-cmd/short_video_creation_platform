@@ -25,7 +25,7 @@ PHASE_ALIASES = {
     "storyboard_prompts": "storyboard_prompt_generation",
     "video": "video_prompts",
 }
-REQUIRED_STYLE_HEADINGS = ["整体色调", "光线风格", "构图倾向", "禁止出现的视觉元素"]
+REQUIRED_STYLE_HEADINGS = ["画面风格", "整体色调", "光线风格", "AI 视觉执行要求"]
 REQUIRED_VIDEO_PROMPT_SECTIONS = ["【自检通过项】", "【资产声明区】", "【中文视频提示词】"]
 HIGH_INTENSITY_TERMS = re.compile(r"奔跑|跳跃|翻滚|剧烈打斗|打斗|快速追逐|追逐|摔倒|撞击|飞跃|爆炸")
 OPERATION_TASK_TYPES = {"video_edit", "video_extend", "combined_task"}
@@ -211,6 +211,10 @@ def validate_art(run_dir: Path) -> None:
     for heading in REQUIRED_STYLE_HEADINGS:
         if heading not in text:
             fail(f"style_bible.md missing required section: {heading}")
+    if "## 构图倾向" in text:
+        fail("style_bible.md must not contain a hard 构图倾向 section; composition belongs to storyboard_director")
+    if "## 禁止出现的视觉元素" in text:
+        fail("style_bible.md must not contain a standalone 禁止出现的视觉元素 section")
     non_empty_lines = [line for line in text.splitlines() if line.strip()]
     if len(non_empty_lines) > 80:
         fail("style_bible.md is too long; keep it within one page")
