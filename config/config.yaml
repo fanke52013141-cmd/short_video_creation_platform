@@ -18,10 +18,10 @@ skill_versions:
   story_generation: "3.0.0"
   art_direction: "2.1.0"
   storyboard_director: "2.2.0"
-  asset_executor: "1.0.0"
-  character_prompt_generator: "2.0.0"
-  scene_prompt_generator: "2.0.0"
-  prop_prompt_generator: "2.0.0"
+  asset_executor: "1.1.0"
+  character_prompt_generator: "2.1.0"
+  scene_prompt_generator: "2.1.0"
+  prop_prompt_generator: "2.1.0"
   image_generation_executor: "1.0.0"
   storyboard_prompt_generator: "1.0.0"
   video_prompt_generator: "2.3.0"
@@ -73,10 +73,21 @@ schemas:
   video_prompt: "./schemas/video_prompt.schema.json"
 
 naming_policy:
-  character: "{外貌特征}_{情绪状态}_{角度}"
-  scene: "{地点名}_{时间/光线}_{氛围}"
-  prop: "{物品名}_{视角/状态}"
+  character:
+    preferred: "custom_concrete_name_when_available"
+    fallback: "主体1/主体2/主体3"
+    forbid_state_split: true
+    forbid_asset_ids_as_names: true
+  scene:
+    preferred: "concrete_scene_name"
+    fallback: "场景1/场景2"
+    light_time_weather_do_not_split: true
+    forbid_asset_ids_as_names: true
+  prop:
+    key_props_only: true
+    default_handling: "text_prompt_control"
   storyboard: "S{三位数序号}"
+  scene_id: "SC{三位数序号}"
   video: "V{三位数序号}"
   forbid_abstract_asset_ids:
     - "CHAR_001"
@@ -126,6 +137,47 @@ style_bible_policy:
   forbidden_sections:
     - "构图倾向"
     - "禁止出现的视觉元素"
+
+asset_policy:
+  naming_model: "seedance_subject_scene_binding"
+  character:
+    allowed_naming:
+      - "numbered_subject"
+      - "custom_concrete_name"
+    required_identity_bundle:
+      - "face_closeup"
+      - "full_body_styling"
+    do_not_split_for:
+      - "emotion"
+      - "expression"
+      - "gesture"
+      - "pose"
+      - "action"
+      - "camera_angle"
+    wardrobe_change_keeps_same_name: true
+  scene:
+    allowed_naming:
+      - "simple_scene_number"
+      - "concrete_scene_name"
+    do_not_split_for:
+      - "light_change"
+      - "time_of_day_change"
+      - "weather_change"
+      - "color_temperature_change"
+    split_only_for:
+      - "spatial_structure_change"
+      - "location_change"
+      - "story_space_change"
+  prop:
+    generate_independent_only_when:
+      - "story_key_prop"
+      - "repeated_appearance"
+      - "closeup_required"
+      - "complex_shape"
+      - "state_change_needs_tracking"
+    default_handling: "text_prompt_control"
+    inherited_reference_props_do_not_describe: true
+    remove_extra_prop_by_direct_instruction_only: true
 
 video_prompt_policy:
   output_language: "zh"
