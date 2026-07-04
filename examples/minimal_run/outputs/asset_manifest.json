@@ -1,34 +1,86 @@
 {
-  "naming_policy": "特征 + 状态中文命名",
+  "naming_policy": "seedance_subject_scene_binding",
   "characters": [
     {
-      "asset_name": "黑发女孩_克制_正面",
+      "asset_name": "林小满",
       "asset_type": "character",
+      "naming_strategy": "custom_concrete_name",
+      "seedance_label": "林小满",
+      "definition_sentence": "将生成的人脸大头特写图和全身妆造图统一定义为林小满。",
+      "reference_bindings": [
+        {
+          "source_id": "林小满_人脸大头特写",
+          "source_type": "generated_asset",
+          "role": "face_closeup",
+          "notes": "锁定面部 ID"
+        },
+        {
+          "source_id": "林小满_全身妆造",
+          "source_type": "generated_asset",
+          "role": "full_body_styling",
+          "notes": "锁定体型、服装和整体造型"
+        }
+      ],
       "base_name": "林小满",
-      "feature": "黑发、深色针织衫",
-      "state": "克制",
-      "angle_or_view": "正面",
+      "feature": "黑色中长发、深色针织衫",
+      "state": null,
+      "angle_or_view": null,
       "visual_anchors": ["黑色中长发", "深色针织衫"],
       "appears_in_shots": ["S001", "S002"],
       "generation_required": true,
-      "prompt_scope": "single_character_all_states",
-      "notes": "人物外观由资产图锁定"
+      "required_reference_set": ["face_closeup", "full_body_styling"],
+      "prompt_scope": "single_character_identity_bundle",
+      "handling_policy": "generate_identity_bundle",
+      "notes": "克制、眼眶泛红、坐下、捏紧手机等状态由视频提示词文字控制，不拆新人物资产。"
     }
   ],
   "scenes": [
     {
-      "asset_name": "雨夜客厅_冷暖对比_安静",
+      "asset_name": "雨夜客厅场景",
       "asset_type": "scene",
-      "base_name": "雨夜客厅",
-      "feature": "窗外雨夜、室内暖灯",
-      "state": "安静",
-      "angle_or_view": "中景",
-      "visual_anchors": ["雨窗", "暖黄台灯", "沙发"],
+      "naming_strategy": "concrete_scene_name",
+      "seedance_label": "雨夜客厅场景",
+      "definition_sentence": "将生成的客厅场景参考图定义为雨夜客厅场景。",
+      "reference_bindings": [
+        {
+          "source_id": "雨夜客厅场景_参考图",
+          "source_type": "generated_asset",
+          "role": "scene_reference",
+          "notes": "锁定客厅空间结构和主要陈设"
+        }
+      ],
+      "base_name": "雨夜客厅场景",
+      "feature": "客厅、沙发、茶几、窗外雨夜",
+      "state": null,
+      "angle_or_view": null,
+      "visual_anchors": ["沙发", "茶几", "雨窗", "暖黄台灯"],
       "appears_in_shots": ["S001", "S002"],
       "generation_required": true,
-      "prompt_scope": "single_scene",
-      "notes": "场景基调由资产图锁定"
+      "required_reference_set": ["scene_reference"],
+      "prompt_scope": "single_scene_reference",
+      "handling_policy": "generate_scene_reference",
+      "notes": "冷蓝雨光和暖黄灯光由提示词控制，不因光线变化拆新场景。"
     }
   ],
-  "props": []
+  "props": [
+    {
+      "asset_name": "手机",
+      "asset_type": "prop",
+      "naming_strategy": "key_prop_name",
+      "seedance_label": "手机",
+      "definition_sentence": null,
+      "reference_bindings": [],
+      "base_name": "手机",
+      "feature": "亮屏手机",
+      "state": "贴近耳边",
+      "angle_or_view": null,
+      "visual_anchors": ["亮起的屏幕", "贴近耳边"],
+      "appears_in_shots": ["S001", "S002"],
+      "generation_required": false,
+      "required_reference_set": null,
+      "prompt_scope": "text_control_only",
+      "handling_policy": "text_prompt_control",
+      "notes": "手机是动作关键道具，但外形普通，后续视频提示词正文描述即可，不生成独立道具图。"
+    }
+  ]
 }
