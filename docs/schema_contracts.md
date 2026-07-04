@@ -1,31 +1,36 @@
 # Schema Contracts
 
-本项目的 Markdown 产物服务于人类确认和复制，JSON 产物服务于下游 Skill 和校验脚本读取。凡是进入下游的核心 JSON，都必须满足 `schemas/` 中对应 schema。
+本项目中，Markdown 产物服务于人类确认和复制；JSON 产物只在确实需要下游稳定读取时才出现。剧本阶段不输出 JSON，避免让剧本专家同时承担结构化抽取职责。
 
 ## 核心 schema
 
 | 产物 | Schema |
 |---|---|
-| `outputs/story.json` | `schemas/story.schema.json` |
 | `outputs/storyboard.json` | `schemas/storyboard.schema.json` |
 | `outputs/asset_manifest.json` | `schemas/asset_manifest.schema.json` |
 | `outputs/shot_asset_map.json` | `schemas/shot_asset_map.schema.json` |
-| 可选结构化视频提示词计划 | `schemas/video_prompt.schema.json` |
+| `outputs/video_prompts.json` | `schemas/video_prompt.schema.json` |
+| 多参素材约束 | `schemas/reference_media.schema.json` |
 
-`style_bible.md` 不再对应 JSON schema。风格圣经以 Markdown 作为唯一产物，且必须保持在一页以内。
+`outputs/story.md` 和 `outputs/style_bible.md` 不对应 JSON schema。前者是剧本创作产物，后者是一页以内的视觉约束文件。
 
-## story.json 契约
+## story.md 契约
 
-`story.json` 只保留下游必要字段：
+`story_generation` 只输出 `outputs/story.md`。该文件应服务剧本优化本身，而不是提前为下游抽字段。
 
-- `title`
-- `logline`
-- `scenes`
-- `characters`
-- `plot_segments`
-- `production_notes`
+禁止在剧本阶段输出：
 
-禁止在故事 JSON 中堆叠复杂心理层、多余元数据或不会被下游消费的分析字段。
+- `outputs/story.json`
+- `outputs/story_index.json`
+- 镜头结构化
+- 资产清单
+- 角色状态拆分
+- 场景资产拆分
+- 道具资产拆分
+- 图片提示词
+- 视频提示词
+
+镜头结构化由 `storyboard_director` 输出 `storyboard.json`；人物、场景、道具和资产结构化由 `asset_executor` 输出 `asset_manifest.json` 与 `shot_asset_map.json`。
 
 ## storyboard.json 契约
 
@@ -72,7 +77,7 @@
 
 ## 视频提示词契约
 
-`video_prompts.md` 是最终人工复制到即梦的主交付文件。
+`video_prompts.md` 是最终人工复制到即梦的主交付文件。`video_prompts.json` 是同一组 `V###` 的结构化计划，用于校验和后续自动化。
 
 每个视频提示词使用 `V###` 命名。一个 `V###` 可以对应一个或多个 `S###`，但合并必须同时满足：
 
@@ -90,7 +95,7 @@
 
 ## 原则
 
-- Markdown 可以灵活，JSON 字段必须稳定。
-- 下游 Skill 不得依赖未写入 JSON 的关键事实。
+- 剧本阶段先保证剧本质量，不承担结构化抽取。
+- JSON 只在导演、资产执行、视频计划等明确需要机器校验的阶段出现。
 - 新增影响下游读取的字段时，应同步更新 schema、Skill 文档和 `scripts/validate_project.py`。
-- 旧项目不满足 schema 时，应重新初始化或标记为 legacy，不要伪装通过。
+- 旧项目不满足当前契约时，应重新初始化或标记为 legacy，不要伪装通过。
