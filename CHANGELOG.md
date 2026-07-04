@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-07-04 - v1.0.3
+
+### Changed
+- [process] 简化第一阶段：`story_generation` 只输出 `outputs/story.md`，不再输出 `story.json` 或任何 story index。
+- [skill] 将 `story_generation` 升级到 3.0.0，明确禁止在剧本阶段拆分镜头、角色状态、场景资产、道具资产或生成提示词。
+- [prompt] 更新 `skills/raw_prompts/story_generation.source.md`，删除机器可读故事输出要求，让模型专注剧本优化。
+- [script] `validate_project.py` 的 `story` 阶段只校验 `story.md`，并将存在 `story.json` 视为不合格。
+- [schema] 删除已弃用的 `schemas/story.schema.json`；结构化从导演分镜阶段开始。
+- [docs] 更新 README、flow、schema contracts、local run 模板、Agent 和质量门，统一“剧本阶段 Markdown-only”的边界。
+- [examples] 更新 `examples/minimal_run/`，移除 `outputs/story.json` 并扩展 `story.md` 样例。
+
+### Reason
+- 剧本优化阶段不应同时承担结构化抽取职责；否则会分散模型注意力，影响故事质量。
+- 镜头结构化属于导演，资产拆分属于资产执行官，视频计划属于视频提示词生成器。
+
+### Validation
+- 待 CI 验证：`python scripts/validate_project.py examples/minimal_run --phase all`。
+
 ## 2026-07-04 - v1.0.2
 
 ### Changed
