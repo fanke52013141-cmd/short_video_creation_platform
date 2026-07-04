@@ -1,6 +1,6 @@
 project:
   name: "short_video_creation_platform"
-  version: "1.0.1"
+  version: "1.0.2"
   description: "将用户想法转化为即梦画布生产前置交付包的 Skill 工作流"
 
 runtime:
@@ -24,7 +24,7 @@ skill_versions:
   prop_prompt_generator: "2.0.0"
   image_generation_executor: "1.0.0"
   storyboard_prompt_generator: "1.0.0"
-  video_prompt_generator: "2.1.0"
+  video_prompt_generator: "2.2.0"
 
 phase_order:
   - story_generation
@@ -55,6 +55,7 @@ paths:
   storyboard_reference_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboards"
   storyboard_prompts: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboard_prompts.md"
   video_prompts: "./local_runs/YYYY-MM-DD/project_slug/outputs/video_prompts.md"
+  video_prompts_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/video_prompts.json"
 
 prompt_sources:
   story_generation: "./skills/raw_prompts/story_generation.source.md"
@@ -70,6 +71,7 @@ schemas:
   storyboard: "./schemas/storyboard.schema.json"
   asset_manifest: "./schemas/asset_manifest.schema.json"
   shot_asset_map: "./schemas/shot_asset_map.schema.json"
+  reference_media: "./schemas/reference_media.schema.json"
   video_prompt: "./schemas/video_prompt.schema.json"
 
 naming_policy:
@@ -109,6 +111,8 @@ style_bible_policy:
 
 video_prompt_policy:
   output_language: "zh"
+  markdown_output_required: true
+  json_output_required: true
   max_video_prompt_duration_seconds: 15
   supported_task_types:
     - "pipeline_shot_generation"
@@ -169,6 +173,7 @@ final_handoff:
   included:
     - "outputs/story.md"
     - "outputs/video_prompts.md"
+    - "outputs/video_prompts.json"
     - "outputs/assets/characters/"
     - "outputs/assets/scenes/"
     - "outputs/storyboards/"
