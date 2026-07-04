@@ -14,78 +14,76 @@
           "source_shots",
           "duration_seconds",
           "scene_id",
+          "merge_decision",
+          "frame_references",
           "declared_assets",
+          "uses_previous_storyboard_anchor",
+          "risk_notice_required",
           "prompt_cn"
         ],
         "properties": {
           "video_id": { "type": "string", "pattern": "^V[0-9]{3}$" },
-          "task_type": {
-            "type": "string",
-            "enum": [
-              "pipeline_shot_generation",
-              "multimodal_reference",
-              "video_edit",
-              "video_extend",
-              "combined_task",
-              "track_stitch"
-            ]
-          },
+          "task_type": { "type": "string", "enum": ["pipeline_shot_generation"] },
           "source_shots": {
             "type": "array",
             "items": { "type": "string", "pattern": "^S[0-9]{3}$" }
           },
           "duration_seconds": { "type": ["integer", "number"], "minimum": 0, "maximum": 15 },
-          "scene_id": { "type": "string" },
+          "scene_id": { "type": "string", "pattern": "^SC[0-9]{3}$" },
+          "merge_decision": { "$ref": "#/$defs/merge_decision" },
+          "frame_references": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/frame_reference" }
+          },
           "declared_assets": {
             "type": "array",
             "items": { "$ref": "#/$defs/declared_asset" }
           },
-          "operation_objects": {
-            "type": ["array", "null"],
-            "items": { "type": "string" }
-          },
-          "uses_previous_storyboard_anchor": { "type": ["boolean", "string", "null"] },
-          "risk_notice_required": { "type": ["boolean", "string", "null"] },
+          "uses_previous_storyboard_anchor": { "type": "boolean" },
+          "risk_notice_required": { "type": "boolean" },
           "prompt_cn": { "type": "string" }
         }
       }
     }
   },
   "$defs": {
+    "merge_decision": {
+      "type": "object",
+      "required": ["strategy", "reason", "continuity_risk"],
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "single_shot",
+            "merged_strong_action_continuity",
+            "merged_optional_composition_change",
+            "forced_split_scene_or_time_change",
+            "forced_split_duration_over_limit",
+            "forced_split_action_discontinuity"
+          ]
+        },
+        "reason": { "type": "string" },
+        "continuity_risk": { "type": "string", "enum": ["low", "medium", "high"] }
+      }
+    },
+    "frame_reference": {
+      "type": "object",
+      "required": ["shot_id", "asset_name", "role", "path"],
+      "properties": {
+        "shot_id": { "type": "string", "pattern": "^S[0-9]{3}$" },
+        "asset_name": { "type": "string" },
+        "role": { "type": "string", "enum": ["first_frame", "last_frame", "keyframe"] },
+        "path": { "type": "string" }
+      }
+    },
     "declared_asset": {
       "type": "object",
       "required": ["asset_name", "media_type", "role", "usage_type"],
       "properties": {
         "asset_name": { "type": "string" },
-        "media_type": {
-          "type": "string",
-          "enum": ["image", "audio", "video", "text", "storyboard", "character", "scene", "prop"]
-        },
-        "role": {
-          "type": "string",
-          "enum": [
-            "first_frame",
-            "last_frame",
-            "keyframe",
-            "character_asset",
-            "scene_asset",
-            "style_reference",
-            "voice_reference",
-            "music_reference",
-            "ambience_reference",
-            "action_reference",
-            "style_video_reference",
-            "overall_reference",
-            "edit_object",
-            "extend_object",
-            "storyboard_reference",
-            "text_intent"
-          ]
-        },
-        "usage_type": {
-          "type": "string",
-          "enum": ["reference", "operation_object", "text_only"]
-        },
+        "media_type": { "type": "string", "enum": ["storyboard", "character", "scene", "prop", "image"] },
+        "role": { "type": "string", "enum": ["first_frame", "last_frame", "keyframe", "character_asset", "scene_asset", "style_reference"] },
+        "usage_type": { "type": "string", "enum": ["reference", "text_only"] },
         "source_path": { "type": ["string", "null"] },
         "notes": { "type": ["string", "null"] }
       }

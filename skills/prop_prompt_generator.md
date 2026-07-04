@@ -1,55 +1,84 @@
 # Skill: prop_prompt_generator
-**Version**: 2.0.0
+**Version**: 2.3.0
 
 ## Source Prompt
 `skills/raw_prompts/prop_prompt_generator.source.md`
 
 ## Purpose
-为单个道具资产生成即梦图片生成提示词。
+根据锁定剧本、风格圣经和单个核心道具资产，生成一份独立道具参考图提示词。
 
-一次只处理一个道具，不混入其他道具或角色设定。道具是否需要独立生成只由 `asset_executor` 决定。
+本 Skill 只处理已经由 `asset_executor` 判定为需要独立生成的核心剧情道具。普通道具不进入本 Skill。
 
 ## Inputs
 ```json
 {
   "story_markdown_path": "./outputs/story.md",
-  "asset_manifest_path": "./outputs/asset_manifest.json",
-  "prop_asset_name": "旧皮箱_正面"
+  "style_bible_path": "./outputs/style_bible.md",
+  "asset_type": "prop",
+  "asset_name": "旧皮箱",
+  "output_prompt_path": "./outputs/assets/props/旧皮箱.md"
 }
 ```
+
+## Minimal Input Boundary
+
+必须输入：
+
+- `story.md`：用于理解道具在剧情里的功能、出现方式和象征意义。
+- `style_bible.md`：用于继承全片画面风格、色调、光线和 AI 视觉执行要求。
+- `asset_type`：必须为 `prop`。
+- `asset_name`：资产执行官固定的道具名。
+- `output_prompt_path`：本次要写出的提示词位置。
+
+不得输入：
+
+- `task_id`
+- `asset_payload`
+- 完整任务队列
+- 其他人物、场景或道具任务
 
 ## Outputs
 ```json
 {
-  "prop_prompt_path": "./outputs/assets/props/旧皮箱_正面.md"
+  "prop_prompt_path": "./outputs/assets/props/旧皮箱.md"
 }
 ```
 
 ## Procedure
-1. 读取 `story.md`。
-2. 从 `asset_manifest.json` 中只切出本次道具资产。
-3. 如果 `generation_required` 不是 true，输出“不生成独立道具资产”的原因，不生成最终图像提示词。
-4. 需要生成时，输出单一物体的中文图片提示词。
-5. 提示词必须包含：物品名、视角/状态、形状、材质、颜色、尺度、磨损、可识别细节、禁止项。
-6. 文字类道具必须说明文字策略：直接生成、留白后期加字或不可读暗示。
-7. 文件名必须与 `asset_name` 一致。
+
+1. 读取 `story.md`，理解 `asset_name` 在剧情里的功能、出现方式和象征意义。
+2. 读取 `style_bible.md`，继承必要的画面风格和 AI 视觉执行要求。
+3. 只输出单一物体图片提示词。
+4. 不默认要求视频阶段使用 `@PROP`；道具通常写入视频提示词正文。
+5. 不新增 `asset_name` 之外的道具。
+
+## 独立生成条件
+
+只有已经由 `asset_executor` 判定为独立生成的道具，才进入本 Skill。通常满足以下至少一项：
+
+- 剧情关键线索。
+- 反复出现。
+- 需要特写。
+- 外形复杂，文字难以稳定控制。
+- 状态变化明显且需要连续追踪。
+- 用户明确要求道具图。
 
 ## Quality Gate
-- [ ] 一次只处理一个道具。
-- [ ] 只为 `generation_required=true` 的道具生成独立图片提示词。
-- [ ] 没有为普通一次性背景物件强行生成独立道具资产。
-- [ ] 道具在缩略图和特写中都可辨识。
-- [ ] 材质、尺度、颜色、状态明确。
-- [ ] 没有与角色或场景资产冲突。
-- [ ] 不默认要求视频阶段使用 `@PROP`；道具写入视频提示词正文描述。
+
+- [ ] 一次只处理一个道具资产和一个输出位置。
+- [ ] 输入只有 `story.md`、`style_bible.md`、`asset_type`、`asset_name`、`output_prompt_path`。
+- [ ] 没有 `task_id` 或 `asset_payload`。
+- [ ] 没有为普通背景物件强行生成独立道具资产。
+- [ ] 输出是单一物体图片提示词。
+- [ ] 不默认要求视频阶段使用 `@PROP`。
 
 ## Checkpoint Update
-完成某道具后更新：
-- `artifacts.assets.props.{asset_name}`: `./outputs/assets/props/{asset_name}.md`
-
-全部道具完成后，`asset_prompt_generation` 的道具分支可标记完成。
+完成某个输出位置后更新：
+- `artifacts.assets.props.{asset_name}`: `output_prompt_path`
 
 ## Failure Handling
-- 道具定义不足：返回 `asset_executor` 补充状态、视角、生成理由或出现镜头。
-- 道具不应生成：返回 `asset_executor` 将其标记为 `generation_required=false`。
-- 文字策略缺失：返回 `asset_executor` 补充文字处理策略。
+
+- 输入包含多个资产：拆成单资产调用。
+- 输入缺少 `story.md`：停止，因为道具设定需要完整剧情上下文。
+- 普通道具被要求独立生成：返回 `asset_executor` 改为 `text_prompt_control` 或移出资产清单。
+- 道具确实关键但定义不足：返回 `asset_executor` 补充道具名称或独立生成理由。

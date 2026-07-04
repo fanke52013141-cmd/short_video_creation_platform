@@ -1,172 +1,175 @@
 # Workflow
 
-路径约定：仓库根目录保存流程资产；真实创作在 `local_runs/YYYY-MM-DD/project_slug/` 中执行。下文的 `RUN` 代表这个 active run 目录。
+路径约定：真实创作在 `local_runs/YYYY-MM-DD/project_slug/` 中执行。下文的 `RUN` 代表这个 active run 目录。
 
-执行边界：本仓库负责剧本、风格圣经、分镜、资产清单、资产提示词、分镜生图提示词和最终视频提示词。图片与视频生成在即梦网页端人工执行；流程终点是进入即梦画布生产。
-
-## 0. Initialize Local Run
-
-- Script: `scripts/init_local_run.ps1`
-- Output:
-  - `RUN/checkpoint.json`
-  - `RUN/inputs/idea_brief.md`
-  - `RUN/outputs/assets/characters/`
-  - `RUN/outputs/assets/scenes/`
-  - `RUN/outputs/assets/props/`
-  - `RUN/outputs/storyboards/`
-
-## 1. Idea To Story
+## 1. Story
 
 - Skill: `story_generation`
-- Source prompt: `skills/raw_prompts/story_generation.source.md`
 - Input: `RUN/inputs/idea_brief.md`
-- Output:
-  - `RUN/outputs/story.md`
-  - `RUN/outputs/story.json`
-- Schema: `schemas/story.schema.json`
-- Contract: `story.json` 只保留下游必要字段：场景列表、角色列表、剧情段落和生产备注。
+- Output: `RUN/outputs/story.md`
+- Contract: 只优化剧本；不输出 `story.json`；不拆镜头、资产或提示词。
 
-## 2. Story To One-Page Style Bible
+## 2. Art Direction
 
 - Skill: `art_direction`
-- Source prompt: `skills/raw_prompts/art_direction.source.md`
-- Input:
-  - `RUN/outputs/story.md`
-- Output:
-  - `RUN/outputs/style_bible.md`
-- Contract: 不输出 `art_direction.json`。`style_bible.md` 必须一页以内，只允许定义整体色调、光线风格、构图倾向和禁止出现的视觉元素。
+- Input: 用户已确认锁定的 `RUN/outputs/story.md`
+- Output: `RUN/outputs/style_bible.md`
+- Contract: 只定义画面风格、整体色调、光线风格和 AI 视觉执行要求；不做具体构图。
 
-## 3. Story And Style To Storyboard
+## 3. Storyboard Director
 
 - Skill: `storyboard_director`
-- Source prompt: `skills/raw_prompts/storyboard_director.source.md`
 - Input:
   - `RUN/outputs/story.md`
   - `RUN/outputs/style_bible.md`
-- Output:
-  - `RUN/outputs/storyboard.json`
-- Schema: `schemas/storyboard.schema.json`
+- Output: `RUN/outputs/storyboard.json`
 - Shot fields:
-  - `shot_id`: `S001`、`S002`...
-  - `scene_id`: 关联场景
-  - `duration_seconds`: 建议时长，必须 `>0` 且 `<=15`
-  - `framing`: 景别
-  - `camera_move`: 运镜
-  - `action_desc`: 具象动作描述
-  - `characters_in_shot`: 出现角色名，使用特征名，不使用 `CharA`
-  - `location`: 场景名
-- Boundary: 导演不得输出资产草表、资产 ID、提示词、音色或外部交接内容。
-- Quality Gate: 分镜阶段内部完成相邻逻辑检查；不再存在独立 `storyboard_sequence_review` 节点。
+  - `shot_id`
+  - `scene_id`
+  - `duration_seconds`
+  - `framing`
+  - `camera_move`
+  - `action_desc`
 
-## 4. Storyboard To Asset Manifest And Shot Map
+## 4. Asset Executor
 
 - Skill: `asset_executor`
 - Input:
   - `RUN/outputs/story.md`
   - `RUN/outputs/storyboard.json`
+  - 可选用户参考素材
 - Output:
   - `RUN/outputs/asset_manifest.json`
   - `RUN/outputs/shot_asset_map.json`
-- Schemas:
-  - `schemas/asset_manifest.schema.json`
-  - `schemas/shot_asset_map.schema.json`
-- Responsibilities:
-  1. 遍历故事和分镜，提取所有需要生产的角色、场景、道具资产。
-  2. 为每个资产定义“特征 + 状态”命名。
-  3. 建立每个 shot 对应哪些资产的映射关系。
+- Contract:
+  - 人物资产按 `人物稳定名_状态` 固定，例如 `林小满_雨夜接电话状态`。
+  - 不默认拆成 `人脸大头特写` 和 `全身妆造` 两个资产。
+  - 场景资产按稳定场景名固定；普通光线、时间、天气变化不拆场景。
+  - 普通道具正文控制；只有核心复杂道具才独立生成。
+  - 每个需要生成提示词的资产只有一个 `output_prompt_path`。
 
 ## 5. Asset Prompt Generation
 
-三路可并行执行，互不依赖。
+三路可并行执行。每次只处理一个资产。
 
-### 5-A Character Prompts
+```json
+{
+  "story_markdown_path": "./outputs/story.md",
+  "style_bible_path": "./outputs/style_bible.md",
+  "asset_type": "character | scene | prop",
+  "asset_name": "资产执行官固定的资产名",
+  "output_prompt_path": "本次要写出的提示词文件"
+}
+```
 
-- Skill: `character_prompt_generator`
-- Input:
-  - `RUN/outputs/story.md`
-  - 从 `asset_manifest.json` 切出的单个角色及其全部状态
-- Output:
-  - `RUN/outputs/assets/characters/{角色资产名}.md`
+### Character
 
-### 5-B Scene Prompts
+- `asset_name` 示例：`林小满_雨夜接电话状态`
+- 输出：一份 21:9 人物状态资产图提示词。
+- 同一张图中可包含人物特写、正面、侧面、后视图。
 
-- Skill: `scene_prompt_generator`
-- Input:
-  - `RUN/outputs/story.md`
-  - 从 `asset_manifest.json` 切出的单个场景
-- Output:
-  - `RUN/outputs/assets/scenes/{场景资产名}.md`
+### Scene
 
-### 5-C Prop Prompts
+- `asset_name` 示例：`雨夜客厅场景`
+- 输出：一份单场景参考图提示词。
 
-- Skill: `prop_prompt_generator`
-- Input:
-  - `RUN/outputs/story.md`
-  - 从 `asset_manifest.json` 切出的单个道具
-- Output:
-  - `RUN/outputs/assets/props/{道具资产名}.md`
+### Prop
 
-用户随后在即梦生成资产图片，并回填到对应资产目录。
+- 只处理 `generation_required=true` 且确实需要独立生成的核心道具。
 
-## 6. Storyboard Image Prompt Generation
+## 5.5 Asset Image Generation
+
+- Skill: `image_generation_executor`
+- Minimal input:
+  ```json
+  {
+    "asset_type": "character | scene | prop",
+    "asset_name": "资产名",
+    "prompt_path": "资产提示词路径",
+    "generation_mode": "jimeng_web_manual | chatgpt_web | codex_direct | external_manual",
+    "output_image_path": "生成后的图片路径"
+  }
+  ```
+- Output: 一张资产图片文件。
+- 人物资产图允许是一张 21:9 多视角资产图；仍然只算一张图片文件。
+
+## 6. Storyboard Prompt Generation
 
 - Skill: `storyboard_prompt_generator`
+- 按 shot 循环执行。
 - Input:
-  - `RUN/outputs/storyboard.json`
-  - `RUN/outputs/style_bible.md`
-  - `RUN/outputs/shot_asset_map.json`
-  - `RUN/outputs/assets/**` 中已有资产参考图
-- Output:
-  - `RUN/outputs/storyboard_prompts.md`
-- Responsibility: 把导演分镜的叙事语言转化为 AI 生图语言。导演分镜不是生图提示词，不得直接复制为图片提示词。
+  ```json
+  {
+    "storyboard_json_path": "./outputs/storyboard.json",
+    "style_bible_path": "./outputs/style_bible.md",
+    "shot_asset_map_path": "./outputs/shot_asset_map.json",
+    "asset_image_root": "./outputs/assets",
+    "storyboard_image_root": "./outputs/storyboards",
+    "shot_id": "S001",
+    "output_prompt_path": "./outputs/storyboard_prompts/S001.md"
+  }
+  ```
+- Output: 当前 `S###` 的分镜参考图提示词，也可汇总为 `RUN/outputs/storyboard_prompts.md`。
+- 必须输出：
+  - `recommended_frame_role: first_frame | last_frame | keyframe`
+  - `uses_previous_storyboard_reference: true | false`
+  - 如引用上一分镜，必须限定为 `placement_anchor`，只继承站位、朝向、空间比例和连续性。
 
-用户随后在即梦生成分镜参考图，并回填到 `RUN/outputs/storyboards/S001.png`、`S002.png` 等。
+## 6.5 Storyboard Image Generation
+
+- Input:
+  ```json
+  {
+    "shot_id": "S001",
+    "prompt_path": "./outputs/storyboard_prompts/S001.md",
+    "generation_mode": "chatgpt_web",
+    "output_image_path": "./outputs/storyboards/S001.png"
+  }
+  ```
+- Output: 一张分镜参考图。
 
 ## 7. Video Prompt Generation
 
 - Skill: `video_prompt_generator`
-- Input:
-  - `RUN/outputs/storyboard.json`
-  - `RUN/outputs/storyboards/`
-  - `RUN/outputs/shot_asset_map.json`
-  - `RUN/outputs/assets/`
-  - 可选 `reference_media`：用户额外提供的图片、音频、视频素材及其角色
+- 在全部分镜图生成完成后运行。
+- Minimal input:
+  ```json
+  {
+    "storyboard_json_path": "./outputs/storyboard.json",
+    "storyboard_prompts_path": "./outputs/storyboard_prompts.md",
+    "storyboard_reference_dir": "./outputs/storyboards",
+    "shot_asset_map_path": "./outputs/shot_asset_map.json",
+    "asset_reference_dir": "./outputs/assets"
+  }
+  ```
 - Output:
   - `RUN/outputs/video_prompts.md`
-- Supported task types:
-  - `pipeline_shot_generation`: 默认分镜流水线生成。
-  - `multimodal_reference`: 多图片 / 音频 / 视频参考生成新视频。
-  - `video_edit`: 严格编辑已有视频对象。
-  - `video_extend`: 向前或向后延长已有视频对象。
-  - `combined_task`: 参考一个素材，同时编辑或延长另一个素材。
-  - `track_stitch`: 多段视频轨道衔接。
-- Merge rule: 相邻 shot 只有同时满足以下三项才允许合并为一个 `V###`：
-  1. 同一 `scene_id`。
-  2. 合并后时长之和 `<=15s`。
-  3. 动作描述连续，无场景切换、无时间跳跃。
-- Anchor rule:
-  - 同一场景内连续多镜头，每个视频提示词必须引入 `参考@上一分镜_站位，保持人物空间关系、朝向和相对位置不变`。
-  - 场景切换时不引入上一分镜，避免错误约束。
-- Asset declaration rule:
-  - 每条 `V###` 必须包含 `【自检通过项】`、`【资产声明区】`、`【中文视频提示词】`。
-  - 所有素材先声明再引用。
-  - 图片、音频、视频素材必须标注角色：首帧、尾帧、关键帧、人物资产、场景资产、风格参考、声音参考、配乐参考、环境音参考、动作参考、整体参考、编辑对象或延长对象。
-- Operation object rule:
-  - 编辑对象正文必须写 `严格编辑 @资产名`，禁止写 `参考@资产名`。
-  - 延长对象正文必须写 `向前延长 @资产名` 或 `向后延长 @资产名`，禁止写 `参考@资产名`。
-- Prop rule: 道具资产不使用 `@PROP`，只写入视频提示词正文描述。
-- Risk rule: 若包含奔跑、跳跃、翻滚、剧烈打斗、快速追逐等高强度动作，必须在 `V###` 最前面输出 `【生成风险提示】`。
+  - `RUN/outputs/video_prompts.json`
 
-## Final Jimeng Canvas Handoff
+### Merge rule
 
-只交付以下内容：
+- 合并对象是连续 `S###`，不是 `SC###`。
+- 同一 `scene_id` 内的连续 shot 才允许合并。
+- 合并总时长必须 `<=15s`。
+- 强连续动作、同一站位关系、同一道具交互优先合并。
+- 跨场景、时间跳跃、动作不连续或超过 15 秒必须拆分。
 
-| 交付物 | 内容 | 说明 |
-|---|---|---|
-| `outputs/story.md` | 完整剧本 | 供导演在即梦画布理解叙事 |
-| `outputs/video_prompts.md` | 完整视频提示词 | 逐条复制到即梦使用 |
-| `outputs/assets/characters/` | 全部有效角色资产 | 废弃/被替换的图片不包含 |
-| `outputs/assets/scenes/` | 全部有效场景资产 | 废弃/被替换的图片不包含 |
-| `outputs/storyboards/` | 全部分镜参考图 | 用于视频生成时的首帧/站位参考 |
+### Frame role rule
 
-道具资产不单独交付，写入视频提示词正文描述。
+- 合并多个 shot 时，第一个 source shot 的分镜图是 `first_frame`。
+- 最后一个 source shot 的分镜图是 `last_frame`。
+- 中间 source shots 的分镜图是 `keyframe`。
+- 每条 `V###` 必须在 `video_prompts.json` 写入 `frame_references` 和 `merge_decision`。
+
+## Final Canvas Handoff
+
+| 交付物 | 内容 |
+|---|---|
+| `outputs/story.md` | 完整剧本 |
+| `outputs/video_prompts.md` | 完整视频提示词 |
+| `outputs/video_prompts.json` | 结构化视频计划 |
+| `outputs/assets/characters/` | 有效人物状态资产图 |
+| `outputs/assets/scenes/` | 有效场景资产图 |
+| `outputs/storyboards/` | 全部分镜参考图 |
+
+道具资产不作为单独最终交付目录；普通道具写入视频提示词正文描述。

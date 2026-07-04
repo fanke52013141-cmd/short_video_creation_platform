@@ -1,30 +1,29 @@
 project:
   name: "short_video_creation_platform"
-  version: "1.0.2"
-  description: "将用户想法转化为即梦画布生产前置交付包的 Skill 工作流"
+  version: "1.0.3"
+  description: "短视频生产前置流程：剧本、风格、分镜、资产、分镜图和视频提示词"
 
 runtime:
-  mode: "draft"
-  max_retries: 2
-  timeout_seconds: 120
-  log_level: "info"
   require_user_confirmation_between_major_phases: true
   image_generation_mode_default: "external_manual"
   allowed_image_generation_modes:
+    - "jimeng_web_manual"
+    - "chatgpt_web"
+    - "codex_direct"
     - "external_manual"
   video_generation_mode_default: "jimeng_canvas_manual"
 
 skill_versions:
-  story_generation: "2.0.0"
-  art_direction: "2.0.0"
-  storyboard_director: "2.0.0"
-  asset_executor: "1.0.0"
-  character_prompt_generator: "2.0.0"
-  scene_prompt_generator: "2.0.0"
-  prop_prompt_generator: "2.0.0"
-  image_generation_executor: "1.0.0"
-  storyboard_prompt_generator: "1.0.0"
-  video_prompt_generator: "2.2.0"
+  story_generation: "3.0.0"
+  art_direction: "2.1.0"
+  storyboard_director: "2.2.0"
+  asset_executor: "1.4.0"
+  character_prompt_generator: "2.4.0"
+  scene_prompt_generator: "2.3.0"
+  prop_prompt_generator: "2.3.0"
+  image_generation_executor: "1.3.0"
+  storyboard_prompt_generator: "1.1.0"
+  video_prompt_generator: "2.6.0"
 
 phase_order:
   - story_generation
@@ -36,26 +35,16 @@ phase_order:
   - video_prompt_generator
 
 paths:
-  active_run_dir: "./local_runs/YYYY-MM-DD/project_slug"
-  input_dir: "./local_runs/YYYY-MM-DD/project_slug/inputs"
-  output_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs"
-  reference_dir: "./local_runs/YYYY-MM-DD/project_slug/references"
-  log_dir: "./local_runs/YYYY-MM-DD/project_slug/logs"
-  checkpoint_template_file: "./checkpoint.template.json"
-  checkpoint_file: "./local_runs/YYYY-MM-DD/project_slug/checkpoint.json"
-  story_md: "./local_runs/YYYY-MM-DD/project_slug/outputs/story.md"
-  story_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/story.json"
-  style_bible: "./local_runs/YYYY-MM-DD/project_slug/outputs/style_bible.md"
-  storyboard_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboard.json"
-  asset_manifest: "./local_runs/YYYY-MM-DD/project_slug/outputs/asset_manifest.json"
-  shot_asset_map: "./local_runs/YYYY-MM-DD/project_slug/outputs/shot_asset_map.json"
-  character_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/assets/characters"
-  scene_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/assets/scenes"
-  prop_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/assets/props"
-  storyboard_reference_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboards"
-  storyboard_prompts: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboard_prompts.md"
-  video_prompts: "./local_runs/YYYY-MM-DD/project_slug/outputs/video_prompts.md"
-  video_prompts_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/video_prompts.json"
+  story_md: "./outputs/story.md"
+  style_bible: "./outputs/style_bible.md"
+  storyboard_json: "./outputs/storyboard.json"
+  asset_manifest: "./outputs/asset_manifest.json"
+  shot_asset_map: "./outputs/shot_asset_map.json"
+  assets_root: "./outputs/assets"
+  storyboard_reference_dir: "./outputs/storyboards"
+  storyboard_prompts: "./outputs/storyboard_prompts.md"
+  video_prompts: "./outputs/video_prompts.md"
+  video_prompts_json: "./outputs/video_prompts.json"
 
 prompt_sources:
   story_generation: "./skills/raw_prompts/story_generation.source.md"
@@ -64,30 +53,33 @@ prompt_sources:
   character_prompt_generator: "./skills/raw_prompts/character_prompt_generator.source.md"
   scene_prompt_generator: "./skills/raw_prompts/scene_prompt_generator.source.md"
   prop_prompt_generator: "./skills/raw_prompts/prop_prompt_generator.source.md"
+  storyboard_prompt_generator: "./skills/raw_prompts/storyboard_prompt_generator.source.md"
   video_prompt_generator: "./skills/raw_prompts/seedance_video_prompt.source.md"
 
 schemas:
-  story: "./schemas/story.schema.json"
   storyboard: "./schemas/storyboard.schema.json"
   asset_manifest: "./schemas/asset_manifest.schema.json"
   shot_asset_map: "./schemas/shot_asset_map.schema.json"
-  reference_media: "./schemas/reference_media.schema.json"
   video_prompt: "./schemas/video_prompt.schema.json"
 
-naming_policy:
-  character: "{外貌特征}_{情绪状态}_{角度}"
-  scene: "{地点名}_{时间/光线}_{氛围}"
-  prop: "{物品名}_{视角/状态}"
-  storyboard: "S{三位数序号}"
-  video: "V{三位数序号}"
-  forbid_abstract_asset_ids:
-    - "CHAR_001"
-    - "ENV_001"
-    - "PROP_001"
+story_policy:
+  output: "story.md"
+  forbidden_outputs:
+    - "story.json"
+    - "story_index.json"
+
+style_bible_policy:
+  required_sections:
+    - "画面风格"
+    - "整体色调"
+    - "光线风格"
+    - "AI 视觉执行要求"
+  forbidden_sections:
+    - "构图倾向"
+    - "禁止出现的视觉元素"
 
 storyboard_policy:
   max_shot_duration_seconds: 15
-  director_outputs_assets: false
   required_shot_fields:
     - shot_id
     - scene_id
@@ -95,79 +87,61 @@ storyboard_policy:
     - framing
     - camera_move
     - action_desc
+  forbidden_shot_fields:
     - characters_in_shot
     - location
+    - character_ids
+    - prop_ids
+    - asset_ids
+    - prompt_cn
 
-style_bible_policy:
-  one_page_only: true
-  tone_keywords_max: 3
-  lighting_sentence_max: 1
-  composition_sentence_max: 1
-  required_sections:
-    - "整体色调"
-    - "光线风格"
-    - "构图倾向"
-    - "禁止出现的视觉元素"
+asset_policy:
+  character_asset_name_pattern: "人物稳定名_状态"
+  character_image_output: "single_21x9_multi_view_image"
+  scene_split_only_for:
+    - "spatial_structure_change"
+    - "location_change"
+    - "story_space_change"
+  prop_default_handling: "text_prompt_control"
+  asset_prompt_inputs:
+    - "story.md"
+    - "style_bible.md"
+    - "asset_type"
+    - "asset_name"
+    - "output_prompt_path"
+
+storyboard_prompt_policy:
+  required_per_shot_fields:
+    - "recommended_frame_role"
+    - "uses_previous_storyboard_reference"
+  frame_roles:
+    - "first_frame"
+    - "last_frame"
+    - "keyframe"
+  previous_reference_purpose: "placement_anchor"
+  previous_reference_scope: "same_scene_id_only"
 
 video_prompt_policy:
-  output_language: "zh"
-  markdown_output_required: true
-  json_output_required: true
   max_video_prompt_duration_seconds: 15
-  supported_task_types:
-    - "pipeline_shot_generation"
-    - "multimodal_reference"
-    - "video_edit"
-    - "video_extend"
-    - "combined_task"
-    - "track_stitch"
-  material_roles:
-    images:
-      - "first_frame"
-      - "last_frame"
-      - "keyframe"
-      - "character_asset"
-      - "scene_asset"
-      - "style_reference"
-    audio:
-      - "voice_reference"
-      - "music_reference"
-      - "ambience_reference"
-    videos:
-      reference_roles:
-        - "action_reference"
-        - "style_video_reference"
-        - "overall_reference"
-      operation_roles:
-        - "edit_object"
-        - "extend_object"
-  required_sections:
-    - "自检通过项"
-    - "资产声明区"
-    - "中文视频提示词"
-  merge_conditions:
-    same_scene_id: true
-    duration_sum_lte_15s: true
-    action_continuity_required: true
+  required_inputs:
+    - "storyboard.json"
+    - "storyboard_prompts.md"
+    - "outputs/storyboards/"
+    - "shot_asset_map.json"
+    - "outputs/assets/"
+  merge_requirements:
+    - "shot_id_contiguous"
+    - "same_scene_id"
+    - "duration_sum_lte_15s"
+    - "no_scene_time_or_story_space_jump"
+  required_json_fields:
+    - "merge_decision"
+    - "frame_references"
   previous_storyboard_anchor: "参考@上一分镜_站位，保持人物空间关系、朝向和相对位置不变"
-  previous_storyboard_anchor_scope: "same_scene_continuity_only"
-  edit_object_phrase: "严格编辑 @资产名"
-  extend_object_phrases:
-    - "向前延长 @资产名"
-    - "向后延长 @资产名"
-  forbid_reference_prefix_for_operation_objects: true
-  prop_policy: "describe_in_prompt_body_not_at_ref"
-  high_intensity_action_requires_risk_notice: true
-  no_text_logo_watermark_constraint_required: true
   forbidden_blocks:
     - "English Prompt"
     - "中英对照"
     - "@PROP"
-
-external_services:
-  jimeng:
-    execution_mode: "manual_web"
-    role: "asset_images_storyboard_images_and_canvas_video_generation"
 
 final_handoff:
   included:
@@ -177,8 +151,3 @@ final_handoff:
     - "outputs/assets/characters/"
     - "outputs/assets/scenes/"
     - "outputs/storyboards/"
-  excluded:
-    - "outputs/assets/props/ as standalone delivery"
-    - "external result manifests"
-    - "generated media review"
-    - "voice reference manifests"

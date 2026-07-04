@@ -1,63 +1,164 @@
 # Skill: storyboard_prompt_generator
-**Version**: 1.0.0
+**Version**: 1.1.0
 
 ## Purpose
-将导演分镜序列转化为可在即梦生成分镜参考图的中文生图提示词。
+将导演分镜转化为可生成分镜参考图的中文图片提示词。
 
-导演分镜是叙事语言，本 Skill 输出的是生成语言。不得直接复制 `action_desc` 当作图片提示词。
+本 Skill 按 `shot_id` 循环工作。每次只处理一个 `S###`，输出一份分镜参考图提示词。
+
+它还必须判断两件事：
+
+1. 当前分镜是否需要引用上一分镜图片作为站位参考。
+2. 当前分镜图在后续视频提示词中建议承担 `first_frame`、`last_frame` 还是 `keyframe`。
 
 ## Inputs
+
+单个 shot 调用：
+
 ```json
 {
   "storyboard_json_path": "./outputs/storyboard.json",
   "style_bible_path": "./outputs/style_bible.md",
   "shot_asset_map_path": "./outputs/shot_asset_map.json",
-  "asset_reference_dir": "./outputs/assets"
+  "asset_image_root": "./outputs/assets",
+  "storyboard_image_root": "./outputs/storyboards",
+  "shot_id": "S002",
+  "output_prompt_path": "./outputs/storyboard_prompts/S002.md"
 }
 ```
 
-## Outputs
+可选输入：
+
 ```json
 {
-  "storyboard_prompts_path": "./outputs/storyboard_prompts.md"
+  "story_markdown_path": "./outputs/story.md"
 }
 ```
 
-## Prompt Contract
-每个 `S###` 必须输出一条中文分镜生图提示词，包含：
+`story.md` 只在 `action_desc` 信息不足时作为补充，不作为默认重写依据。
 
-- 分镜 ID
-- 引用资产：角色、场景、必要道具
-- 风格约束：从 `style_bible.md` 注入
-- 画面主体和动作
-- 景别和构图
-- 光线和氛围
-- 禁止项
+## Outputs
+
+```json
+{
+  "shot_id": "S002",
+  "output_prompt_path": "./outputs/storyboard_prompts/S002.md",
+  "recommended_frame_role": "keyframe",
+  "uses_previous_storyboard_reference": true,
+  "previous_storyboard_reference": {
+    "source_shot_id": "S001",
+    "source_path": "./outputs/storyboards/S001.png",
+    "reference_purpose": "placement_anchor"
+  }
+}
+```
+
+最终也可以汇总为：
+
+```text
+./outputs/storyboard_prompts.md
+```
+
+## Previous Storyboard Reference Policy
+
+不是所有相邻分镜都引用上一分镜。只有满足以下条件时才引用：
+
+1. 当前 shot 与上一 shot 连续。
+2. 两个 shot 的 `scene_id` 相同。
+3. 人物、场景或主要道具存在明显站位延续关系。
+4. 当前 shot 不是新的空间布局、时间跳跃或叙事空间切换。
+5. 上一分镜图已经存在，或将按固定路径生成。
+
+引用上一分镜时，只把它作为站位参考，不作为表情、动作、服装、光影的强制复制。
+
+推荐写法：
+
+```text
+参考上一分镜 S001 的站位关系，只继承人物相对位置、朝向、空间比例和场景连续性；当前画面动作、表情和景别以 S002 为准。
+```
+
+必须避免：
+
+- 跨 `scene_id` 引用上一分镜。
+- 时间跳跃后继续引用上一分镜。
+- 新构图、新调度却硬套上一分镜站位。
+- 把上一分镜当作完整画面复制。
+
+## Frame Role Policy
+
+每个分镜参考图必须给出 `recommended_frame_role`：
+
+```text
+first_frame | last_frame | keyframe
+```
+
+### first_frame
+用于视频段落的起始画面。通常适合：
+
+- 新场景的第一个 shot。
+- 新空间关系首次建立。
+- 人物站位、场景布局、镜头轴线需要被锁定。
+- 预计后续同场景镜头会延续该站位。
+
+### last_frame
+用于视频段落的目标画面或动作结果。通常适合：
+
+- 连续动作的终点。
+- 情绪反应的落点。
+- 人物姿态、道具位置或表情需要在视频末端准确抵达。
+- 与前一个 shot 存在强动作连续性，且当前 shot 是这个动作的完成状态。
+
+### keyframe
+用于中间状态或重要参考画面。通常适合：
+
+- 同一视频段落中间的过渡状态。
+- 远景到近景、人物到手部细节等景别变化。
+- 对动作、表情、道具或站位有约束价值，但不一定是视频起点或终点。
 
 ## Procedure
-1. 读取 `storyboard.json`。
-2. 读取 `style_bible.md`，将全片风格统一注入每条提示词。
-3. 读取 `shot_asset_map.json`，为每个 shot 查询对应资产。
-4. 检查 `outputs/assets/**` 中是否已有参考图；有图时在提示词中声明“参考对应资产图”。
-5. 将 `framing`、`camera_move`、`action_desc` 转换为静态分镜参考图描述。
-6. 不生成视频动作时长、不生成视频提示词、不合并镜头。
-7. 汇总输出 `outputs/storyboard_prompts.md`。
+
+1. 读取 `storyboard.json`，定位当前 `shot_id`。
+2. 读取 `style_bible.md`，继承画面风格、整体色调、光线风格和 AI 视觉执行要求。
+3. 读取 `shot_asset_map.json`，查询当前 shot 对应的人物、场景和必要道具。
+4. 查找 `asset_image_root` 中已生成的人物、场景、必要道具图。
+5. 判断是否引用上一分镜图片作为站位参考。
+6. 判断当前分镜图的 `recommended_frame_role`。
+7. 把导演分镜的 `framing`、`camera_move`、`action_desc` 改写为静态分镜参考图提示词。
+8. 不生成视频动作时长，不合并镜头，不决定最终视频提示词。
 
 ## Output Format
 
 ```markdown
-# Storyboard Prompts
+# S002 分镜参考图提示词
 
-## S001
-- 参考资产：少女_默然_正面；破旧公寓_深夜_冷白灯光；旧皮箱_正面
-- 分镜生图提示词：...
-- 禁止项：...
+## 分镜角色
+recommended_frame_role: keyframe
+
+## 上一分镜站位参考
+uses_previous_storyboard_reference: true
+source_shot_id: S001
+source_path: ./outputs/storyboards/S001.png
+reference_purpose: placement_anchor
+reason: 同一 scene_id，人物与手机位置延续，当前为同一动作的近景反应。
+
+## 资产声明区
+@林小满_雨夜接电话状态（人物资产）
+@雨夜客厅场景（场景资产）
+手机（正文控制道具）
+
+## 中文分镜图提示词
+参考上一分镜 S001 的站位关系，只继承人物相对位置、朝向、空间比例和场景连续性；当前画面动作、表情和景别以 S002 为准。近景，林小满握紧手机，嘴唇微张又抿紧，眼眶泛红但没有眼泪。继承 style_bible.md 的冷蓝雨夜与暖黄室内灯光。画面无字幕、无 Logo、无水印。
 ```
 
 ## Quality Gate
+
 - [ ] 每个 `storyboard.json` 中的 shot 都有对应提示词。
+- [ ] 每个 shot 都明确 `recommended_frame_role`。
+- [ ] `recommended_frame_role` 只能是 `first_frame`、`last_frame`、`keyframe`。
+- [ ] 每个 shot 都明确是否引用上一分镜。
+- [ ] 引用上一分镜时，必须说明只用于站位、朝向、空间比例和连续性。
+- [ ] 不跨 `scene_id` 引用上一分镜。
 - [ ] 每条提示词注入 `style_bible.md` 的核心约束。
-- [ ] 每条提示词只描述静态分镜参考图，不写视频运动过程。
 - [ ] 资产引用来自 `shot_asset_map.json`。
 - [ ] 不新增未登记资产。
 - [ ] 输出中文。
@@ -67,9 +168,11 @@
 - `current_phase`: `storyboard_prompt_generator`
 - `completed_phases`: 追加 `storyboard_prompt_generator`
 - `artifacts.storyboard_prompts`: `./outputs/storyboard_prompts.md`
-- `next_phase.skill`: `video_prompt_generator`
+- `next_phase.skill`: `storyboard_image_generation`
 
 ## Failure Handling
+
 - 某 shot 缺少资产映射：返回 `asset_executor` 补齐。
 - 静态分镜提示词无法生成：返回 `storyboard_director` 具象化 `action_desc`。
 - 风格约束缺失：返回 `art_direction` 修订 `style_bible.md`。
+- 需要上一分镜站位参考但上一分镜图片不存在：先生成上一分镜图片，再生成当前分镜。

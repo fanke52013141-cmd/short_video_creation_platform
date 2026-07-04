@@ -1,34 +1,43 @@
 {
-  "naming_policy": "特征 + 状态中文命名",
+  "naming_policy": "asset_name_with_state_when_needed",
   "characters": [
     {
-      "asset_name": "黑发女孩_克制_正面",
+      "asset_name": "林小满_雨夜接电话状态",
       "asset_type": "character",
-      "base_name": "林小满",
-      "feature": "黑发、深色针织衫",
-      "state": "克制",
-      "angle_or_view": "正面",
-      "visual_anchors": ["黑色中长发", "深色针织衫"],
+      "naming_strategy": "character_state_name",
+      "seedance_label": "林小满",
+      "state": "雨夜接电话状态",
       "appears_in_shots": ["S001", "S002"],
       "generation_required": true,
-      "prompt_scope": "single_character_all_states",
-      "notes": "人物外观由资产图锁定"
+      "output_prompt_path": "./outputs/assets/characters/林小满_雨夜接电话状态.md",
+      "prompt_scope": "single_character_state_reference",
+      "handling_policy": "generate_character_state_reference"
     }
   ],
   "scenes": [
     {
-      "asset_name": "雨夜客厅_冷暖对比_安静",
+      "asset_name": "雨夜客厅场景",
       "asset_type": "scene",
-      "base_name": "雨夜客厅",
-      "feature": "窗外雨夜、室内暖灯",
-      "state": "安静",
-      "angle_or_view": "中景",
-      "visual_anchors": ["雨窗", "暖黄台灯", "沙发"],
+      "naming_strategy": "concrete_scene_name",
+      "seedance_label": "雨夜客厅场景",
       "appears_in_shots": ["S001", "S002"],
       "generation_required": true,
-      "prompt_scope": "single_scene",
-      "notes": "场景基调由资产图锁定"
+      "output_prompt_path": "./outputs/assets/scenes/雨夜客厅场景.md",
+      "prompt_scope": "single_scene_reference",
+      "handling_policy": "generate_scene_reference"
     }
   ],
-  "props": []
+  "props": [
+    {
+      "asset_name": "手机",
+      "asset_type": "prop",
+      "naming_strategy": "key_prop_name",
+      "seedance_label": "手机",
+      "appears_in_shots": ["S001", "S002"],
+      "generation_required": false,
+      "output_prompt_path": null,
+      "prompt_scope": "text_control_only",
+      "handling_policy": "text_prompt_control"
+    }
+  ]
 }

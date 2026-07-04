@@ -1,50 +1,65 @@
 # Skill: image_generation_executor
-**Version**: 1.0.0
+**Version**: 1.3.0
 
 ## Purpose
-辅助人工在即梦生成图片资产。本 Skill 只保留 `external_manual` 模式，不再包含 `internal_codex` 分支。
+执行单个资产图片生成任务。
 
-本 Skill 不重新决定角色、场景、道具是否需要生成。它只消费资产提示词阶段产出的 Markdown，并整理人工生成时的执行清单。
+本 Skill 不决定资产、不新增资产、不改名、不重写提示词。它只把已经定稿的资产提示词生成成一张图片文件。
 
-## Inputs
+## Input
+
 ```json
 {
-  "asset_manifest_path": "./outputs/asset_manifest.json",
-  "asset_prompt_dir": "./outputs/assets",
-  "generation_mode": "external_manual"
+  "asset_type": "character",
+  "asset_name": "林小满_雨夜接电话状态",
+  "prompt_path": "./outputs/assets/characters/林小满_雨夜接电话状态.md",
+  "generation_mode": "jimeng_web_manual | chatgpt_web | codex_direct | external_manual",
+  "output_image_path": "./outputs/assets/characters/林小满_雨夜接电话状态.png"
 }
 ```
 
-## Outputs
-```json
-{
-  "manual_queue_path": "./outputs/image_generation_queue.md",
-  "asset_output_dirs": {
-    "characters": "./outputs/assets/characters",
-    "scenes": "./outputs/assets/scenes",
-    "props": "./outputs/assets/props"
-  }
-}
+不需要：
+
+- `task_id`
+- `output_count`
+- `asset_payload`
+- 完整 `story.md`
+- 完整 `style_bible.md`
+- 完整 `storyboard.json`
+
+## Output
+
+核心输出只有一张图片文件：
+
+```text
+./outputs/assets/characters/林小满_雨夜接电话状态.png
 ```
 
-## Procedure
-1. 读取 `asset_manifest.json`。
-2. 读取 `outputs/assets/characters/*.md`、`outputs/assets/scenes/*.md`、`outputs/assets/props/*.md`。
-3. 按角色 → 场景 → 道具顺序输出人工生成队列。
-4. 明确每个资产生成完成后应保存到哪个目录。
-5. 不调用图片生成能力，不生成本地图片，不维护外部结果 manifest。
+如果需要记录状态，使用执行日志，不新增主流程 JSON 产物。
+
+## Character Image Rule
+
+人物资产允许是一张 21:9 人物状态资产图。它可以在同一张图中包含：
+
+```text
+人物特写 / 正面 / 侧面 / 后视图
+```
+
+这仍然算一张人物资产图，不算多个输出。
+
+## Scene Image Rule
+
+场景资产只生成一张场景参考图。
+
+## Prop Image Rule
+
+只有 `generation_required=true` 且确实需要独立生成的核心道具，才生成道具图片。
 
 ## Quality Gate
-- [ ] 只支持 `external_manual`。
-- [ ] 队列覆盖所有 `generation_required=true` 的资产。
-- [ ] 每个队列项指向一个可复制的提示词文件。
-- [ ] 每个队列项声明生成后保存路径。
-- [ ] 不出现 `internal_codex` 分支。
 
-## Checkpoint Update
-本 Skill 是辅助节点，不属于主流程强制阶段。若执行，通过后可更新：
-- `artifacts.image_generation_queue`: `./outputs/image_generation_queue.md`
-
-## Failure Handling
-- 资产提示词缺失：返回对应的角色、场景或道具提示词生成器。
-- 用户还未生成图片：停止在人工生成点，不伪造结果。
+- [ ] 一次只处理一个资产。
+- [ ] 只生成一张图片文件。
+- [ ] 人物资产图允许是 21:9 多视角单图。
+- [ ] 不新增资产。
+- [ ] 不修改资产名。
+- [ ] 不输出额外 JSON 主产物。

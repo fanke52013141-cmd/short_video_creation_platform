@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.0",
+  "schema_version": "2.1",
   "project_slug": "minimal_run",
   "current_phase": "video_prompt_generator",
   "completed_phases": [
@@ -22,7 +22,6 @@
   ],
   "artifacts": {
     "story_md": "./outputs/story.md",
-    "story_json": "./outputs/story.json",
     "style_bible": "./outputs/style_bible.md",
     "storyboard_json": "./outputs/storyboard.json",
     "asset_manifest": "./outputs/asset_manifest.json",
@@ -30,6 +29,18 @@
     "storyboard_prompts": "./outputs/storyboard_prompts.md",
     "video_prompts": "./outputs/video_prompts.md",
     "video_prompts_json": "./outputs/video_prompts.json"
+  },
+  "quality_gates": {
+    "story_generation_markdown_only": true,
+    "style_bible_no_composition_section": true,
+    "director_owns_composition": true,
+    "character_asset_name_includes_state": true,
+    "scene_light_time_split_forbidden": true,
+    "asset_prompt_generation_simple_input": true,
+    "storyboard_prompt_frame_role_required": true,
+    "storyboard_prompt_previous_anchor_decision_required": true,
+    "video_prompt_merge_decision_required": true,
+    "video_prompt_frame_references_required": true
   },
   "status": "ready_for_jimeng_canvas"
 }

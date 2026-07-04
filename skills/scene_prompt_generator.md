@@ -1,55 +1,76 @@
 # Skill: scene_prompt_generator
-**Version**: 2.0.0
+**Version**: 2.3.0
 
 ## Source Prompt
 `skills/raw_prompts/scene_prompt_generator.source.md`
 
 ## Purpose
-为单个场景资产生成即梦图片生成提示词。
+根据锁定剧本、风格圣经和单个场景资产，生成一份场景参考图提示词。
 
-一次只处理一个场景，不混入其他场景设定。场景定义只来自 `asset_manifest.json`，本阶段不得新增、合并或重命名场景资产。
+本 Skill 不重新决定场景资产，不改名，不新增场景，不按普通光线、时间、天气变化拆场景。
 
 ## Inputs
 ```json
 {
   "story_markdown_path": "./outputs/story.md",
-  "asset_manifest_path": "./outputs/asset_manifest.json",
-  "scene_asset_name": "破旧公寓_深夜_冷白灯光"
+  "style_bible_path": "./outputs/style_bible.md",
+  "asset_type": "scene",
+  "asset_name": "雨夜客厅场景",
+  "output_prompt_path": "./outputs/assets/scenes/雨夜客厅场景.md"
 }
 ```
+
+## Minimal Input Boundary
+
+必须输入：
+
+- `story.md`：用于理解场景在剧情里的用途、人物活动方式和空间气质。
+- `style_bible.md`：用于继承全片画面风格、色调、光线和 AI 视觉执行要求。
+- `asset_type`：必须为 `scene`。
+- `asset_name`：资产执行官固定的场景名。
+- `output_prompt_path`：本次要写出的提示词位置。
+
+不得输入：
+
+- `task_id`
+- `asset_payload`
+- 完整任务队列
+- 其他人物、场景或道具任务
 
 ## Outputs
 ```json
 {
-  "scene_prompt_path": "./outputs/assets/scenes/破旧公寓_深夜_冷白灯光.md"
+  "scene_prompt_path": "./outputs/assets/scenes/雨夜客厅场景.md"
 }
 ```
 
 ## Procedure
-1. 读取 `story.md`。
-2. 从 `asset_manifest.json` 中只切出本次场景资产。
-3. 输出一个可用于生成场景 Key Plate 的中文提示词。
-4. 提示词必须包含：地点、时间/光线、氛围、空间结构、可拍摄路径、材质、尺度锚点、禁止项。
-5. 不输出四宫格 Scene Sheet，除非用户明确要求。
-6. 文件名必须与 `asset_name` 一致。
+
+1. 读取 `story.md`，理解 `asset_name` 在剧情里的空间用途、人物活动方式和叙事气质。
+2. 读取 `style_bible.md`，继承画面风格、整体色调、光线风格和 AI 视觉执行要求。
+3. 根据 `asset_name` 和剧情用途，输出一个单场景参考图提示词。
+4. 不因为白天/夜晚、冷光/暖光、晴天/阴天、雨夜/清晨等普通光影变化拆新场景。
+5. 不新增 `asset_name` 之外的场景。
 
 ## Quality Gate
-- [ ] 一次只处理一个场景。
-- [ ] 场景提示词是单一场景图，不是拼贴、分屏或四宫格。
-- [ ] 有前景、中景、背景三层或明确说明为何不需要。
-- [ ] 光源有来源、方向、色温和阴影逻辑。
-- [ ] 场景有尺度锚点。
-- [ ] 与 `style_bible.md` 和分镜用途一致。
+
+- [ ] 一次只处理一个场景资产和一个输出位置。
+- [ ] 场景名称概括环境，不使用复杂编码或 `ENV_001`。
+- [ ] 输入只有 `story.md`、`style_bible.md`、`asset_type`、`asset_name`、`output_prompt_path`。
+- [ ] 没有 `task_id` 或 `asset_payload`。
+- [ ] 没有因为普通光线、时间、天气变化拆新场景。
+- [ ] 场景提示词是单一场景参考图，不是拼贴、分屏或四宫格。
+- [ ] 空间结构、入口/出口、可拍摄路径和尺度锚点明确。
 - [ ] 不使用真实艺术家、摄影师、建筑师、设计师姓名。
 - [ ] 不使用模型专属语法。
 
 ## Checkpoint Update
-完成某场景后更新：
-- `artifacts.assets.scenes.{asset_name}`: `./outputs/assets/scenes/{asset_name}.md`
-
-全部场景完成后，`asset_prompt_generation` 的场景分支可标记完成。
+完成某个输出位置后更新：
+- `artifacts.assets.scenes.{asset_name}`: `output_prompt_path`
 
 ## Failure Handling
-- 场景定义过抽象：返回 `asset_executor` 补充时间、光线、氛围或空间用途。
-- 场景空间不支持分镜用途：返回 `storyboard_director` 或 `asset_executor` 修正。
+
+- 输入包含多个资产：拆成单资产调用。
+- 输入缺少 `story.md`：停止，因为场景设定需要完整剧情上下文。
+- 场景因光线变化被拆分：返回 `asset_executor` 合并为同一场景资产。
 - 输出成多个场景：拆回单个场景资产提示词。

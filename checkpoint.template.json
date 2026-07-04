@@ -6,7 +6,7 @@
     "created_at": "__CREATED_AT__",
     "run_dir": "__RUN_DIR__"
   },
-  "schema_version": "2.0",
+  "schema_version": "2.1",
   "last_updated": "__CREATED_AT__",
   "current_phase": "initialized",
   "completed_phases": [],
@@ -23,7 +23,6 @@
   "artifacts": {
     "idea_brief": "./inputs/idea_brief.md",
     "story_md": "./outputs/story.md",
-    "story_json": "./outputs/story.json",
     "style_bible": "./outputs/style_bible.md",
     "storyboard_json": "./outputs/storyboard.json",
     "asset_manifest": "./outputs/asset_manifest.json",
@@ -35,19 +34,30 @@
     },
     "storyboard_prompts": "./outputs/storyboard_prompts.md",
     "storyboards": "./outputs/storyboards",
-    "video_prompts": "./outputs/video_prompts.md"
+    "video_prompts": "./outputs/video_prompts.md",
+    "video_prompts_json": "./outputs/video_prompts.json"
   },
   "generation_modes": {
     "image_generation": "external_manual",
     "video_generation": "jimeng_canvas_manual"
   },
   "quality_gates": {
+    "story_generation_markdown_only": true,
     "style_bible_one_page": true,
+    "style_bible_no_composition_section": true,
     "storyboard_shot_duration_lte_15s": true,
+    "director_owns_composition": true,
     "director_does_not_define_assets": true,
     "asset_executor_is_single_asset_source": true,
-    "video_prompt_merge_rule_required": true,
-    "previous_storyboard_anchor_required_for_same_scene_continuity": true
+    "character_asset_name_includes_state": true,
+    "scene_light_time_split_forbidden": true,
+    "asset_prompt_generation_simple_input": true,
+    "key_props_only": true,
+    "storyboard_prompt_frame_role_required": true,
+    "storyboard_prompt_previous_anchor_decision_required": true,
+    "video_prompt_merge_decision_required": true,
+    "video_prompt_frame_references_required": true,
+    "video_prompt_duration_lte_15s": true
   },
   "next_phase": {
     "skill": "story_generation",
