@@ -26,6 +26,8 @@ PHASE_ALIASES = {
     "video": "video_prompts",
 }
 REQUIRED_STYLE_HEADINGS = ["整体色调", "光线风格", "构图倾向", "禁止出现的视觉元素"]
+REQUIRED_VIDEO_PROMPT_SECTIONS = ["【自检通过项】", "【资产声明区】", "【中文视频提示词】"]
+HIGH_INTENSITY_TERMS = re.compile(r"奔跑|跳跃|翻滚|剧烈打斗|打斗|快速追逐|追逐|摔倒|撞击|飞跃|爆炸")
 
 
 def fail(message: str) -> None:
@@ -288,16 +290,39 @@ def validate_storyboard_prompt_generation(run_dir: Path) -> None:
     ok("storyboard prompts")
 
 
+def _declared_assets_by_role(text: str, role: str) -> list[str]:
+    pattern = re.compile(r"@([^\s@（）()，,；;]+)[（(][^）)]*" + re.escape(role) + r"[^）)]*[）)]")
+    return pattern.findall(text)
+
+
+def validate_operation_object_usage(text: str) -> None:
+    edit_assets = _declared_assets_by_role(text, "编辑对象")
+    extend_assets = _declared_assets_by_role(text, "延长对象")
+    for asset in edit_assets:
+        if f"参考@{asset}" in text:
+            fail(f"edit object @{asset} must not be referenced with 参考@")
+        if not re.search(rf"严格编辑\s*@{re.escape(asset)}", text):
+            fail(f"edit object @{asset} must be used with 严格编辑 @{asset}")
+    for asset in extend_assets:
+        if f"参考@{asset}" in text:
+            fail(f"extend object @{asset} must not be referenced with 参考@")
+        if not re.search(rf"向前延长\s*@{re.escape(asset)}|向后延长\s*@{re.escape(asset)}", text):
+            fail(f"extend object @{asset} must be used with 向前延长/向后延长 @{asset}")
+
+
 def validate_video_prompts(run_dir: Path) -> None:
     storyboard = validate_storyboard(run_dir)
     require_file(outputs(run_dir) / "video_prompts.md")
     text = (outputs(run_dir) / "video_prompts.md").read_text(encoding="utf-8")
-    if "English Prompt" in text or "【English Prompt】" in text:
+    if "English Prompt" in text or "【English Prompt】" in text or "中英对照" in text:
         fail("English Prompt blocks are not allowed")
     if "@PROP_" in text or "PROP_" in text:
         fail("prop assets must be described in the prompt body, not referenced as @PROP")
     if not re.search(r"\bV[0-9]{3}\b", text):
         fail("video_prompts.md must contain V### prompt ids")
+    for section in REQUIRED_VIDEO_PROMPT_SECTIONS:
+        if section not in text:
+            fail(f"video_prompts.md missing required section: {section}")
     for match in re.finditer(r"时长[：:]\s*([0-9]+(?:\.[0-9]+)?)\s*s", text):
         if float(match.group(1)) > MAX_SHOT_DURATION_SECONDS:
             fail("single video prompt duration must be <= 15s")
@@ -308,6 +333,11 @@ def validate_video_prompts(run_dir: Path) -> None:
             same_scene_pairs += 1
     if same_scene_pairs and "参考@上一分镜_站位" not in text:
         fail("same-scene continuity requires 参考@上一分镜_站位 anchor rule")
+    if HIGH_INTENSITY_TERMS.search(text) and "【生成风险提示】" not in text:
+        fail("high-intensity action prompts require 【生成风险提示】")
+    validate_operation_object_usage(text)
+    if "画面保持无字幕" not in text or "Logo" not in text or "水印" not in text:
+        fail("video_prompts.md must include no-subtitle/no-logo/no-watermark constraints")
     ok("video prompts")
 
 
