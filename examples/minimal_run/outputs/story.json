@@ -1,0 +1,32 @@
+{
+  "title": "雨夜电话",
+  "logline": "雨夜客厅里，一个女孩用克制的动作隐藏委屈。",
+  "duration_minutes": 0.25,
+  "genre": "情绪短片",
+  "theme": "克制与等待",
+  "scenes": [
+    {
+      "scene_id": "SC001",
+      "name": "雨夜客厅",
+      "time": "深夜",
+      "location_desc": "狭小客厅，窗外有雨，室内暖灯与冷蓝窗光对比"
+    }
+  ],
+  "characters": [
+    {
+      "name": "林小满",
+      "feature_name": "黑发女孩",
+      "visual_anchors": ["深色针织衫", "黑色中长发"],
+      "role": "独居女孩"
+    }
+  ],
+  "plot_segments": [
+    {
+      "segment_id": "P001",
+      "scene_id": "SC001",
+      "characters": ["林小满"],
+      "summary": "林小满在沙发边缘接电话，嘴唇抿紧，手指捏住毛毯边缘，最后看向雨窗。"
+    }
+  ],
+  "production_notes": ["情绪必须落地为动作、表情、声音和光影。"]
+}
