@@ -5,6 +5,8 @@
 ## 核心原则
 
 - 剧本优先：`story_generation` 只优化剧本，不输出结构化 JSON。
+- 用户确认：剧本与视觉方向都需要用户确认后再进入下游。
+- 艺术先行：艺术总监先定画面风格、色调、光线和 AI 视觉执行要求；导演后续负责具体构图与分镜。
 - 最小必要输入：下游只读取当前阶段真正需要的文件。
 - 职责单一：导演只做镜头结构化，资产执行官只做资产提取和映射，视频提示词生成器只做可复制到即梦的提示词。
 - 流程精简：流程终点是进入即梦画布生产，不在仓库内追加音色、外部结果、媒体审查和最终打包节点。
@@ -15,15 +17,16 @@
 1. 执行 `scripts/init_local_run.ps1 -ProjectSlug your-project-slug` 初始化本地创作目录。
 2. 填写 `local_runs/YYYY-MM-DD/your-project-slug/inputs/idea_brief.md`。
 3. 运行 `skills/story_generation.md`，只产出 `outputs/story.md`。
-4. 人工确认剧本后运行 `skills/art_direction.md`，产出一页以内的 `outputs/style_bible.md`。
-5. 运行 `skills/storyboard_director.md`，由导演负责结构化镜头，产出 `outputs/storyboard.json`。
-6. 运行 `skills/asset_executor.md`，由资产执行官负责人物、场景、道具拆分，产出 `outputs/asset_manifest.json` 和 `outputs/shot_asset_map.json`。
-7. 并行运行 `skills/character_prompt_generator.md`、`skills/scene_prompt_generator.md`、`skills/prop_prompt_generator.md`。
-8. 去即梦生成资产图片，并回填到 `outputs/assets/characters/`、`outputs/assets/scenes/`、`outputs/assets/props/`。
-9. 运行 `skills/storyboard_prompt_generator.md`，产出 `outputs/storyboard_prompts.md`。
-10. 去即梦生成分镜参考图，并回填到 `outputs/storyboards/S001.png`、`S002.png` 等。
-11. 运行 `skills/video_prompt_generator.md`，产出 `outputs/video_prompts.md` 和 `outputs/video_prompts.json`。
-12. 将 `story.md`、`video_prompts.md`、`assets/characters/`、`assets/scenes/`、`storyboards/` 交给即梦画布生产。
+4. 用户与剧本专家反复讨论，直到用户确认剧本可以进入下一阶段。
+5. 运行 `skills/art_direction.md`：如果用户已有艺术风格或参考图，优先继承并补全执行规则；如果用户没有明确视觉方向，先给候选方案让用户选择。用户确认后产出 `outputs/style_bible.md`。
+6. 运行 `skills/storyboard_director.md`，由导演负责具体构图、景别、镜头调度和分镜结构化，产出 `outputs/storyboard.json`。
+7. 运行 `skills/asset_executor.md`，由资产执行官负责人物、场景、道具拆分，产出 `outputs/asset_manifest.json` 和 `outputs/shot_asset_map.json`。
+8. 并行运行 `skills/character_prompt_generator.md`、`skills/scene_prompt_generator.md`、`skills/prop_prompt_generator.md`。
+9. 去即梦生成资产图片，并回填到 `outputs/assets/characters/`、`outputs/assets/scenes/`、`outputs/assets/props/`。
+10. 运行 `skills/storyboard_prompt_generator.md`，产出 `outputs/storyboard_prompts.md`。
+11. 去即梦生成分镜参考图，并回填到 `outputs/storyboards/S001.png`、`S002.png` 等。
+12. 运行 `skills/video_prompt_generator.md`，产出 `outputs/video_prompts.md` 和 `outputs/video_prompts.json`。
+13. 将 `story.md`、`video_prompts.md`、`assets/characters/`、`assets/scenes/`、`storyboards/` 交给即梦画布生产。
 
 ## 输出目录
 
@@ -73,4 +76,5 @@ python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase al
 - 仓库保存流程、Skill、配置模板、schema、检查规则和文档。
 - 真实创作产物、参考素材、生成图片、日志和 `checkpoint.json` 放入本地 `local_runs/YYYY-MM-DD/project_slug/`，不提交仓库。
 - `story_generation` 不输出 `story.json`；镜头和资产结构化分别交给导演和资产执行官。
+- `art_direction` 不负责具体构图，构图、景别、机位和镜头调度由 `storyboard_director` 处理。
 - 道具资产不作为最终即梦画布交付目录单独交付；它们应写入 `video_prompts.md` 正文描述。
