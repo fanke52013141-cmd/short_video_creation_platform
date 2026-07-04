@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Video Prompt Plan",
+  "type": "object",
+  "required": ["videos"],
+  "properties": {
+    "videos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["video_id", "source_shots", "duration_seconds", "scene_id", "prompt_cn"],
+        "properties": {
+          "video_id": { "type": "string", "pattern": "^V[0-9]{3}$" },
+          "source_shots": { "type": "array", "items": { "type": "string", "pattern": "^S[0-9]{3}$" } },
+          "duration_seconds": { "type": ["integer", "number"] },
+          "scene_id": { "type": "string" },
+          "uses_previous_storyboard_anchor": { "type": ["boolean", "string", "null"] },
+          "prompt_cn": { "type": "string" }
+        }
+      }
+    }
+  }
+}
