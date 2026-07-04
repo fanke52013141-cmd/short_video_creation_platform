@@ -41,6 +41,8 @@
           "state": { "type": ["string", "null"] },
           "angle_or_view": { "type": ["string", "null"] },
           "visual_anchors": { "type": ["array", "string", "null"], "items": { "type": "string" } },
+          "generation_brief": { "type": ["string", "null"] },
+          "usage_context": { "type": ["string", "null"] },
           "appears_in_shots": { "type": "array", "items": { "type": "string" } },
           "generation_required": { "type": ["boolean", "string"] },
           "required_reference_set": {
@@ -76,6 +78,44 @@
           },
           "notes": { "type": ["string", "null"] }
         }
+      }
+    },
+    "asset_prompt_task": {
+      "type": "object",
+      "required": [
+        "task_id",
+        "parent_asset_name",
+        "asset_type",
+        "prompt_role",
+        "style_bible_path",
+        "asset_payload",
+        "reference_bindings",
+        "output_prompt_path"
+      ],
+      "properties": {
+        "task_id": { "type": "string" },
+        "parent_asset_name": { "type": "string" },
+        "asset_type": { "type": "string", "enum": ["character", "scene", "prop"] },
+        "prompt_role": {
+          "type": "string",
+          "enum": ["face_closeup", "full_body_styling", "scene_reference", "independent_prop_reference", "prop_text_control_note"]
+        },
+        "style_bible_path": { "type": "string" },
+        "asset_payload": {
+          "type": "object",
+          "properties": {
+            "seedance_label": { "type": ["string", "null"] },
+            "definition_sentence": { "type": ["string", "null"] },
+            "visual_anchors": { "type": ["array", "string", "null"], "items": { "type": "string" } },
+            "generation_brief": { "type": ["string", "null"] },
+            "usage_context": { "type": ["string", "null"] },
+            "handling_policy": { "type": ["string", "null"] },
+            "prompt_scope": { "type": ["string", "null"] },
+            "notes": { "type": ["string", "null"] }
+          }
+        },
+        "reference_bindings": { "type": "array" },
+        "output_prompt_path": { "type": "string" }
       }
     }
   }
