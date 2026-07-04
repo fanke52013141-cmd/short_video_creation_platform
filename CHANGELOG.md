@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-07-04 - v1.0.2
+
+### Changed
+- [ci] 新增 GitHub Actions workflow：编译 `scripts/validate_project.py`、解析 `checkpoint.template.json` 与全部 schema JSON、运行最小样例 `examples/minimal_run --phase all`。
+- [examples] 新增 `examples/minimal_run/`，提供一套可跑通的最小本地 run，用作回归测试基线。
+- [schema] 扩展 `schemas/video_prompt.schema.json`，要求 `video_prompts.json` 输出结构化 `V###` 计划。
+- [schema] 新增 `schemas/reference_media.schema.json`，沉淀多参素材的类型、角色和用途约束。
+- [skill] 将 `video_prompt_generator` 升级到 2.2.0，要求同时输出 `outputs/video_prompts.md` 与 `outputs/video_prompts.json`。
+- [script] `validate_project.py` 新增 `video_prompts.json` 校验：检查 `V###` 连续性、shot 覆盖完整性、重复覆盖、单条时长、操作对象声明、上一分镜站位锚点和风险提示。
+- [config] 更新 `video_prompt_policy` 与最终交付清单，加入 `outputs/video_prompts.json`。
+
+### Reason
+- 仅有 Markdown 提示词无法可靠校验 shot 覆盖、任务类型、操作对象和素材声明关系；结构化 JSON 可作为机器可验证的生产计划。
+- CI 与最小样例可以防止后续修改 Skill、schema 或脚本时破坏核心流程。
+
+### Validation
+- 已在本地构建并编译新版 `validate_project.py`。
+- 已用本地最小样例跑通 `python scripts/validate_project.py examples/minimal_run --phase all`。
+
 ## 2026-07-04 - v1.0.1
 
 ### Changed
