@@ -1,0 +1,16 @@
+{
+  "shot_assets": [
+    {
+      "shot_id": "S001",
+      "characters": ["黑发女孩_克制_正面"],
+      "scenes": ["雨夜客厅_冷暖对比_安静"],
+      "props": []
+    },
+    {
+      "shot_id": "S002",
+      "characters": ["黑发女孩_克制_正面"],
+      "scenes": ["雨夜客厅_冷暖对比_安静"],
+      "props": []
+    }
+  ]
+}
