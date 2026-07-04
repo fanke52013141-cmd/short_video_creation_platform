@@ -6,7 +6,7 @@
       "asset_type": "character",
       "naming_strategy": "custom_concrete_name",
       "seedance_label": "林小满",
-      "definition_sentence": "将生成的人脸大头特写图和全身妆造图统一定义为林小满。",
+      "definition_sentence": "将生成的人物参考图统一定义为林小满。",
       "reference_bindings": [
         {
           "source_id": "林小满_人脸大头特写",
@@ -26,11 +26,13 @@
       "state": null,
       "angle_or_view": null,
       "visual_anchors": ["黑色中长发", "深色针织衫"],
-      "generation_brief": "年轻女性林小满，黑色中长发，深色针织衫，气质克制安静。",
-      "usage_context": "家庭情绪短片主角，后续常出现接电话、停顿、抿唇等克制动作。",
       "appears_in_shots": ["S001", "S002"],
       "generation_required": true,
       "required_reference_set": ["face_closeup", "full_body_styling"],
+      "prompt_outputs": [
+        "./outputs/assets/characters/林小满_人脸大头特写.md",
+        "./outputs/assets/characters/林小满_全身妆造.md"
+      ],
       "prompt_scope": "single_character_identity_bundle",
       "handling_policy": "generate_identity_bundle",
       "notes": "克制、眼眶泛红、坐下、捏紧手机等状态由视频提示词文字控制，不拆新人物资产。"
@@ -56,11 +58,12 @@
       "state": null,
       "angle_or_view": null,
       "visual_anchors": ["沙发", "茶几", "雨窗", "暖黄台灯"],
-      "generation_brief": "客厅空间，沙发、茶几、窗户和台灯构成稳定空间结构。",
-      "usage_context": "用于中景、近景和手部特写的家庭情绪戏。",
       "appears_in_shots": ["S001", "S002"],
       "generation_required": true,
       "required_reference_set": ["scene_reference"],
+      "prompt_outputs": [
+        "./outputs/assets/scenes/雨夜客厅场景.md"
+      ],
       "prompt_scope": "single_scene_reference",
       "handling_policy": "generate_scene_reference",
       "notes": "冷蓝雨光和暖黄灯光由提示词控制，不因光线变化拆新场景。"
@@ -79,11 +82,10 @@
       "state": "贴近耳边",
       "angle_or_view": null,
       "visual_anchors": ["亮起的屏幕", "贴近耳边"],
-      "generation_brief": "亮屏手机，林小满接电话时贴近耳边，后续由视频提示词正文控制。",
-      "usage_context": "动作关键道具，但外形普通，不需要独立道具图。",
       "appears_in_shots": ["S001", "S002"],
       "generation_required": false,
       "required_reference_set": null,
+      "prompt_outputs": [],
       "prompt_scope": "text_control_only",
       "handling_policy": "text_prompt_control",
       "notes": "手机是动作关键道具，但外形普通，后续视频提示词正文描述即可，不生成独立道具图。"
