@@ -27,6 +27,7 @@
     "storyboard_json": "./outputs/storyboard.json",
     "asset_manifest": "./outputs/asset_manifest.json",
     "shot_asset_map": "./outputs/shot_asset_map.json",
+    "asset_prompt_tasks": "./outputs/asset_prompt_tasks.json",
     "asset_dirs": {
       "characters": "./outputs/assets/characters",
       "scenes": "./outputs/assets/scenes",
@@ -53,6 +54,7 @@
     "seedance_stable_asset_naming": true,
     "character_state_split_forbidden": true,
     "scene_light_time_split_forbidden": true,
+    "asset_prompt_task_minimal_input": true,
     "key_props_only": true,
     "video_prompt_merge_rule_required": true,
     "video_prompt_merge_decision_required": true,
