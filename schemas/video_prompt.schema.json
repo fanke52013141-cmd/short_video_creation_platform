@@ -15,6 +15,7 @@
           "duration_seconds",
           "scene_id",
           "merge_decision",
+          "frame_references",
           "declared_assets",
           "prompt_cn"
         ],
@@ -38,6 +39,10 @@
           "duration_seconds": { "type": ["integer", "number"], "minimum": 0, "maximum": 15 },
           "scene_id": { "type": "string" },
           "merge_decision": { "$ref": "#/$defs/merge_decision" },
+          "frame_references": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/frame_reference" }
+          },
           "declared_assets": {
             "type": "array",
             "items": { "$ref": "#/$defs/declared_asset" }
@@ -74,6 +79,16 @@
           "type": "string",
           "enum": ["low", "medium", "high"]
         }
+      }
+    },
+    "frame_reference": {
+      "type": "object",
+      "required": ["shot_id", "asset_name", "role", "path"],
+      "properties": {
+        "shot_id": { "type": "string", "pattern": "^S[0-9]{3}$" },
+        "asset_name": { "type": "string" },
+        "role": { "type": "string", "enum": ["first_frame", "last_frame", "keyframe"] },
+        "path": { "type": "string" }
       }
     },
     "declared_asset": {
