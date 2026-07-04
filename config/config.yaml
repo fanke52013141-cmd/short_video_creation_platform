@@ -16,7 +16,7 @@ runtime:
 
 skill_versions:
   story_generation: "3.0.0"
-  art_direction: "2.0.0"
+  art_direction: "2.1.0"
   storyboard_director: "2.0.0"
   asset_executor: "1.0.0"
   character_prompt_generator: "2.0.0"
@@ -108,12 +108,15 @@ storyboard_policy:
 
 style_bible_policy:
   one_page_only: true
-  tone_keywords_max: 3
-  lighting_sentence_max: 1
-  composition_sentence_max: 1
+  user_visual_direction_first: true
+  propose_options_when_open_direction: true
+  director_owns_composition: true
   required_sections:
+    - "画面风格"
     - "整体色调"
     - "光线风格"
+    - "AI 视觉执行要求"
+  forbidden_sections:
     - "构图倾向"
     - "禁止出现的视觉元素"
 
