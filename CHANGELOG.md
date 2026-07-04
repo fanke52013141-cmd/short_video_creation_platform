@@ -7,11 +7,13 @@
 - [process] 明确艺术总监先于导演出现，但只负责视觉方向；具体构图、景别、机位和镜头调度归 `storyboard_director`。
 - [process] 沉淀视频分镜合并规则：合并对象是连续 `S###`，不是 `SC###`；`SC###` 只是合并边界。
 - [process] 沉淀 Seedance 资产命名规则：人物/场景使用稳定命名与素材绑定，不按表情、动作、姿态、普通光影变化拆资产。
+- [process] 明确资产图片生成执行节点可使用即梦网页端、ChatGPT 网页端、Codex 或外部工具；每个 `asset_image_task` 只生成一张图，禁止拼接图、四宫格和设定表。
 - [skill] 将 `story_generation` 升级到 3.0.0，明确禁止在剧本阶段拆分镜头、角色状态、场景资产、道具资产或生成提示词。
 - [skill] 将 `art_direction` 升级到 2.1.0：用户有风格/参考图时优先继承并补全；用户没有明确视觉方向时先给候选方案，不直接定稿。
 - [skill] 将 `storyboard_director` 升级到 2.2.0：明确导演只输出 `shot_id`、`scene_id`、`duration_seconds`、`framing`、`camera_move`、`action_desc`，不输出人物、地点或资产拆分字段。
 - [skill] 将 `asset_executor` 升级到 1.1.0：改为 Seedance 主体/场景/关键道具命名、素材绑定、生成决策和 shot 映射。
 - [skill] 将 `character_prompt_generator`、`scene_prompt_generator`、`prop_prompt_generator` 升级到 2.1.0：分别适配身份资产组、场景参考图、关键道具才独立生成的策略。
+- [skill] 将 `image_generation_executor` 升级到 1.1.0：改为工具无关的单图资产生成任务执行器，支持 `jimeng_web_manual`、`chatgpt_web`、`codex_direct`、`external_manual`。
 - [skill] 将 `video_prompt_generator` 升级到 2.3.0：强连续动作优先合并，景别变化不再作为禁止合并理由；每条 `V###` 必须写入 `merge_decision`。
 - [prompt] 更新 `skills/raw_prompts/story_generation.source.md`，删除机器可读故事输出要求，让模型专注剧本优化。
 - [prompt] 更新 `skills/raw_prompts/art_direction.source.md`，删除 `art_direction.json`、构图硬字段和独立“禁止出现的视觉元素”字段要求。
@@ -28,8 +30,9 @@
 - [schema] 扩展 `schemas/asset_manifest.schema.json`，加入 Seedance 命名策略、素材绑定、参考资产组和处理策略字段。
 - [schema] 扩展 `schemas/video_prompt.schema.json`，要求每条 `V###` 包含 `merge_decision`。
 - [config] 更新 `asset_policy`，记录人物不按状态拆、场景不按普通光影拆、道具只管控核心剧情道具。
+- [config] 新增 `image_generation_policy`，记录单任务单图、禁止拼图和可选图片生成模式。
 - [config] 更新 `video_prompt_policy.merge_policy`，记录强连续动作优先合并、景别变化可合并、跨场景/超时长/动作不连续必须拆分。
-- [docs] 更新 README、schema contracts、local run 模板、Agent、flow 和质量门，统一 Seedance 资产命名和素材绑定边界。
+- [docs] 更新 README、schema contracts、local run 模板、Agent、flow 和质量门，统一 Seedance 资产命名、素材绑定和资产图片生成边界。
 - [examples] 更新 `examples/minimal_run/`，移除 `outputs/story.json`，扩展 `story.md`，更新 `style_bible.md` 新格式，精简 `storyboard.json`，更新 Seedance 资产命名，并在 `video_prompts.md/json` 中加入合并判断。
 
 ### Reason
@@ -38,6 +41,7 @@
 - 导演阶段应只完成镜头结构化和场景分组；人物、场景、道具和资产拆分属于资产执行官。
 - Seedance 人物资产应以稳定主体命名和素材绑定为核心；常规表情、动作、姿态用文字控制，避免 ID 漂移和多人物误判。
 - Seedance 场景资产应以空间结构为核心；普通光线、时间、天气变化用文字控制，避免无谓拆分。
+- 资产图片生成不应被固定为即梦网页端；不同工具可以执行同一单图任务，但任务输入和输出路径必须统一。
 - 视频提示词需要 `duration_seconds` 与 `scene_id` 做合并判断，因此这两个字段必须保留。
 - 强连续动作如果被拆成多次生成，容易造成动作、手部、道具位置和人物姿态穿帮，因此在同场景且总时长不超过 15 秒时应优先合并。
 
