@@ -87,11 +87,10 @@
 
 - `naming_strategy`: `numbered_subject | custom_concrete_name | simple_scene_number | concrete_scene_name | key_prop_name`。
 - `seedance_label`: 提示词中的稳定主体 / 场景 / 道具标签。
-- `definition_sentence`: 对用户素材的前置定义句，例如“将图片1中穿红裙、戴草帽的女性定义为主体1”。
+- `definition_sentence`: 对用户素材的前置定义句。
 - `reference_bindings`: 同一主体或场景绑定的图片 / 视频 / 生成资产。
-- `generation_brief`: 下游生成提示词需要的浓缩视觉描述。
-- `usage_context`: 下游生成提示词需要的用途说明。
 - `required_reference_set`: 人物通常为 `face_closeup + full_body_styling`，场景通常为 `scene_reference`。
+- `prompt_outputs`: 该资产需要生成的提示词输出路径列表。
 - `handling_policy`: 说明是绑定现有参考、生成身份资产组、生成场景参考、正文控制道具、沿用参考道具、删除道具还是生成独立道具。
 
 命名规则：
@@ -103,33 +102,21 @@
 - 场景不因普通光线、时间、天气变化拆成多个资产。
 - 道具只保留核心剧情道具；普通背景物件不强行生成独立资产。
 
-## asset_prompt_tasks.json 契约
+## 资产提示词输入契约
 
-`asset_prompt_tasks.json` 是资产提示词生成阶段的最小输入队列。每个 task 只对应一份资产提示词输出。
+不再设置 `asset_prompt_tasks.json`。资产提示词生成器每次只接收一个极简调用：
 
-每个 task 至少包含：
+```json
+{
+  "story_markdown_path": "./outputs/story.md",
+  "style_bible_path": "./outputs/style_bible.md",
+  "asset_type": "character",
+  "asset_name": "林小满",
+  "output_prompt_path": "./outputs/assets/characters/林小满_人脸大头特写.md"
+}
+```
 
-- `task_id`
-- `parent_asset_name`
-- `asset_type`: `character | scene | prop`
-- `prompt_role`: `face_closeup | full_body_styling | scene_reference | independent_prop_reference | prop_text_control_note`
-- `style_bible_path`
-- `asset_payload`
-- `reference_bindings`
-- `output_prompt_path`
-
-`asset_payload` 只携带当前任务所需字段：
-
-- `seedance_label`
-- `definition_sentence`
-- `visual_anchors`
-- `generation_brief`
-- `usage_context`
-- `handling_policy`
-- `prompt_scope`
-- `notes`
-
-资产提示词生成器不得读取完整 `story.md`、完整 `storyboard.json`、完整 `shot_asset_map.json` 或完整 `asset_manifest.json`。这些信息必须在 `asset_executor` 阶段被浓缩进 `asset_payload`。
+必须有完整 `story.md`，因为人物设定、场景气质和道具意义需要剧情上下文。不得使用 `task_id`、`asset_payload` 或额外任务队列来替代剧本。
 
 ## shot_asset_map.json 契约
 
@@ -174,8 +161,8 @@
 - 剧本阶段先保证剧本质量，不承担结构化抽取。
 - 艺术方向阶段先保证用户确认的视觉边界，不承担具体构图。
 - 导演阶段只做镜头结构化和场景分组，不做资产拆分。
-- 资产阶段只做 Seedance 稳定命名、素材绑定、生成决策、shot 映射和 `asset_prompt_task` 展开，不写最终提示词。
-- 资产提示词生成阶段只消费单个 `asset_prompt_task` 和 `style_bible.md`，不继续读取完整故事或完整资产清单。
+- 资产阶段只做 Seedance 稳定命名、素材绑定、生成决策和 shot 映射，不写最终提示词。
+- 资产提示词生成阶段读取完整剧本、风格圣经、单个资产类型、资产名和输出路径。
 - JSON 只在导演、资产执行、视频计划等明确需要机器校验的阶段出现。
 - 新增影响下游读取的字段时，应同步更新 schema、Skill 文档和 `scripts/validate_project.py`。
 - 旧项目不满足当前契约时，应重新初始化或标记为 legacy，不要伪装通过。
