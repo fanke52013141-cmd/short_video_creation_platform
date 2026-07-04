@@ -10,6 +10,7 @@
 - 最小必要输入：下游只读取当前阶段真正需要的文件。
 - 职责单一：导演只做镜头结构化，资产执行官只做资产提取和映射，视频提示词生成器只做可复制到即梦的提示词。
 - Seedance 友好：人物和场景使用稳定命名与素材绑定，不按表情、动作、普通光影变化拆资产。
+- 单图生成：每个资产图片任务只生成一张图片，禁止拼接图、四宫格、设定表或对比图。
 - 流程精简：流程终点是进入即梦画布生产，不在仓库内追加音色、外部结果、媒体审查和最终打包节点。
 - 交付清晰：最终交付给即梦画布的内容只包含剧本、视频提示词、有效角色资产、有效场景资产和分镜参考图。
 
@@ -23,11 +24,12 @@
 6. 运行 `skills/storyboard_director.md`，由导演负责具体构图、景别、镜头调度和分镜结构化，产出 `outputs/storyboard.json`。
 7. 运行 `skills/asset_executor.md`，由资产执行官负责 Seedance 主体/场景/关键道具命名、素材绑定和 shot 映射，产出 `outputs/asset_manifest.json` 和 `outputs/shot_asset_map.json`。
 8. 并行运行 `skills/character_prompt_generator.md`、`skills/scene_prompt_generator.md`、`skills/prop_prompt_generator.md`。
-9. 去即梦生成资产图片，并回填到 `outputs/assets/characters/`、`outputs/assets/scenes/`、`outputs/assets/props/`。
-10. 运行 `skills/storyboard_prompt_generator.md`，产出 `outputs/storyboard_prompts.md`。
-11. 去即梦生成分镜参考图，并回填到 `outputs/storyboards/S001.png`、`S002.png` 等。
-12. 运行 `skills/video_prompt_generator.md`，产出 `outputs/video_prompts.md` 和 `outputs/video_prompts.json`。
-13. 将 `story.md`、`video_prompts.md`、`assets/characters/`、`assets/scenes/`、`storyboards/` 交给即梦画布生产。
+9. 运行或手动执行 `skills/image_generation_executor.md`，可用即梦网页端、ChatGPT 网页端、Codex 或其他外部工具生成资产图片；每个任务只生成一张图片。
+10. 将有效资产图片回填到 `outputs/assets/characters/`、`outputs/assets/scenes/`、`outputs/assets/props/`。
+11. 运行 `skills/storyboard_prompt_generator.md`，产出 `outputs/storyboard_prompts.md`。
+12. 生成分镜参考图，并回填到 `outputs/storyboards/S001.png`、`S002.png` 等。
+13. 运行 `skills/video_prompt_generator.md`，产出 `outputs/video_prompts.md` 和 `outputs/video_prompts.json`。
+14. 将 `story.md`、`video_prompts.md`、`assets/characters/`、`assets/scenes/`、`storyboards/` 交给即梦画布生产。
 
 ## 输出目录
 
@@ -38,6 +40,8 @@ outputs/
 ├── storyboard.json
 ├── asset_manifest.json
 ├── shot_asset_map.json
+├── image_generation_queue.json
+├── image_generation_queue.md
 ├── storyboard_prompts.md
 ├── video_prompts.md
 ├── video_prompts.json
@@ -55,6 +59,7 @@ outputs/
 - 场景：优先使用具象场景名，例如 `雨夜客厅场景`；无明确名称时用 `场景1`、`场景2`。禁止用 `ENV_001` 当场景名。
 - 场景素材：普通光线、时间、天气变化不拆新场景；只有空间结构、地点或叙事空间变化才新建场景资产。
 - 道具：只管控核心剧情道具；普通背景物件不强行生成独立资产。
+- 资产图片：一个 `asset_image_task` 只输出一张图；人物面部参考和全身妆造是两个独立图片任务。
 - 分镜：`S{三位数序号}`，例如 `S001`。
 - 场景/时空单元：`SC{三位数序号}`，例如 `SC001`。
 - 视频提示词：`V{三位数序号}`，例如 `V001`，可合并多个连续分镜。
