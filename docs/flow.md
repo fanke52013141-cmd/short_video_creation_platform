@@ -80,6 +80,7 @@
 - Output:
   - `RUN/outputs/asset_manifest.json`
   - `RUN/outputs/shot_asset_map.json`
+  - `RUN/outputs/asset_prompt_tasks.json`
 - Schemas:
   - `schemas/asset_manifest.schema.json`
   - `schemas/shot_asset_map.schema.json`
@@ -90,43 +91,67 @@
   4. 为场景选择 `场景1/场景2` 或具象场景名，例如 `雨夜客厅场景`。
   5. 不因普通光线、时间、天气变化拆分新场景资产。
   6. 道具只保留核心剧情道具；普通道具默认沿用参考素材或正文控制。
-  7. 建立每个 shot 对应哪些稳定资产名的映射关系。
+  7. 提炼 `generation_brief`、`usage_context` 和 `visual_anchors`。
+  8. 建立每个 shot 对应哪些稳定资产名的映射关系。
+  9. 展开 `asset_prompt_tasks.json`，作为下一阶段的最小输入。
 
 ## 5. Asset Prompt Generation
 
-三路可并行执行，互不依赖。
+三路可并行执行，互不依赖。三类生成器都只消费单个 `asset_prompt_task`，不读取完整 `story.md`、完整 `storyboard.json`、完整 `shot_asset_map.json` 或完整 `asset_manifest.json`。
 
 ### 5-A Character Prompts
 
 - Skill: `character_prompt_generator`
 - Input:
-  - `RUN/outputs/story.md`
+  - 从 `RUN/outputs/asset_prompt_tasks.json` 切出的单个 character task
   - `RUN/outputs/style_bible.md`
-  - 从 `asset_manifest.json` 切出的单个人物主体
+- Required task fields:
+  - `task_id`
+  - `parent_asset_name`
+  - `asset_type=character`
+  - `prompt_role=face_closeup | full_body_styling`
+  - `asset_payload`
+  - `reference_bindings`
+  - `output_prompt_path`
 - Output:
-  - 人脸大头特写提示词
-  - 全身妆造提示词
+  - `output_prompt_path` 指向的一份单图提示词 Markdown
 - Boundary: 不为表情、动作、姿态拆新人物资产。
 
 ### 5-B Scene Prompts
 
 - Skill: `scene_prompt_generator`
 - Input:
-  - `RUN/outputs/story.md`
+  - 从 `RUN/outputs/asset_prompt_tasks.json` 切出的单个 scene task
   - `RUN/outputs/style_bible.md`
-  - 从 `asset_manifest.json` 切出的单个场景
+- Required task fields:
+  - `task_id`
+  - `parent_asset_name`
+  - `asset_type=scene`
+  - `prompt_role=scene_reference`
+  - `asset_payload`
+  - `reference_bindings`
+  - `output_prompt_path`
 - Output:
-  - `RUN/outputs/assets/scenes/{场景资产名}.md`
+  - `output_prompt_path` 指向的一份单场景参考图提示词 Markdown
 - Boundary: 不为普通光影、时段、天气变化拆新场景资产。
 
 ### 5-C Prop Prompts
 
 - Skill: `prop_prompt_generator`
 - Input:
-  - `RUN/outputs/story.md`
-  - 从 `asset_manifest.json` 切出的单个道具
+  - 从 `RUN/outputs/asset_prompt_tasks.json` 切出的单个 prop task
+  - `RUN/outputs/style_bible.md`
+- Required task fields:
+  - `task_id`
+  - `parent_asset_name`
+  - `asset_type=prop`
+  - `prompt_role=independent_prop_reference | prop_text_control_note`
+  - `asset_payload`
+  - `reference_bindings`
+  - `output_prompt_path`
 - Output:
-  - 只有 `generation_required=true` 且 `handling_policy=generate_independent_prop` 时，输出 `RUN/outputs/assets/props/{道具资产名}.md`
+  - 只有 `handling_policy=generate_independent_prop` 时，输出独立道具图片提示词。
+  - `text_prompt_control` 或 `inherited_from_reference` 只输出不生成说明。
 - Boundary: 普通道具不强行生成独立图片，后续写入视频提示词正文。
 
 ## 5.5 Asset Image Generation
