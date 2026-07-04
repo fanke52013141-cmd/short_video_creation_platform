@@ -8,10 +8,11 @@
 - 用户确认：剧本与视觉方向都需要用户确认后再进入下游。
 - 艺术先行：艺术总监先定画面风格、色调、光线和 AI 视觉执行要求；导演后续负责具体构图与分镜。
 - 最小必要输入：下游只读取当前阶段真正需要的文件。
-- Seedance 友好：人物和场景使用稳定命名与素材绑定，不按表情、动作、普通光影变化拆资产。
+- 人物资产：按 `人物稳定名_状态` 固定，例如 `林小满_雨夜接电话状态`；不默认拆成大头特写和全身妆造两个资产。
+- 场景资产：按稳定场景名固定，普通光线、时间、天气变化不拆新场景。
 - 资产提示词输入保持简单：`story.md + style_bible.md + asset_type + asset_name + output_prompt_path`。
-- 单图生成：每个资产图片任务只生成一张图片，禁止拼接图、四宫格、设定表或对比图。
-- 交付清晰：最终交付给即梦画布的内容只包含剧本、视频提示词、有效角色资产、有效场景资产和分镜参考图。
+- 分镜参考图：每个 `S###` 必须标明首帧、尾帧或关键帧，并判断是否引用上一分镜作站位参考。
+- 视频提示词：可在同一 `scene_id` 内合并连续 `S###`，合并总时长必须不超过 15 秒。
 
 ## 推荐试跑顺序
 
@@ -22,13 +23,13 @@
 5. 运行 `skills/art_direction.md`，用户确认后产出 `outputs/style_bible.md`。
 6. 运行 `skills/storyboard_director.md`，产出 `outputs/storyboard.json`。
 7. 运行 `skills/asset_executor.md`，产出 `outputs/asset_manifest.json` 和 `outputs/shot_asset_map.json`。
-8. 根据 `asset_manifest.json` 里的 `prompt_outputs`，循环运行人物、场景、必要道具提示词生成器。
+8. 根据 `asset_manifest.json` 里的 `output_prompt_path`，循环运行人物、场景、必要道具提示词生成器。
 9. 每次提示词生成器只输入：剧本、风格圣经、资产类型、资产名和输出路径。
-10. 运行或手动执行 `skills/image_generation_executor.md` 生成资产图片；每个任务只生成一张图片。
+10. 运行或手动执行 `skills/image_generation_executor.md` 生成资产图片；每个任务只生成一张图片文件。
 11. 将有效资产图片回填到 `outputs/assets/characters/`、`outputs/assets/scenes/`、`outputs/assets/props/`。
-12. 运行 `skills/storyboard_prompt_generator.md`，产出 `outputs/storyboard_prompts.md`。
+12. 运行 `skills/storyboard_prompt_generator.md`，产出 `outputs/storyboard_prompts.md`，明确每个分镜的帧角色和上一分镜站位参考判断。
 13. 生成分镜参考图，并回填到 `outputs/storyboards/S001.png`、`S002.png` 等。
-14. 运行 `skills/video_prompt_generator.md`，产出 `outputs/video_prompts.md` 和 `outputs/video_prompts.json`。
+14. 运行 `skills/video_prompt_generator.md`，根据连续 shot、同一 scene_id 和 15 秒上限生成 `outputs/video_prompts.md` 与 `outputs/video_prompts.json`。
 
 ## 输出目录
 
@@ -53,10 +54,10 @@ outputs/
 
 ## 命名规范
 
-- 人物：优先使用剧本中的唯一稳定人名或身份标签，例如 `林小满`、`警察`；无明确名称时用 `主体1`、`主体2`。
+- 人物：`人物稳定名_状态`，例如 `林小满_雨夜接电话状态`。
+- 人物资产图：一个人物状态资产生成一张 21:9 人物资产图，可在同一张图内包含特写、正面、侧面、后视图。
 - 场景：优先使用具象场景名，例如 `雨夜客厅场景`；无明确名称时用 `场景1`、`场景2`。
 - 道具：只管控核心剧情道具；普通背景物件不强行生成独立资产。
-- 资产提示词：每次只处理一个资产名和一个输出路径；需要完整剧本和风格圣经，不需要 `task_id` 或 `asset_payload`。
 - 分镜：`S{三位数序号}`，例如 `S001`。
 - 场景/时空单元：`SC{三位数序号}`，例如 `SC001`。
 - 视频提示词：`V{三位数序号}`，例如 `V001`，可合并多个连续分镜。
