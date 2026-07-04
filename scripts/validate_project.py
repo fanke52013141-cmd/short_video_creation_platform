@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a short-video creation local run.
-
-Usage:
-  python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase initialized
-  python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase all
-"""
+"""Validate a short-video creation local run."""
 
 from __future__ import annotations
 
@@ -17,6 +12,7 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = REPO_ROOT / "schemas"
 MAX_SHOT_DURATION_SECONDS = 15
+FRAME_ROLES = {"first_frame", "last_frame", "keyframe"}
 PHASE_ALIASES = {
     "init": "initialized",
     "art_direction": "art",
@@ -110,7 +106,7 @@ def validate_schema_subset(data: Any, schema: dict[str, Any], label: str) -> Non
         if name not in defs:
             fail(f"{label}: missing schema def {name}")
         merged = dict(defs[name])
-        merged.update({k: v for k, v in node.items() if k != "$ref"})
+        merged.update({key: value for key, value in node.items() if key != "$ref"})
         return merged
 
     def check(value: Any, node: dict[str, Any], path: str) -> None:
@@ -176,7 +172,7 @@ def validate_checkpoint(run_dir: Path) -> dict[str, Any]:
         "video_prompt_generator",
     ]
     if checkpoint.get("phase_order") != required_order:
-        fail("checkpoint.phase_order does not match the simplified Jimeng pipeline")
+        fail("checkpoint.phase_order does not match the simplified pipeline")
     if checkpoint.get("current_phase") not in ["initialized", *required_order]:
         fail(f"unknown checkpoint.current_phase: {checkpoint.get('current_phase')}")
     completed = checkpoint.get("completed_phases", [])
@@ -189,7 +185,7 @@ def validate_checkpoint(run_dir: Path) -> dict[str, Any]:
 
 def validate_initialized(run_dir: Path) -> None:
     validate_checkpoint(run_dir)
-    required_dirs = [
+    for rel in [
         "inputs",
         "outputs/assets/characters",
         "outputs/assets/scenes",
@@ -197,8 +193,7 @@ def validate_initialized(run_dir: Path) -> None:
         "outputs/storyboards",
         "references",
         "logs",
-    ]
-    for rel in required_dirs:
+    ]:
         require_dir(run_dir / rel)
     require_file(run_dir / "inputs/idea_brief.md")
     ok("initialized run structure")
@@ -223,11 +218,10 @@ def validate_art(run_dir: Path) -> None:
         if heading not in text:
             fail(f"style_bible.md missing required section: {heading}")
     if "## 构图倾向" in text:
-        fail("style_bible.md must not contain a hard 构图倾向 section; composition belongs to storyboard_director")
+        fail("style_bible.md must not contain a hard 构图倾向 section")
     if "## 禁止出现的视觉元素" in text:
         fail("style_bible.md must not contain a standalone 禁止出现的视觉元素 section")
-    non_empty_lines = [line for line in text.splitlines() if line.strip()]
-    if len(non_empty_lines) > 80:
+    if len([line for line in text.splitlines() if line.strip()]) > 80:
         fail("style_bible.md is too long; keep it within one page")
     if (outputs(run_dir) / "art_direction.json").exists():
         fail("art_direction.json is deprecated; use style_bible.md only")
@@ -258,7 +252,7 @@ def validate_storyboard(run_dir: Path) -> dict[str, Any]:
         if forbidden:
             fail(f"{expected} contains fields reserved for later stages: {', '.join(forbidden)}")
         if re.search(r"CHAR_|ENV_|PROP_|AUDIO_", json.dumps(shot, ensure_ascii=False)):
-            fail(f"{expected} contains legacy abstract asset IDs; use scene_id and natural action description only")
+            fail(f"{expected} contains legacy abstract asset IDs")
     ok(f"storyboard shots: {len(shots)}")
     return storyboard
 
@@ -281,7 +275,13 @@ def validate_assets(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     if len(names) != sum(len(manifest.get(group, []) or []) for group in ("characters", "scenes", "props")):
         fail("asset_manifest.json has duplicate asset_name values")
     if any(re.match(r"^(CHAR|ENV|PROP|AUDIO)_[0-9]{3}", name) for name in names):
-        fail("asset names must use feature/state naming, not CHAR_/ENV_/PROP_ IDs")
+        fail("asset names must use stable names, not CHAR_/ENV_/PROP_ IDs")
+    for group in ("characters", "scenes", "props"):
+        for item in manifest.get(group, []) or []:
+            if "prompt_outputs" in item:
+                fail("asset_manifest.json must use output_prompt_path, not prompt_outputs")
+            if item.get("generation_required") is True and not item.get("output_prompt_path"):
+                fail(f"{item.get('asset_name')} generation_required=true but output_prompt_path is missing")
     valid_shots = {shot["shot_id"] for shot in storyboard.get("shots", [])}
     mapped_shots = {item.get("shot_id") for item in shot_map.get("shot_assets", [])}
     missing_maps = valid_shots - mapped_shots
@@ -298,31 +298,59 @@ def validate_assets(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
 
 def validate_asset_prompt_generation(run_dir: Path) -> None:
     manifest, _ = validate_assets(run_dir)
-    prompt_dirs = {
-        "characters": outputs(run_dir) / "assets" / "characters",
-        "scenes": outputs(run_dir) / "assets" / "scenes",
-        "props": outputs(run_dir) / "assets" / "props",
-    }
-    for group, directory in prompt_dirs.items():
-        required_assets = [
-            item["asset_name"]
-            for item in manifest.get(group, []) or []
-            if item.get("generation_required") is True
-        ]
-        for asset_name in required_assets:
-            expected = directory / f"{asset_name}.md"
-            if not expected.exists():
-                warn(f"missing prompt file for {asset_name}: {expected}")
-    ok("asset prompt directories checked")
+    for group in ("characters", "scenes", "props"):
+        for item in manifest.get(group, []) or []:
+            prompt_path = item.get("output_prompt_path")
+            if item.get("generation_required") is True and prompt_path:
+                require_file(run_dir / prompt_path.replace("./", ""))
+    ok("asset prompt files checked")
+
+
+def _shot_sections(text: str) -> dict[str, str]:
+    matches = list(re.finditer(r"(?m)^##\s+(S[0-9]{3})\b", text))
+    sections: dict[str, str] = {}
+    for index, match in enumerate(matches):
+        start = match.start()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        sections[match.group(1)] = text[start:end]
+    return sections
+
+
+def _extract_field(section: str, field: str) -> str | None:
+    match = re.search(rf"(?m)^{re.escape(field)}\s*:\s*([^\n]+)", section)
+    return match.group(1).strip() if match else None
 
 
 def validate_storyboard_prompt_generation(run_dir: Path) -> None:
     validate_assets(run_dir)
+    storyboard = read_json(outputs(run_dir) / "storyboard.json")
     require_file(outputs(run_dir) / "storyboard_prompts.md")
     text = (outputs(run_dir) / "storyboard_prompts.md").read_text(encoding="utf-8")
-    for shot in read_json(outputs(run_dir) / "storyboard.json").get("shots", []):
-        if shot["shot_id"] not in text:
-            fail(f"storyboard_prompts.md missing {shot['shot_id']}")
+    sections = _shot_sections(text)
+    shots = storyboard.get("shots", [])
+    by_id = {shot["shot_id"]: shot for shot in shots}
+    for index, shot in enumerate(shots):
+        shot_id = shot["shot_id"]
+        section = sections.get(shot_id)
+        if not section:
+            fail(f"storyboard_prompts.md missing section for {shot_id}")
+        role = _extract_field(section, "recommended_frame_role")
+        if role not in FRAME_ROLES:
+            fail(f"{shot_id} recommended_frame_role must be one of {sorted(FRAME_ROLES)}")
+        uses_previous = _extract_field(section, "uses_previous_storyboard_reference")
+        if uses_previous not in {"true", "false"}:
+            fail(f"{shot_id} uses_previous_storyboard_reference must be true or false")
+        if uses_previous == "true":
+            if index == 0:
+                fail(f"{shot_id} cannot reference previous storyboard; it is the first shot")
+            source_shot_id = _extract_field(section, "source_shot_id")
+            expected_prev = shots[index - 1]["shot_id"]
+            if source_shot_id != expected_prev:
+                fail(f"{shot_id} previous storyboard source must be {expected_prev}, got {source_shot_id}")
+            if by_id[source_shot_id]["scene_id"] != shot["scene_id"]:
+                fail(f"{shot_id} must not reference previous storyboard across scene_id")
+            if "placement_anchor" not in section and "站位" not in section:
+                fail(f"{shot_id} previous storyboard reference must be placement-only")
     ok("storyboard prompts")
 
 
@@ -352,13 +380,20 @@ def validate_operation_object_usage(text: str) -> None:
     )
 
 
+def _storyboard_index(storyboard: dict[str, Any]) -> dict[str, int]:
+    return {shot["shot_id"]: index for index, shot in enumerate(storyboard.get("shots", []))}
+
+
 def validate_video_prompt_plan(run_dir: Path, storyboard: dict[str, Any]) -> dict[str, Any]:
     plan = validate_schema_file(outputs(run_dir) / "video_prompts.json", "video_prompt.schema.json")
     videos = plan.get("videos", [])
     if not videos:
         fail("video_prompts.json has no videos")
-    valid_shots = [shot["shot_id"] for shot in storyboard.get("shots", [])]
+    shots = storyboard.get("shots", [])
+    valid_shots = [shot["shot_id"] for shot in shots]
     valid_shot_set = set(valid_shots)
+    shot_index = _storyboard_index(storyboard)
+    shot_by_id = {shot["shot_id"]: shot for shot in shots}
     covered_shots: list[str] = []
     video_ids = [video.get("video_id") for video in videos]
     if len(video_ids) != len(set(video_ids)):
@@ -377,6 +412,19 @@ def validate_video_prompt_plan(run_dir: Path, storyboard: dict[str, Any]) -> dic
         unknown = sorted(set(source_shots) - valid_shot_set)
         if unknown:
             fail(f"{video_id} references unknown source_shots: {', '.join(unknown)}")
+        source_indexes = [shot_index[shot_id] for shot_id in source_shots]
+        if source_indexes != list(range(min(source_indexes), max(source_indexes) + 1)):
+            fail(f"{video_id} source_shots must be contiguous")
+        source_scene_ids = {shot_by_id[shot_id]["scene_id"] for shot_id in source_shots}
+        if len(source_scene_ids) != 1:
+            fail(f"{video_id} must not merge shots across scene_id")
+        duration_sum = sum(shot_by_id[shot_id]["duration_seconds"] for shot_id in source_shots)
+        if duration_sum > MAX_SHOT_DURATION_SECONDS:
+            fail(f"{video_id} merged source_shots exceed {MAX_SHOT_DURATION_SECONDS}s")
+        if len(source_shots) > 1:
+            strategy = (video.get("merge_decision") or {}).get("strategy", "")
+            if not strategy.startswith("merged_"):
+                fail(f"{video_id} merged source_shots require a merged_* strategy")
         covered_shots.extend(source_shots)
 
         prompt_cn = video.get("prompt_cn", "")
@@ -421,13 +469,6 @@ def validate_video_prompts(run_dir: Path) -> None:
     for match in re.finditer(r"时长[：:]\s*([0-9]+(?:\.[0-9]+)?)\s*s", text):
         if float(match.group(1)) > MAX_SHOT_DURATION_SECONDS:
             fail("single video prompt duration must be <= 15s")
-    same_scene_pairs = 0
-    shots = storyboard.get("shots", [])
-    for prev, current in zip(shots, shots[1:]):
-        if prev.get("scene_id") == current.get("scene_id"):
-            same_scene_pairs += 1
-    if same_scene_pairs and "参考@上一分镜_站位" not in text:
-        fail("same-scene continuity requires 参考@上一分镜_站位 anchor rule")
     if HIGH_INTENSITY_TERMS.search(text) and "【生成风险提示】" not in text:
         fail("high-intensity action prompts require 【生成风险提示】")
     validate_operation_object_usage(text)
@@ -448,7 +489,7 @@ def validate_all(run_dir: Path) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Validate a simplified Jimeng short-video local run.")
+    parser = argparse.ArgumentParser(description="Validate a simplified short-video local run.")
     parser.add_argument("run_dir", help="Local run directory")
     parser.add_argument(
         "--phase",
