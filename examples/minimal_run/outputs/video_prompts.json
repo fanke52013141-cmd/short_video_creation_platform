@@ -1,0 +1,49 @@
+{
+  "videos": [
+    {
+      "video_id": "V001",
+      "task_type": "pipeline_shot_generation",
+      "source_shots": ["S001", "S002"],
+      "duration_seconds": 10,
+      "scene_id": "SC001",
+      "declared_assets": [
+        {
+          "asset_name": "S001_分镜参考图",
+          "media_type": "storyboard",
+          "role": "first_frame",
+          "usage_type": "reference",
+          "source_path": "outputs/storyboards/S001.png",
+          "notes": "首帧参考图"
+        },
+        {
+          "asset_name": "S002_分镜参考图",
+          "media_type": "storyboard",
+          "role": "keyframe",
+          "usage_type": "reference",
+          "source_path": "outputs/storyboards/S002.png",
+          "notes": "关键状态参考图"
+        },
+        {
+          "asset_name": "黑发女孩_克制_正面",
+          "media_type": "character",
+          "role": "character_asset",
+          "usage_type": "reference",
+          "source_path": "outputs/assets/characters/黑发女孩_克制_正面.png",
+          "notes": "人物资产"
+        },
+        {
+          "asset_name": "雨夜客厅_冷暖对比_安静",
+          "media_type": "scene",
+          "role": "scene_asset",
+          "usage_type": "reference",
+          "source_path": "outputs/assets/scenes/雨夜客厅_冷暖对比_安静.png",
+          "notes": "场景资产"
+        }
+      ],
+      "operation_objects": [],
+      "uses_previous_storyboard_anchor": true,
+      "risk_notice_required": false,
+      "prompt_cn": "一、【自检通过项】\n- 资产命名一致：正文引用与声明区完全一致。\n- 锁补匹配：人物外观和客厅空间由资产锁定，正文只补动作、表情和声音。\n- 情绪具象化：委屈转译为抿唇、眼眶泛红、手指捏紧手机边缘。\n- 运镜纯度：镜头只使用一次固定机位和一次推近，不在单镜头内叠加运镜。\n- 约束条件：已写入防字幕、防 Logo、防水印。\n\n二、【资产声明区】\n@S001_分镜参考图（首帧）\n@S002_分镜参考图（关键帧）\n@黑发女孩_克制_正面（人物资产）\n@雨夜客厅_冷暖对比_安静（场景资产）\n\n三、【中文视频提示词】\n从首帧 @S001_分镜参考图 出发。镜头固定在客厅门口中景，参考@上一分镜_站位，保持人物空间关系、朝向和相对位置不变。@黑发女孩_克制_正面 坐在沙发边缘，手机贴在耳边，右手缓慢摩挲毛毯边缘，视线落向茶几。窗外持续雨声，冷蓝雨光扫过玻璃，室内暖黄台灯压低空间亮度。\n\n接近 @S002_分镜参考图 的状态时，镜头缓慢推近到近景。她轻轻吸气，嘴唇微张又抿紧，眼眶泛红但没有眼泪，手指捏紧手机边缘。环境音保留雨声和轻微室内回响，节奏常速偏慢。\n\n约束条件：画面保持无字幕，避免生成任何文字、Logo 或水印。"
+    }
+  ]
+}
