@@ -21,10 +21,10 @@ skill_versions:
   story_generation: "3.0.0"
   art_direction: "2.1.0"
   storyboard_director: "2.2.0"
-  asset_executor: "1.2.0"
-  character_prompt_generator: "2.2.0"
-  scene_prompt_generator: "2.2.0"
-  prop_prompt_generator: "2.2.0"
+  asset_executor: "1.3.0"
+  character_prompt_generator: "2.3.0"
+  scene_prompt_generator: "2.3.0"
+  prop_prompt_generator: "2.3.0"
   image_generation_executor: "1.1.0"
   storyboard_prompt_generator: "1.0.0"
   video_prompt_generator: "2.3.0"
@@ -51,7 +51,6 @@ paths:
   storyboard_json: "./local_runs/YYYY-MM-DD/project_slug/outputs/storyboard.json"
   asset_manifest: "./local_runs/YYYY-MM-DD/project_slug/outputs/asset_manifest.json"
   shot_asset_map: "./local_runs/YYYY-MM-DD/project_slug/outputs/shot_asset_map.json"
-  asset_prompt_tasks: "./local_runs/YYYY-MM-DD/project_slug/outputs/asset_prompt_tasks.json"
   character_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/assets/characters"
   scene_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/assets/scenes"
   prop_asset_dir: "./local_runs/YYYY-MM-DD/project_slug/outputs/assets/props"
@@ -146,7 +145,17 @@ style_bible_policy:
 
 asset_policy:
   naming_model: "seedance_subject_scene_binding"
-  prompt_task_model: "single_asset_prompt_task"
+  prompt_input_model: "story_style_asset_output_path"
+  prompt_generator_required_inputs:
+    - "story_md"
+    - "style_bible"
+    - "asset_type"
+    - "asset_name"
+    - "output_prompt_path"
+  prompt_generator_forbidden_inputs:
+    - "task_id"
+    - "asset_payload"
+    - "asset_prompt_tasks_json"
   character:
     allowed_naming:
       - "numbered_subject"
