@@ -7,34 +7,29 @@
 - [process] 明确艺术总监先于导演出现，但只负责视觉方向；具体构图、景别、机位和镜头调度归 `storyboard_director`。
 - [process] 沉淀视频分镜合并规则：合并对象是连续 `S###`，不是 `SC###`；`SC###` 只是合并边界。
 - [process] 沉淀 Seedance 资产命名规则：人物/场景使用稳定命名与素材绑定，不按表情、动作、姿态、普通光影变化拆资产。
-- [process] 明确资产提示词生成的最小输入：下游只读取单个 `asset_prompt_task` 和 `style_bible.md`，不读取完整剧本、完整分镜或完整资产清单。
+- [process] 简化资产提示词生成输入：使用 `story.md + style_bible.md + asset_type + asset_name + output_prompt_path`，不再使用 `asset_prompt_tasks.json`、`task_id` 或 `asset_payload`。
 - [process] 明确资产图片生成执行节点可使用即梦网页端、ChatGPT 网页端、Codex 或外部工具；每个 `asset_image_task` 只生成一张图，禁止拼接图、四宫格和设定表。
 - [skill] 将 `story_generation` 升级到 3.0.0，明确禁止在剧本阶段拆分镜头、角色状态、场景资产、道具资产或生成提示词。
 - [skill] 将 `art_direction` 升级到 2.1.0：用户有风格/参考图时优先继承并补全；用户没有明确视觉方向时先给候选方案，不直接定稿。
 - [skill] 将 `storyboard_director` 升级到 2.2.0：明确导演只输出 `shot_id`、`scene_id`、`duration_seconds`、`framing`、`camera_move`、`action_desc`，不输出人物、地点或资产拆分字段。
-- [skill] 将 `asset_executor` 升级到 1.2.0：除 Seedance 主体/场景/关键道具命名、素材绑定、生成决策和 shot 映射外，新增 `asset_prompt_tasks.json` 展开职责。
-- [skill] 将 `character_prompt_generator`、`scene_prompt_generator`、`prop_prompt_generator` 升级到 2.2.0：统一改为消费单个 `asset_prompt_task`，不再读取完整 `story.md` 或完整 `asset_manifest.json`。
+- [skill] 将 `asset_executor` 升级到 1.3.0：只固定资产、素材绑定、shot 映射和 `prompt_outputs`，不再展开额外任务包。
+- [skill] 将 `character_prompt_generator`、`scene_prompt_generator`、`prop_prompt_generator` 升级到 2.3.0：统一读取完整剧本、风格圣经、资产类型、资产名和输出路径。
 - [skill] 将 `image_generation_executor` 升级到 1.1.0：改为工具无关的单图资产生成任务执行器，支持 `jimeng_web_manual`、`chatgpt_web`、`codex_direct`、`external_manual`。
 - [skill] 将 `video_prompt_generator` 升级到 2.3.0：强连续动作优先合并，景别变化不再作为禁止合并理由；每条 `V###` 必须写入 `merge_decision`。
-- [prompt] 更新 `skills/raw_prompts/story_generation.source.md`，删除机器可读故事输出要求，让模型专注剧本优化。
-- [prompt] 更新 `skills/raw_prompts/art_direction.source.md`，删除 `art_direction.json`、构图硬字段和独立“禁止出现的视觉元素”字段要求。
-- [prompt] 更新 `skills/raw_prompts/storyboard_director.source.md`，删除资产表、旧式资产 ID、复杂分镜提示词字段和多余 machine-readable 字段。
-- [prompt] 更新 `skills/raw_prompts/character_prompt_generator.source.md`，改为单个 `asset_prompt_task` 输入，按 `prompt_role` 输出单张人物参考图提示词。
-- [prompt] 更新 `skills/raw_prompts/scene_prompt_generator.source.md`，改为单个 `asset_prompt_task` 输入，生成单场景参考图提示词。
-- [prompt] 更新 `skills/raw_prompts/prop_prompt_generator.source.md`，改为单个 `asset_prompt_task` 输入，普通道具正文控制，只有核心道具才独立生成。
+- [prompt] 更新 `skills/raw_prompts/character_prompt_generator.source.md`、`scene_prompt_generator.source.md`、`prop_prompt_generator.source.md`，删除 `asset_prompt_task` / `asset_payload` 输入，改为剧本 + 风格 + 单资产 + 输出路径。
 - [prompt] 更新 `skills/raw_prompts/seedance_video_prompt.source.md`，加入 `merge_decision`、强连续动作合并和景别变化可合并规则。
 - [script] `validate_project.py` 的 `story` 阶段只校验 `story.md`，并将存在 `story.json` 视为不合格。
 - [script] `validate_project.py` 的 `art` 阶段改为校验 `画面风格`、`整体色调`、`光线风格`、`AI 视觉执行要求`，并拒绝 `构图倾向` 硬字段。
 - [script] `validate_project.py` 的 `storyboard` 阶段拒绝 `characters_in_shot`、`location`、资产 ID 和提示词字段。
 - [schema] 删除已弃用的 `schemas/story.schema.json`；结构化从导演分镜阶段开始。
 - [schema] 精简 `schemas/storyboard.schema.json`，删除 `characters_in_shot` 与 `location`。
-- [schema] 扩展 `schemas/asset_manifest.schema.json`，加入 Seedance 命名策略、素材绑定、参考资产组、处理策略、`generation_brief`、`usage_context` 和 `asset_prompt_task` 字段定义。
+- [schema] 扩展 `schemas/asset_manifest.schema.json`，加入 `prompt_outputs`，移除 `asset_prompt_task` 字段定义。
 - [schema] 扩展 `schemas/video_prompt.schema.json`，要求每条 `V###` 包含 `merge_decision`。
-- [config] 更新 `asset_policy`，记录人物不按状态拆、场景不按普通光影拆、道具只管控核心剧情道具，并加入 `single_asset_prompt_task` 模式。
+- [config] 更新 `asset_policy`，记录人物不按状态拆、场景不按普通光影拆、道具只管控核心剧情道具，并记录 `story_style_asset_output_path` 输入模式。
 - [config] 新增 `image_generation_policy`，记录单任务单图、禁止拼图和可选图片生成模式。
 - [config] 更新 `video_prompt_policy.merge_policy`，记录强连续动作优先合并、景别变化可合并、跨场景/超时长/动作不连续必须拆分。
-- [docs] 更新 README、schema contracts、local run 模板、Agent、flow 和质量门，统一 Seedance 资产命名、素材绑定、资产提示词最小输入和资产图片生成边界。
-- [examples] 更新 `examples/minimal_run/`，新增 `outputs/asset_prompt_tasks.json`，移除 `outputs/story.json`，扩展 `story.md`，更新 `style_bible.md` 新格式，精简 `storyboard.json`，更新 Seedance 资产命名，并在 `video_prompts.md/json` 中加入合并判断。
+- [docs] 更新 schema contracts、local run 模板、Agent、flow 和质量门，统一 Seedance 资产命名、素材绑定、资产提示词简单输入和资产图片生成边界。
+- [examples] 更新 `examples/minimal_run/`，删除 `outputs/asset_prompt_tasks.json`，移除 `outputs/story.json`，更新 `asset_manifest.json` 的 `prompt_outputs`，并在 `video_prompts.md/json` 中加入合并判断。
 
 ### Reason
 - 剧本优化阶段不应同时承担结构化抽取职责；否则会分散模型注意力，影响故事质量。
@@ -42,7 +37,7 @@
 - 导演阶段应只完成镜头结构化和场景分组；人物、场景、道具和资产拆分属于资产执行官。
 - Seedance 人物资产应以稳定主体命名和素材绑定为核心；常规表情、动作、姿态用文字控制，避免 ID 漂移和多人物误判。
 - Seedance 场景资产应以空间结构为核心；普通光线、时间、天气变化用文字控制，避免无谓拆分。
-- 资产提示词生成阶段如果继续读取完整剧本和完整资产清单，会扩大上下文、增加越界创作和重新决策风险；应由 `asset_executor` 提前浓缩为单个 `asset_prompt_task`。
+- 资产提示词生成需要完整剧本上下文，否则人物、场景和道具只剩孤立名称，难以做准设定。
 - 资产图片生成不应被固定为即梦网页端；不同工具可以执行同一单图任务，但任务输入和输出路径必须统一。
 - 视频提示词需要 `duration_seconds` 与 `scene_id` 做合并判断，因此这两个字段必须保留。
 - 强连续动作如果被拆成多次生成，容易造成动作、手部、道具位置和人物姿态穿帮，因此在同场景且总时长不超过 15 秒时应优先合并。
