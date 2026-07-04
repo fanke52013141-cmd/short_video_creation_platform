@@ -30,5 +30,10 @@
     "video_prompts": "./outputs/video_prompts.md",
     "video_prompts_json": "./outputs/video_prompts.json"
   },
+  "quality_gates": {
+    "story_generation_markdown_only": true,
+    "style_bible_no_composition_section": true,
+    "director_owns_composition": true
+  },
   "status": "ready_for_jimeng_canvas"
 }
