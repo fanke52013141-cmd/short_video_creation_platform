@@ -1,5 +1,5 @@
 # Skill: video_prompt_generator
-**Version**: 2.5.0
+**Version**: 2.6.0
 
 ## Source Prompt
 `skills/raw_prompts/seedance_video_prompt.source.md`
@@ -29,6 +29,20 @@
   "video_prompts_json_path": "./outputs/video_prompts.json"
 }
 ```
+
+## Production Prompt Rules
+
+视频提示词必须遵守以下规则：
+
+- 资产先声明，正文后引用。
+- 正文资产名必须与声明区完全一致。
+- 分镜图锁定构图时，不重复描述已锁定构图，只写画面演进。
+- 人物资产锁定外观时，不重复描述人物外形，只补动作、表情、姿态和情绪。
+- 场景资产锁定空间时，不重复描述环境全貌，只补主体行动、镜头运动和局部变化。
+- 抽象词必须转译为可见画面或可听声音。
+- 每个视频段只使用一种主运镜方式。
+- 道具一般写入正文描述，不使用 `@PROP`。
+- 结尾必须写防字幕、防 Logo、防水印约束。
 
 ## Merge Policy
 
@@ -103,7 +117,7 @@ reference_purpose: placement_anchor
 }
 ```
 
-## Output Requirements
+## Markdown Output Requirements
 
 每条 `V###` 必须包含：
 
@@ -113,13 +127,7 @@ reference_purpose: placement_anchor
 【中文视频提示词】
 ```
 
-硬性要求：
-
-- 只输出中文。
-- 分镜图、人物资产、场景资产必须先声明再引用。
-- 道具一般不使用 `@PROP`，写入正文描述。
-- 必须包含无字幕、无 Logo、无水印约束。
-- 每条 `V###` 必须写 `merge_decision` 和 `frame_references`。
+自检项最多 6 条，必须具体说明：资产命名一致、锁补匹配、情绪/氛围具象化、运镜纯度、合并判断、约束条件。
 
 ## Quality Gate
 
@@ -129,4 +137,7 @@ reference_purpose: placement_anchor
 - [ ] 合并总时长 `<=15` 秒。
 - [ ] 每条 `V###` 有 `merge_decision`。
 - [ ] 每条 `V###` 有 `frame_references`。
+- [ ] 每条提示词有资产声明区。
+- [ ] 抽象词已转译为可见动作、光影、声音或空间关系。
+- [ ] 每个视频段只使用一种主运镜方式。
 - [ ] 不输出英文 Prompt。
