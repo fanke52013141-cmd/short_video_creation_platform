@@ -11,5 +11,5 @@
 | Scene Assets | 核心场景空间关系明确 | P1 |
 | Prop Assets | 关键道具锚点稳定；普通道具不强行独立生成 | P1 |
 | Storyboard Prompts | 每个 shot 都有分镜生图提示词，且资产引用来自映射 | P0 |
-| Video Prompts | `video_prompts.md/json` 齐全，中文-only，无默认 `@PROP` | P0 |
+| Video Prompts | `video_prompts.md/json` 齐全，中文-only，无默认 `@PROP`；强连续动作优先合并；每条 `V###` 必须有 `merge_decision` | P0 |
 | Final Handoff | 只交付 story、video prompts、角色资产、场景资产和分镜图 | P0 |
