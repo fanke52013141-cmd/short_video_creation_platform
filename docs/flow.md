@@ -58,23 +58,25 @@
   - `RUN/outputs/storyboard.json`
 - Schema: `schemas/storyboard.schema.json`
 - Shot fields:
-  - `shot_id`: `S001`、`S002`...
-  - `scene_id`: 关联场景
+  - `shot_id`: 镜头编号，`S001`、`S002`...
+  - `scene_id`: 场景 / 时空单元编号，`SC001`、`SC002`...，由导演创建，可被多个 shot 复用
   - `duration_seconds`: 建议时长，必须 `>0` 且 `<=15`
   - `framing`: 景别
   - `camera_move`: 运镜
   - `action_desc`: 具象动作描述
-  - `characters_in_shot`: 出现角色名，使用特征名，不使用 `CharA`
-  - `location`: 场景名
-- Boundary: 导演负责具体构图与镜头调度，但不得输出资产草表、资产 ID、提示词、音色或外部交接内容。
+- Boundary:
+  - 导演负责具体构图、景别、机位、镜头调度和分镜结构化。
+  - 导演不得输出人物、场景、道具、资产拆分字段。
+  - 导演不得输出 `characters_in_shot`、`location`、资产 ID、图片提示词、视频提示词、音色或外部交接内容。
 - Quality Gate: 分镜阶段内部完成相邻逻辑检查；不再存在独立 `storyboard_sequence_review` 节点。
 
-## 4. Storyboard To Asset Manifest And Shot Map
+## 4. Storyboard To Seedance Asset Manifest And Shot Map
 
 - Skill: `asset_executor`
 - Input:
   - `RUN/outputs/story.md`
   - `RUN/outputs/storyboard.json`
+  - 可选：用户参考图 / 视频 / 文字素材
 - Output:
   - `RUN/outputs/asset_manifest.json`
   - `RUN/outputs/shot_asset_map.json`
@@ -82,9 +84,13 @@
   - `schemas/asset_manifest.schema.json`
   - `schemas/shot_asset_map.schema.json`
 - Responsibilities:
-  1. 遍历故事和分镜，提取所有需要生产或描述的角色、场景、道具资产。
-  2. 为每个资产定义“特征 + 状态”命名。
-  3. 建立每个 shot 对应哪些资产的映射关系。
+  1. 遍历故事和分镜，提取需要稳定控制的人物、场景和核心剧情道具。
+  2. 为人物选择 `主体1/主体2` 或稳定具象名，例如 `林小满`、`警察`。
+  3. 为同一人物绑定多张参考图，但不因表情、动作、姿态拆分新人物资产。
+  4. 为场景选择 `场景1/场景2` 或具象场景名，例如 `雨夜客厅场景`。
+  5. 不因普通光线、时间、天气变化拆分新场景资产。
+  6. 道具只保留核心剧情道具；普通道具默认沿用参考素材或正文控制。
+  7. 建立每个 shot 对应哪些稳定资产名的映射关系。
 
 ## 5. Asset Prompt Generation
 
@@ -95,18 +101,23 @@
 - Skill: `character_prompt_generator`
 - Input:
   - `RUN/outputs/story.md`
-  - 从 `asset_manifest.json` 切出的单个角色及其全部状态
+  - `RUN/outputs/style_bible.md`
+  - 从 `asset_manifest.json` 切出的单个人物主体
 - Output:
-  - `RUN/outputs/assets/characters/{角色资产名}.md`
+  - 人脸大头特写提示词
+  - 全身妆造提示词
+- Boundary: 不为表情、动作、姿态拆新人物资产。
 
 ### 5-B Scene Prompts
 
 - Skill: `scene_prompt_generator`
 - Input:
   - `RUN/outputs/story.md`
+  - `RUN/outputs/style_bible.md`
   - 从 `asset_manifest.json` 切出的单个场景
 - Output:
   - `RUN/outputs/assets/scenes/{场景资产名}.md`
+- Boundary: 不为普通光影、时段、天气变化拆新场景资产。
 
 ### 5-C Prop Prompts
 
@@ -115,7 +126,8 @@
   - `RUN/outputs/story.md`
   - 从 `asset_manifest.json` 切出的单个道具
 - Output:
-  - `RUN/outputs/assets/props/{道具资产名}.md`
+  - 只有 `generation_required=true` 且 `handling_policy=generate_independent_prop` 时，输出 `RUN/outputs/assets/props/{道具资产名}.md`
+- Boundary: 普通道具不强行生成独立图片，后续写入视频提示词正文。
 
 用户随后在即梦生成资产图片，并回填到对应资产目录。
 
@@ -152,17 +164,19 @@
   - `video_extend`: 向前或向后延长已有视频对象。
   - `combined_task`: 参考一个素材，同时编辑或延长另一个素材。
   - `track_stitch`: 多段视频轨道衔接。
-- Merge rule: 相邻 shot 只有同时满足以下三项才允许合并为一个 `V###`：
-  1. 同一 `scene_id`。
-  2. 合并后时长之和 `<=15s`。
-  3. 动作描述连续，无场景切换、无时间跳跃。
+- Merge rule:
+  - 合并对象是连续 `S###`，不是 `SC###`。
+  - `scene_id` 只是合并边界。
+  - 强连续动作在同场景且总时长 `<=15s` 时优先合并。
+  - 景别变化不是禁止合并的理由。
+  - 跨场景、超 15 秒或动作不连续时必须拆分。
+  - 每条 `V###` 必须在 `video_prompts.json` 中写入 `merge_decision`。
 - Anchor rule:
   - 同一场景内连续多镜头，每个视频提示词必须引入 `参考@上一分镜_站位，保持人物空间关系、朝向和相对位置不变`。
   - 场景切换时不引入上一分镜，避免错误约束。
 - Asset declaration rule:
   - 每条 `V###` 必须包含 `【自检通过项】`、`【资产声明区】`、`【中文视频提示词】`。
   - 所有素材先声明再引用。
-  - 图片、音频、视频素材必须标注角色：首帧、尾帧、关键帧、人物资产、场景资产、风格参考、声音参考、配乐参考、环境音参考、动作参考、整体参考、编辑对象或延长对象。
 - Operation object rule:
   - 编辑对象正文必须写 `严格编辑 @资产名`，禁止写 `参考@资产名`。
   - 延长对象正文必须写 `向前延长 @资产名` 或 `向后延长 @资产名`，禁止写 `参考@资产名`。
