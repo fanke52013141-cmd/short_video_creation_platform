@@ -1,42 +1,55 @@
-# AI Short Film Pipeline
+# 短视频创作平台
 
-这是一个将现有优化提示词 scale 化为 CodeX/Skill 工作流的项目骨架。它不是传统视频生成代码仓库，而是一套“人 + AI + 外部生成平台”的短片生产控制台。
+这是一套面向即梦画布生产的短视频创作流程仓库。仓库不直接生成最终视频，也不管理外部生成后的成片审查；它负责把用户想法转化为剧本、风格约束、分镜序列、资产清单、资产/分镜生图提示词和最终视频提示词。
 
-## 设计原则
+## 核心原则
 
-- 原始提示词保存在 `skills/raw_prompts/`，作为不可随意改写的源文件。
-- `skills/*.md` 做接口化包装：定义输入、输出、质量门槛、checkpoint 更新和上下游契约。
-- 每个阶段必须产出文件，后续阶段只读取文件产物，不依赖对话记忆。
-- 核心 JSON 产物必须符合 `schemas/` 中的机器契约。
-- 故事、视觉风格、分镜、资产、图片、音色、视频提示词之间通过稳定资产 ID 串联。
-- 图片生成有两种模式：`internal_codex` 由 CodeX 直接生成；`external_manual` 由用户在外部网页端生成。
-- 视频生成和剪辑默认在外部网页端 / 剪映完成，仓库只输出逐镜头中文视频提示词、参考素材声明、结果记录和交接材料。
-- 视频提示词统一只输出中文，避免中英双语导致提示词体量膨胀。
-- 人物主要状态资产必须按三视图生产，不能只用单张人物肖像。
-- 有台词、旁白、录音留言的人声镜头必须绑定音色参考。
-- 视频提示词必须逐 shot 循环生成单文件，再汇总成总文件。
-- 分镜生成后必须做相邻镜头逻辑审查，检查 1-shot、2-shot、3-shot 窗口中的空间、道具、人物、声音和因果连续性。
-- 外部生成结果必须回填 manifest，并经过 `generated_media_review` 审查后才能最终交付。
+- 最小必要输入：下游只读取当前阶段真正需要的文件。
+- 职责单一：导演只做分镜，资产执行官只做资产提取和映射，视频提示词生成器只做可复制到即梦的提示词。
+- 流程精简：流程终点是进入即梦画布生产，不在仓库内追加音色、外部结果、媒体审查和最终打包节点。
+- 交付清晰：最终交付给即梦画布的内容只包含剧本、视频提示词、有效角色资产、有效场景资产和分镜参考图。
 
 ## 推荐试跑顺序
 
 1. 执行 `scripts/init_local_run.ps1 -ProjectSlug your-project-slug` 初始化本地创作目录。
 2. 填写 `local_runs/YYYY-MM-DD/your-project-slug/inputs/idea_brief.md`。
-3. 运行 `skills/story_generation.md`。
-4. 人工确认故事后运行 `skills/art_direction.md`。
-5. 人工确认视觉方向后运行 `skills/storyboard_director.md`。
-6. 运行 `skills/storyboard_sequence_review.md`；P0/P1 问题先修正或由用户明确接受 P1 风险。
-7. 运行 `skills/asset_manifest_builder.md` 统一资产 ID。
-8. 分别运行角色、场景、道具提示词 Skill。
-9. 运行 `skills/image_generation_executor.md` 或按外部模式填写 `image_result_manifest.json`。
-10. 建立音色参考清单；有台词的角色必须提供或标记音色参考。
-11. 运行 `skills/shot_video_prompt_generator.md`，逐 shot 循环生成中文视频提示词，再汇总。
-12. 运行 `skills/external_generation_handoff.md` 整理外部视频生成和剪辑交接包。
-13. 将视频提示词复制到即梦 / Seedance 等外部视频工具生成素材。
-14. 将外部生成结果填入 `outputs/06_external_results/shot_result_manifest.json`。
-15. 运行 `skills/generated_media_review.md` 审查外部生成结果。
-16. 运行 `skills/continuity_review.md` 做最终一致性审查。
-17. 运行 `skills/production_package_builder.md` 汇总最终生产包。
+3. 运行 `skills/story_generation.md`，产出 `outputs/story.md` 和精简 `outputs/story.json`。
+4. 人工确认剧本后运行 `skills/art_direction.md`，产出一页以内的 `outputs/style_bible.md`。
+5. 运行 `skills/storyboard_director.md`，产出 `outputs/storyboard.json`。
+6. 运行 `skills/asset_executor.md`，产出 `outputs/asset_manifest.json` 和 `outputs/shot_asset_map.json`。
+7. 并行运行 `skills/character_prompt_generator.md`、`skills/scene_prompt_generator.md`、`skills/prop_prompt_generator.md`。
+8. 去即梦生成资产图片，并回填到 `outputs/assets/characters/`、`outputs/assets/scenes/`、`outputs/assets/props/`。
+9. 运行 `skills/storyboard_prompt_generator.md`，产出 `outputs/storyboard_prompts.md`。
+10. 去即梦生成分镜参考图，并回填到 `outputs/storyboards/S001.png`、`S002.png` 等。
+11. 运行 `skills/video_prompt_generator.md`，产出 `outputs/video_prompts.md`。
+12. 将 `story.md`、`video_prompts.md`、`assets/characters/`、`assets/scenes/`、`storyboards/` 交给即梦画布生产。
+
+## 输出目录
+
+```text
+outputs/
+├── story.md
+├── story.json
+├── style_bible.md
+├── storyboard.json
+├── asset_manifest.json
+├── shot_asset_map.json
+├── storyboard_prompts.md
+├── video_prompts.md
+├── assets/
+│   ├── characters/
+│   ├── scenes/
+│   └── props/
+└── storyboards/
+```
+
+## 命名规范
+
+- 角色：`{外貌特征}_{情绪状态}_{角度}`，例如 `少女_默然_正面`。
+- 场景：`{地点名}_{时间/光线}_{氛围}`，例如 `破旧公寓_深夜_冷白灯光`。
+- 道具：`{物品名}_{视角/状态}`，例如 `旧皮箱_正面`。
+- 分镜：`S{三位数序号}`，例如 `S001`。
+- 视频提示词：`V{三位数序号}`，例如 `V001`，可合并多个连续分镜。
 
 ## 校验
 
@@ -52,11 +65,10 @@ python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase in
 python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase all
 ```
 
-可选阶段：`initialized`、`story`、`art`、`storyboard`、`assets`、`audio`、`video_prompts`、`external`、`media_review`、`final`、`all`。
+可选阶段：`initialized`、`story`、`art`、`storyboard`、`assets`、`asset_prompt_generation`、`storyboard_prompt_generation`、`video_prompts`、`all`。
 
 ## 仓库边界
 
 - 仓库保存流程、Skill、配置模板、schema、检查规则和文档。
-- 每天真实创作和外部生成结果放入本地 `local_runs/YYYY-MM-DD/project_slug/`。
-- 本地创作产物、参考素材、生成图片 / 视频、日志和 `checkpoint.json` 不提交仓库。
-- 详细规则见 `docs/repository_policy.md`、`docs/iteration_protocol.md`、`docs/phase_state_machine.md` 和 `docs/schema_contracts.md`。
+- 真实创作产物、参考素材、生成图片、日志和 `checkpoint.json` 放入本地 `local_runs/YYYY-MM-DD/project_slug/`，不提交仓库。
+- 道具资产不作为最终即梦画布交付目录单独交付；它们应写入 `video_prompts.md` 正文描述。
