@@ -59,16 +59,14 @@
 
 `storyboard.json` 的每个 shot 必须只包含导演分镜所需字段：
 
-- `shot_id`: `S001`、`S002`...
-- `scene_id`
+- `shot_id`: 镜头编号，`S001`、`S002`...
+- `scene_id`: 场景 / 时空单元编号，`SC001`、`SC002`...，由导演创建，可被多个 shot 复用
 - `duration_seconds`，必须 `>0` 且 `<=15`
 - `framing`
 - `camera_move`
 - `action_desc`
-- `characters_in_shot`
-- `location`
 
-导演分镜不得包含资产草表、资产 ID、音色 ID、图片提示词或视频提示词。出现 `CHAR_001`、`ENV_001`、`PROP_001` 等旧式抽象资产 ID 时，视为不合格。
+导演分镜不得包含资产草表、资产 ID、音色 ID、图片提示词或视频提示词。`characters_in_shot`、`location`、`character_ids`、`prop_ids`、`prompt_cn` 等字段都不属于导演阶段。
 
 ## asset_manifest.json 契约
 
@@ -120,6 +118,7 @@
 
 - 剧本阶段先保证剧本质量，不承担结构化抽取。
 - 艺术方向阶段先保证用户确认的视觉边界，不承担具体构图。
+- 导演阶段只做镜头结构化和场景分组，不做资产拆分。
 - JSON 只在导演、资产执行、视频计划等明确需要机器校验的阶段出现。
 - 新增影响下游读取的字段时，应同步更新 schema、Skill 文档和 `scripts/validate_project.py`。
 - 旧项目不满足当前契约时，应重新初始化或标记为 legacy，不要伪装通过。
