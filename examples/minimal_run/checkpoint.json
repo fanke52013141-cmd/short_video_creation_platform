@@ -34,6 +34,9 @@
     "story_generation_markdown_only": true,
     "style_bible_no_composition_section": true,
     "director_owns_composition": true,
+    "seedance_stable_asset_naming": true,
+    "character_state_split_forbidden": true,
+    "scene_light_time_split_forbidden": true,
     "video_prompt_merge_decision_required": true
   },
   "status": "ready_for_jimeng_canvas"
