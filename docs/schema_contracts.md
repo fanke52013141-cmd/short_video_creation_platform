@@ -12,7 +12,7 @@
 | `outputs/video_prompts.json` | `schemas/video_prompt.schema.json` |
 | 多参素材约束 | `schemas/reference_media.schema.json` |
 
-`outputs/story.md` 和 `outputs/style_bible.md` 不对应 JSON schema。前者是剧本创作产物，后者是一页以内的视觉约束文件。
+`outputs/story.md` 和 `outputs/style_bible.md` 不对应 JSON schema。前者是剧本创作产物，后者是一页以内的视觉方向文件。
 
 ## story.md 契约
 
@@ -31,6 +31,29 @@
 - 视频提示词
 
 镜头结构化由 `storyboard_director` 输出 `storyboard.json`；人物、场景、道具和资产结构化由 `asset_executor` 输出 `asset_manifest.json` 与 `shot_asset_map.json`。
+
+## style_bible.md 契约
+
+`art_direction` 只输出用户确认后的 `outputs/style_bible.md`。如果用户没有明确视觉方向，艺术总监应先给候选方案让用户选择，不直接定稿。
+
+最终 `style_bible.md` 只包含：
+
+- `画面风格`
+- `整体色调`
+- `光线风格`
+- `AI 视觉执行要求`
+
+禁止在艺术方向阶段输出：
+
+- `art_direction.json`
+- 独立 `构图倾向` 字段
+- 独立 `禁止出现的视觉元素` 字段
+- 逐镜头构图
+- 景别表
+- 机位设计
+- 分镜
+
+具体构图、景别、机位和镜头调度由 `storyboard_director` 负责。
 
 ## storyboard.json 契约
 
@@ -96,6 +119,7 @@
 ## 原则
 
 - 剧本阶段先保证剧本质量，不承担结构化抽取。
+- 艺术方向阶段先保证用户确认的视觉边界，不承担具体构图。
 - JSON 只在导演、资产执行、视频计划等明确需要机器校验的阶段出现。
 - 新增影响下游读取的字段时，应同步更新 schema、Skill 文档和 `scripts/validate_project.py`。
 - 旧项目不满足当前契约时，应重新初始化或标记为 legacy，不要伪装通过。
