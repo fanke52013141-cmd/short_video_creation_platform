@@ -24,7 +24,7 @@ skill_versions:
   prop_prompt_generator: "2.0.0"
   image_generation_executor: "1.0.0"
   storyboard_prompt_generator: "1.0.0"
-  video_prompt_generator: "2.2.0"
+  video_prompt_generator: "2.3.0"
 
 phase_order:
   - story_generation
@@ -139,6 +139,21 @@ video_prompt_policy:
     - "video_extend"
     - "combined_task"
     - "track_stitch"
+  merge_policy:
+    merge_object: "continuous_shots_not_scene"
+    scene_id_is_boundary_only: true
+    hard_requirements:
+      - "shot_id_contiguous"
+      - "same_scene_id"
+      - "duration_sum_lte_15s"
+      - "no_scene_time_or_story_space_jump"
+    priority_rules:
+      - "merge_strong_action_continuity_first"
+      - "allow_merge_across_framing_change_if_action_continues"
+      - "force_split_when_scene_or_time_changes"
+      - "force_split_when_duration_exceeds_15s"
+      - "force_split_when_action_discontinuity_makes_prompt_ambiguous"
+    required_json_field: "merge_decision"
   material_roles:
     images:
       - "first_frame"
@@ -163,10 +178,6 @@ video_prompt_policy:
     - "自检通过项"
     - "资产声明区"
     - "中文视频提示词"
-  merge_conditions:
-    same_scene_id: true
-    duration_sum_lte_15s: true
-    action_continuity_required: true
   previous_storyboard_anchor: "参考@上一分镜_站位，保持人物空间关系、朝向和相对位置不变"
   previous_storyboard_anchor_scope: "same_scene_continuity_only"
   edit_object_phrase: "严格编辑 @资产名"
