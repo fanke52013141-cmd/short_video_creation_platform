@@ -44,7 +44,10 @@
   "quality_gates": {
     "story_generation_markdown_only": true,
     "style_bible_one_page": true,
+    "style_bible_no_composition_section": true,
+    "art_direction_user_choice_when_open_style": true,
     "storyboard_shot_duration_lte_15s": true,
+    "director_owns_composition": true,
     "director_does_not_define_assets": true,
     "asset_executor_is_single_asset_source": true,
     "video_prompt_merge_rule_required": true,
