@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Reference Media",
+  "type": "object",
+  "required": ["reference_media"],
+  "properties": {
+    "reference_media": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/reference_asset" }
+    }
+  },
+  "$defs": {
+    "reference_asset": {
+      "type": "object",
+      "required": ["asset_name", "media_type", "role", "usage_type"],
+      "properties": {
+        "asset_name": { "type": "string" },
+        "media_type": {
+          "type": "string",
+          "enum": ["image", "audio", "video", "text"]
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "first_frame",
+            "last_frame",
+            "keyframe",
+            "character_asset",
+            "scene_asset",
+            "style_reference",
+            "voice_reference",
+            "music_reference",
+            "ambience_reference",
+            "action_reference",
+            "style_video_reference",
+            "overall_reference",
+            "edit_object",
+            "extend_object",
+            "text_intent"
+          ]
+        },
+        "usage_type": {
+          "type": "string",
+          "enum": ["reference", "operation_object", "text_only"]
+        },
+        "locked_dimensions": {
+          "type": ["array", "null"],
+          "items": { "type": "string" }
+        },
+        "source_path": { "type": ["string", "null"] },
+        "notes": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
