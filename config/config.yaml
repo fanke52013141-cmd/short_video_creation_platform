@@ -21,13 +21,13 @@ skill_versions:
   story_generation: "3.0.0"
   art_direction: "2.1.0"
   storyboard_director: "2.2.0"
-  asset_executor: "1.3.0"
-  character_prompt_generator: "2.3.0"
+  asset_executor: "1.4.0"
+  character_prompt_generator: "2.4.0"
   scene_prompt_generator: "2.3.0"
   prop_prompt_generator: "2.3.0"
-  image_generation_executor: "1.1.0"
-  storyboard_prompt_generator: "1.0.0"
-  video_prompt_generator: "2.3.0"
+  image_generation_executor: "1.2.0"
+  storyboard_prompt_generator: "1.1.0"
+  video_prompt_generator: "2.4.0"
 
 phase_order:
   - story_generation
@@ -68,6 +68,7 @@ prompt_sources:
   character_prompt_generator: "./skills/raw_prompts/character_prompt_generator.source.md"
   scene_prompt_generator: "./skills/raw_prompts/scene_prompt_generator.source.md"
   prop_prompt_generator: "./skills/raw_prompts/prop_prompt_generator.source.md"
+  storyboard_prompt_generator: "./skills/raw_prompts/storyboard_prompt_generator.source.md"
   video_prompt_generator: "./skills/raw_prompts/seedance_video_prompt.source.md"
 
 schemas:
@@ -79,9 +80,11 @@ schemas:
 
 naming_policy:
   character:
-    preferred: "custom_concrete_name_when_available"
-    fallback: "主体1/主体2/主体3"
-    forbid_state_split: true
+    model: "stable_name_plus_state"
+    pattern: "人物稳定名_状态"
+    examples:
+      - "林小满_雨夜接电话状态"
+      - "警察_追捕状态"
     forbid_asset_ids_as_names: true
   scene:
     preferred: "concrete_scene_name"
@@ -104,10 +107,6 @@ story_generation_policy:
   forbidden_outputs:
     - "outputs/story.json"
     - "outputs/story_index.json"
-  structure_later:
-    storyboard: "storyboard_director"
-    assets: "asset_executor"
-    video_plan: "video_prompt_generator"
 
 storyboard_policy:
   max_shot_duration_seconds: 15
@@ -144,7 +143,7 @@ style_bible_policy:
     - "禁止出现的视觉元素"
 
 asset_policy:
-  naming_model: "seedance_subject_scene_binding"
+  naming_model: "asset_name_with_state_when_needed"
   prompt_input_model: "story_style_asset_output_path"
   prompt_generator_required_inputs:
     - "story_md"
@@ -156,25 +155,15 @@ asset_policy:
     - "task_id"
     - "asset_payload"
     - "asset_prompt_tasks_json"
+    - "prompt_outputs_array"
   character:
-    allowed_naming:
-      - "numbered_subject"
-      - "custom_concrete_name"
-    required_identity_bundle:
+    output_model: "single_21x9_character_state_asset_image"
+    asset_name_pattern: "人物稳定名_状态"
+    do_not_default_split_into:
       - "face_closeup"
       - "full_body_styling"
-    do_not_split_for:
-      - "emotion"
-      - "expression"
-      - "gesture"
-      - "pose"
-      - "action"
-      - "camera_angle"
-    wardrobe_change_keeps_same_name: true
   scene:
-    allowed_naming:
-      - "simple_scene_number"
-      - "concrete_scene_name"
+    output_model: "single_scene_reference_image"
     do_not_split_for:
       - "light_change"
       - "time_of_day_change"
@@ -192,43 +181,69 @@ asset_policy:
       - "complex_shape"
       - "state_change_needs_tracking"
     default_handling: "text_prompt_control"
-    inherited_reference_props_do_not_describe: true
-    remove_extra_prop_by_direct_instruction_only: true
 
 image_generation_policy:
-  one_task_one_image: true
-  forbid_collage: true
-  forbid_contact_sheet: true
-  forbid_character_sheet: true
+  one_task_one_image_file: true
+  character_asset_image:
+    aspect_ratio: "21:9"
+    allowed_views_in_single_image:
+      - "closeup"
+      - "front_view"
+      - "side_view"
+      - "back_view"
+  scene_asset_image: "single_scene_reference_image"
+  prop_asset_image: "single_prop_reference_image_when_required"
   allowed_generation_modes:
     - "jimeng_web_manual"
     - "chatgpt_web"
     - "codex_direct"
     - "external_manual"
   required_task_fields:
-    - "task_id"
-    - "parent_asset_name"
     - "asset_type"
-    - "reference_role"
+    - "asset_name"
     - "prompt_path"
     - "generation_mode"
-    - "output_path"
-    - "output_count"
-    - "no_collage"
-  output_count: 1
+    - "output_image_path"
+
+storyboard_prompt_policy:
+  process_model: "one_shot_at_a_time"
+  required_inputs:
+    - "storyboard_json"
+    - "style_bible"
+    - "shot_asset_map"
+    - "asset_image_root"
+    - "storyboard_image_root"
+    - "shot_id"
+    - "output_prompt_path"
+  optional_inputs:
+    - "story_md"
+  previous_storyboard_reference:
+    allowed_only_when:
+      - "previous_shot_contiguous"
+      - "same_scene_id"
+      - "placement_relationship_continues"
+    reference_purpose: "placement_anchor"
+    inherit_only:
+      - "relative_position"
+      - "facing_direction"
+      - "spatial_scale"
+      - "scene_continuity"
+  frame_roles:
+    - "first_frame"
+    - "last_frame"
+    - "keyframe"
 
 video_prompt_policy:
   output_language: "zh"
   markdown_output_required: true
   json_output_required: true
   max_video_prompt_duration_seconds: 15
-  supported_task_types:
-    - "pipeline_shot_generation"
-    - "multimodal_reference"
-    - "video_edit"
-    - "video_extend"
-    - "combined_task"
-    - "track_stitch"
+  minimal_required_inputs:
+    - "storyboard_json"
+    - "storyboard_prompts_md"
+    - "storyboard_reference_dir"
+    - "shot_asset_map"
+    - "asset_reference_dir"
   merge_policy:
     merge_object: "continuous_shots_not_scene"
     scene_id_is_boundary_only: true
@@ -244,37 +259,16 @@ video_prompt_policy:
       - "force_split_when_duration_exceeds_15s"
       - "force_split_when_action_discontinuity_makes_prompt_ambiguous"
     required_json_field: "merge_decision"
-  material_roles:
-    images:
-      - "first_frame"
-      - "last_frame"
-      - "keyframe"
-      - "character_asset"
-      - "scene_asset"
-      - "style_reference"
-    audio:
-      - "voice_reference"
-      - "music_reference"
-      - "ambience_reference"
-    videos:
-      reference_roles:
-        - "action_reference"
-        - "style_video_reference"
-        - "overall_reference"
-      operation_roles:
-        - "edit_object"
-        - "extend_object"
+  frame_role_resolution:
+    merged_video_first_source_shot: "first_frame"
+    merged_video_last_source_shot: "last_frame"
+    merged_video_middle_source_shots: "keyframe"
+    single_shot_default: "first_frame"
   required_sections:
     - "自检通过项"
     - "资产声明区"
     - "中文视频提示词"
   previous_storyboard_anchor: "参考@上一分镜_站位，保持人物空间关系、朝向和相对位置不变"
-  previous_storyboard_anchor_scope: "same_scene_continuity_only"
-  edit_object_phrase: "严格编辑 @资产名"
-  extend_object_phrases:
-    - "向前延长 @资产名"
-    - "向后延长 @资产名"
-  forbid_reference_prefix_for_operation_objects: true
   prop_policy: "describe_in_prompt_body_not_at_ref"
   high_intensity_action_requires_risk_notice: true
   no_text_logo_watermark_constraint_required: true
