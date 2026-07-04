@@ -34,11 +34,13 @@
     "story_generation_markdown_only": true,
     "style_bible_no_composition_section": true,
     "director_owns_composition": true,
-    "seedance_stable_asset_naming": true,
-    "character_state_split_forbidden": true,
+    "character_asset_name_includes_state": true,
     "scene_light_time_split_forbidden": true,
     "asset_prompt_generation_simple_input": true,
-    "video_prompt_merge_decision_required": true
+    "storyboard_prompt_frame_role_required": true,
+    "storyboard_prompt_previous_anchor_decision_required": true,
+    "video_prompt_merge_decision_required": true,
+    "video_prompt_frame_references_required": true
   },
   "status": "ready_for_jimeng_canvas"
 }
