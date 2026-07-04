@@ -26,6 +26,17 @@ PHASE_ALIASES = {
     "video": "video_prompts",
 }
 REQUIRED_STYLE_HEADINGS = ["画面风格", "整体色调", "光线风格", "AI 视觉执行要求"]
+FORBIDDEN_STORYBOARD_FIELDS = {
+    "characters_in_shot",
+    "location",
+    "character_ids",
+    "prop_ids",
+    "asset_ids",
+    "prompt_cn",
+    "frame_strategy",
+    "boundary_reason",
+    "continuity_risk",
+}
 REQUIRED_VIDEO_PROMPT_SECTIONS = ["【自检通过项】", "【资产声明区】", "【中文视频提示词】"]
 HIGH_INTENSITY_TERMS = re.compile(r"奔跑|跳跃|翻滚|剧烈打斗|打斗|快速追逐|追逐|摔倒|撞击|飞跃|爆炸")
 OPERATION_TASK_TYPES = {"video_edit", "video_extend", "combined_task"}
@@ -235,13 +246,19 @@ def validate_storyboard(run_dir: Path) -> dict[str, Any]:
         expected = f"S{index:03d}"
         if shot.get("shot_id") != expected:
             fail(f"shot sequence must be contiguous: expected {expected}, got {shot.get('shot_id')}")
+        scene_id = shot.get("scene_id")
+        if not isinstance(scene_id, str) or not re.fullmatch(r"SC[0-9]{3}", scene_id):
+            fail(f"{expected} scene_id must match SC###")
         duration = shot.get("duration_seconds")
         if not isinstance(duration, (int, float)) or isinstance(duration, bool):
             fail(f"{expected} duration_seconds must be numeric")
         if duration <= 0 or duration > MAX_SHOT_DURATION_SECONDS:
             fail(f"{expected} duration_seconds must be > 0 and <= {MAX_SHOT_DURATION_SECONDS}")
+        forbidden = sorted(FORBIDDEN_STORYBOARD_FIELDS.intersection(shot.keys()))
+        if forbidden:
+            fail(f"{expected} contains fields reserved for later stages: {', '.join(forbidden)}")
         if re.search(r"CHAR_|ENV_|PROP_|AUDIO_", json.dumps(shot, ensure_ascii=False)):
-            fail(f"{expected} contains legacy abstract asset IDs; use feature/state names only")
+            fail(f"{expected} contains legacy abstract asset IDs; use scene_id and natural action description only")
     ok(f"storyboard shots: {len(shots)}")
     return storyboard
 
