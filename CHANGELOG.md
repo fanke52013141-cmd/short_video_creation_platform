@@ -7,6 +7,7 @@
 - [process] 明确艺术总监先于导演出现，但只负责视觉方向；具体构图、景别、机位和镜头调度归 `storyboard_director`。
 - [skill] 将 `story_generation` 升级到 3.0.0，明确禁止在剧本阶段拆分镜头、角色状态、场景资产、道具资产或生成提示词。
 - [skill] 将 `art_direction` 升级到 2.1.0：用户有风格/参考图时优先继承并补全；用户没有明确视觉方向时先给候选方案，不直接定稿。
+- [skill] 将 `storyboard_director` 升级到 2.1.0：明确导演负责具体构图、景别、机位、镜头调度和分镜结构化。
 - [prompt] 更新 `skills/raw_prompts/story_generation.source.md`，删除机器可读故事输出要求，让模型专注剧本优化。
 - [prompt] 更新 `skills/raw_prompts/art_direction.source.md`，删除 `art_direction.json`、构图硬字段和独立“禁止出现的视觉元素”字段要求。
 - [script] `validate_project.py` 的 `story` 阶段只校验 `story.md`，并将存在 `story.json` 视为不合格。
