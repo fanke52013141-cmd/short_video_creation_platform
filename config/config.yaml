@@ -1,6 +1,6 @@
 project:
   name: "short_video_creation_platform"
-  version: "1.0.0"
+  version: "1.0.1"
   description: "将用户想法转化为即梦画布生产前置交付包的 Skill 工作流"
 
 runtime:
@@ -24,7 +24,7 @@ skill_versions:
   prop_prompt_generator: "2.0.0"
   image_generation_executor: "1.0.0"
   storyboard_prompt_generator: "1.0.0"
-  video_prompt_generator: "2.0.0"
+  video_prompt_generator: "2.1.0"
 
 phase_order:
   - story_generation
@@ -110,15 +110,54 @@ style_bible_policy:
 video_prompt_policy:
   output_language: "zh"
   max_video_prompt_duration_seconds: 15
+  supported_task_types:
+    - "pipeline_shot_generation"
+    - "multimodal_reference"
+    - "video_edit"
+    - "video_extend"
+    - "combined_task"
+    - "track_stitch"
+  material_roles:
+    images:
+      - "first_frame"
+      - "last_frame"
+      - "keyframe"
+      - "character_asset"
+      - "scene_asset"
+      - "style_reference"
+    audio:
+      - "voice_reference"
+      - "music_reference"
+      - "ambience_reference"
+    videos:
+      reference_roles:
+        - "action_reference"
+        - "style_video_reference"
+        - "overall_reference"
+      operation_roles:
+        - "edit_object"
+        - "extend_object"
+  required_sections:
+    - "自检通过项"
+    - "资产声明区"
+    - "中文视频提示词"
   merge_conditions:
     same_scene_id: true
     duration_sum_lte_15s: true
     action_continuity_required: true
   previous_storyboard_anchor: "参考@上一分镜_站位，保持人物空间关系、朝向和相对位置不变"
   previous_storyboard_anchor_scope: "same_scene_continuity_only"
+  edit_object_phrase: "严格编辑 @资产名"
+  extend_object_phrases:
+    - "向前延长 @资产名"
+    - "向后延长 @资产名"
+  forbid_reference_prefix_for_operation_objects: true
   prop_policy: "describe_in_prompt_body_not_at_ref"
+  high_intensity_action_requires_risk_notice: true
+  no_text_logo_watermark_constraint_required: true
   forbidden_blocks:
     - "English Prompt"
+    - "中英对照"
     - "@PROP"
 
 external_services:
