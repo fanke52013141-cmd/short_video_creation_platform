@@ -18,6 +18,7 @@ local_runs/YYYY-MM-DD/project_slug/notes.md
 - Idea brief:
 - References:
 - Constraints:
+- User visual style / references:
 
 ## Generation Modes
 
@@ -30,8 +31,8 @@ local_runs/YYYY-MM-DD/project_slug/notes.md
 | Phase | Status | Artifact | Notes |
 | -- | -- | -- | -- |
 | story_generation | pending | `outputs/story.md` | 只做剧本，不输出 JSON |
-| art_direction | pending | `outputs/style_bible.md` | 一页以内 |
-| storyboard_director | pending | `outputs/storyboard.json` | 只做分镜结构化 |
+| art_direction | pending | `outputs/style_bible.md` | 用户有风格则继承；无风格则先给候选方案；不做具体构图 |
+| storyboard_director | pending | `outputs/storyboard.json` | 负责具体构图、景别、镜头和分镜结构化 |
 | asset_executor | pending | `outputs/asset_manifest.json`, `outputs/shot_asset_map.json` | 资产唯一来源 |
 | asset_prompt_generation | pending | `outputs/assets/**.md` | 三路并行 |
 | storyboard_prompt_generator | pending | `outputs/storyboard_prompts.md` | 生成分镜参考图提示词 |
