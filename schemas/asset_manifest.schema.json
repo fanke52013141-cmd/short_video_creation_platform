@@ -20,7 +20,7 @@
           "asset_type": { "type": "string", "enum": ["character", "scene", "prop"] },
           "naming_strategy": {
             "type": ["string", "null"],
-            "enum": ["numbered_subject", "custom_concrete_name", "simple_scene_number", "concrete_scene_name", "key_prop_name", null]
+            "enum": ["numbered_subject", "custom_concrete_name", "character_state_name", "simple_scene_number", "concrete_scene_name", "key_prop_name", null]
           },
           "seedance_label": { "type": ["string", "null"] },
           "definition_sentence": { "type": ["string", "null"] },
@@ -43,41 +43,9 @@
           "visual_anchors": { "type": ["array", "string", "null"], "items": { "type": "string" } },
           "appears_in_shots": { "type": "array", "items": { "type": "string" } },
           "generation_required": { "type": ["boolean", "string"] },
-          "required_reference_set": {
-            "type": ["array", "null"],
-            "items": {
-              "type": "string",
-              "enum": ["face_closeup", "full_body_styling", "scene_reference", "backup_lighting_reference", "independent_prop_reference"]
-            }
-          },
-          "prompt_outputs": {
-            "type": ["array", "null"],
-            "items": { "type": "string" }
-          },
-          "prompt_scope": {
-            "type": ["string", "null"],
-            "enum": [
-              "single_character_identity_bundle",
-              "single_scene_reference",
-              "single_prop_reference",
-              "text_control_only",
-              "inherited_from_reference",
-              null
-            ]
-          },
-          "handling_policy": {
-            "type": ["string", "null"],
-            "enum": [
-              "bind_existing_reference",
-              "generate_identity_bundle",
-              "generate_scene_reference",
-              "text_prompt_control",
-              "inherit_from_reference",
-              "remove_by_instruction",
-              "generate_independent_prop",
-              null
-            ]
-          },
+          "output_prompt_path": { "type": ["string", "null"] },
+          "prompt_scope": { "type": ["string", "null"] },
+          "handling_policy": { "type": ["string", "null"] },
           "notes": { "type": ["string", "null"] }
         }
       }
