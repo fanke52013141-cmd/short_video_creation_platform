@@ -14,20 +14,15 @@
           "duration_seconds",
           "framing",
           "camera_move",
-          "action_desc",
-          "characters_in_shot",
-          "location"
+          "action_desc"
         ],
         "properties": {
           "shot_id": { "type": "string", "pattern": "^S[0-9]{3}$" },
-          "scene_id": { "type": "string" },
-          "duration_seconds": { "type": ["integer", "number"] },
+          "scene_id": { "type": "string", "pattern": "^SC[0-9]{3}$" },
+          "duration_seconds": { "type": ["integer", "number"], "minimum": 0, "maximum": 15 },
           "framing": { "type": "string" },
           "camera_move": { "type": "string" },
-          "action_desc": { "type": "string" },
-          "characters_in_shot": { "type": "array", "items": { "type": "string" } },
-          "location": { "type": "string" },
-          "quality_gate": { "type": ["object", "null"] }
+          "action_desc": { "type": "string" }
         }
       }
     }
