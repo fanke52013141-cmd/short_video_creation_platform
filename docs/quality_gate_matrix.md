@@ -6,10 +6,10 @@
 | Story | 剧本可读、人物动机清楚、适合 2-5 分钟；不得输出 `story.json` | P0 |
 | Art Direction | 用户视觉方向优先；无明确方向时先给候选方案；最终 `style_bible.md` 只含画面风格、整体色调、光线风格、AI 视觉执行要求 | P1 |
 | Storyboard | 每个 shot 有时长、动作、具体构图/景别/镜头；不得定义资产 | P0 |
-| Asset Manifest | 稳定 Seedance 命名；人物不按状态拆；场景不按普通光影拆；道具只保留核心剧情道具；映射资产全部存在 | P0 |
-| Character Assets | 单个人物绑定面部参考 + 全身妆造；同一人物跨素材命名一致 | P1 / final P0 |
-| Scene Assets | 核心空间结构明确；普通时间、光线、天气变化不拆新场景 | P1 |
-| Prop Assets | 只为剧情关键、反复出现、需要特写、复杂或状态变化道具独立生成；普通道具正文控制或沿用参考素材 | P1 |
+| Asset Manifest | 稳定 Seedance 命名；人物不按状态拆；场景不按普通光影拆；道具只保留核心剧情道具；映射资产全部存在；产出最小 `asset_prompt_tasks.json` | P0 |
+| Character Assets | 每次只消费一个 character `asset_prompt_task`；不得读取完整剧本或完整资产清单；同一人物跨素材命名一致 | P1 / final P0 |
+| Scene Assets | 每次只消费一个 scene `asset_prompt_task`；核心空间结构明确；普通时间、光线、天气变化不拆新场景 | P1 |
+| Prop Assets | 每次只消费一个 prop `asset_prompt_task`；只为剧情关键、反复出现、需要特写、复杂或状态变化道具独立生成；普通道具正文控制或沿用参考素材 | P1 |
 | Asset Image Generation | 可用即梦、ChatGPT、Codex 或外部工具；每个 asset_image_task 只生成一张图；禁止拼接图、四宫格、设定表和对比图 | P0 |
 | Storyboard Prompts | 每个 shot 都有分镜生图提示词，且资产引用来自映射 | P0 |
 | Video Prompts | `video_prompts.md/json` 齐全，中文-only，无默认 `@PROP`；强连续动作优先合并；每条 `V###` 必须有 `merge_decision` | P0 |
