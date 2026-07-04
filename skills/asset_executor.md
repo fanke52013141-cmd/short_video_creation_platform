@@ -1,12 +1,12 @@
 # Skill: asset_executor
-**Version**: 1.1.0
+**Version**: 1.2.0
 
 ## Purpose
 从 `story.md` 和 `storyboard.json` 中提取后续 Seedance 生产真正需要稳定控制的主体、场景和关键道具，并建立分镜到资产的映射。
 
-本 Skill 是资产清单和分镜资产映射的唯一来源。它不写图片提示词，不生成图片，不决定视频合并。
+本 Skill 是资产清单、分镜资产映射和资产提示词任务包的唯一来源。它不写最终图片提示词，不生成图片，不决定视频合并。
 
-核心目标不是把所有画面元素拆成资产，而是建立 Seedance 友好的稳定命名和素材绑定关系。
+核心目标不是把所有画面元素拆成资产，而是建立 Seedance 友好的稳定命名、素材绑定关系，以及下游提示词生成器所需的最小任务输入。
 
 ## Inputs
 ```json
@@ -17,11 +17,14 @@
 }
 ```
 
+`story.md` 和 `storyboard.json` 只在本阶段使用。进入 `asset_prompt_generation` 后，不再把完整剧本或完整分镜继续下传。
+
 ## Outputs
 ```json
 {
   "asset_manifest_path": "./outputs/asset_manifest.json",
-  "shot_asset_map_path": "./outputs/shot_asset_map.json"
+  "shot_asset_map_path": "./outputs/shot_asset_map.json",
+  "asset_prompt_tasks_path": "./outputs/asset_prompt_tasks.json"
 }
 ```
 
@@ -160,21 +163,10 @@
       "naming_strategy": "custom_concrete_name",
       "seedance_label": "林小满",
       "definition_sentence": "将图片1中黑色中长发、深色针织衫的年轻女性定义为林小满。",
-      "reference_bindings": [
-        {
-          "source_id": "图片1",
-          "source_type": "image",
-          "role": "face_closeup",
-          "notes": "锁定面部 ID"
-        },
-        {
-          "source_id": "图片2",
-          "source_type": "image",
-          "role": "full_body_styling",
-          "notes": "锁定体型、服装、整体造型"
-        }
-      ],
+      "reference_bindings": [],
       "visual_anchors": ["黑色中长发", "深色针织衫"],
+      "generation_brief": "年轻女性林小满，黑色中长发，深色针织衫，气质克制安静。",
+      "usage_context": "家庭情绪短片主角，后续常出现接电话、停顿、抿唇等克制动作。",
       "appears_in_shots": ["S001", "S002"],
       "generation_required": true,
       "required_reference_set": ["face_closeup", "full_body_styling"],
@@ -187,6 +179,51 @@
   "props": []
 }
 ```
+
+`generation_brief` 和 `usage_context` 是给下游资产提示词任务使用的浓缩上下文。它们由本阶段从 `story.md` 与 `storyboard.json` 中提炼，避免下游继续读取完整剧本。
+
+## asset_prompt_tasks.json Contract
+
+`asset_prompt_tasks.json` 是 `asset_prompt_generation` 的最小输入来源。每个 task 只对应一个资产提示词输出。
+
+```json
+{
+  "tasks": [
+    {
+      "task_id": "PROMPT_CHARACTER_林小满_FACE",
+      "parent_asset_name": "林小满",
+      "asset_type": "character",
+      "prompt_role": "face_closeup",
+      "style_bible_path": "./outputs/style_bible.md",
+      "asset_payload": {
+        "seedance_label": "林小满",
+        "definition_sentence": "将生成的人脸大头特写图和全身妆造图统一定义为林小满。",
+        "visual_anchors": ["黑色中长发", "深色针织衫"],
+        "generation_brief": "年轻女性林小满，黑色中长发，深色针织衫，气质克制安静。",
+        "usage_context": "家庭情绪短片主角。"
+      },
+      "reference_bindings": [],
+      "output_prompt_path": "./outputs/assets/characters/林小满_人脸大头特写.md"
+    }
+  ]
+}
+```
+
+### 最小输入原则
+
+`asset_prompt_generation` 不应读取：
+
+- 完整 `story.md`
+- 完整 `storyboard.json`
+- 完整 `shot_asset_map.json`
+- 完整 `asset_manifest.json`
+
+它只读取：
+
+- 当前 `asset_prompt_task`
+- `style_bible.md`
+- 当前 task 里携带的 `asset_payload`
+- 当前 task 里列出的 `reference_bindings`
 
 ## shot_asset_map.json Contract
 
@@ -214,13 +251,15 @@
 5. 为场景选择命名策略：简单项目可用 `场景1`；剧情项目优先用具象场景名。
 6. 合并同一空间结构的光线、时间、天气变化，不因普通光影变化新建场景资产。
 7. 只保留核心剧情道具；普通背景小物件不进资产清单。
-8. 判断 `generation_required` 和 `handling_policy`：
+8. 为每个资产提炼 `generation_brief` 和 `usage_context`，把下游需要的上下文浓缩到资产对象中。
+9. 判断 `generation_required` 和 `handling_policy`：
    - 人物：已有足够参考素材时绑定现有素材；缺素材时生成身份资产组。
    - 场景：已有场景参考图时绑定；缺素材时生成场景参考图。
    - 道具：默认正文控制，只有关键复杂道具才独立生成。
-9. 写入 `asset_manifest.json`。
-10. 为每个 shot 写入 `shot_asset_map.json`。
-11. 校验所有映射资产都存在于资产清单。
+10. 写入 `asset_manifest.json`。
+11. 为每个 shot 写入 `shot_asset_map.json`。
+12. 根据 `required_reference_set` 和 `handling_policy` 展开 `asset_prompt_tasks.json`。
+13. 校验所有映射资产都存在于资产清单，且每个需要生成提示词的资产都有对应 task。
 
 ## Quality Gate
 
@@ -233,8 +272,10 @@
 - [ ] 只有空间结构或地点变化才新建场景资产。
 - [ ] 道具只保留核心剧情道具。
 - [ ] 普通背景道具没有强行生成独立资产图。
+- [ ] 每个资产都有足够下游使用的 `generation_brief` 或 `visual_anchors`。
 - [ ] 每个 shot 都存在映射记录。
 - [ ] `shot_asset_map.json` 中的所有资产都存在于 `asset_manifest.json`。
+- [ ] `asset_prompt_tasks.json` 不要求下游读取完整 `story.md`、`storyboard.json` 或完整 `asset_manifest.json`。
 
 ## Checkpoint Update
 通过质量门后更新：
@@ -242,6 +283,7 @@
 - `completed_phases`: 追加 `asset_executor`
 - `artifacts.asset_manifest`: `./outputs/asset_manifest.json`
 - `artifacts.shot_asset_map`: `./outputs/shot_asset_map.json`
+- `artifacts.asset_prompt_tasks`: `./outputs/asset_prompt_tasks.json`
 - `next_phase.skill`: `asset_prompt_generation`
 
 ## Failure Handling
@@ -251,3 +293,4 @@
 - 场景因光线/时间变化被拆成多个资产：合并为同一个场景资产，光影交给提示词控制。
 - 普通道具被强行独立生成：改为 `text_control_only` 或从资产清单移除。
 - 某 shot 缺少映射：补写该 shot 的主体、场景、关键道具关系。
+- 某资产缺少下游提示词生成所需上下文：补充 `generation_brief`、`usage_context` 或 `visual_anchors`。
