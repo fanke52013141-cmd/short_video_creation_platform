@@ -130,8 +130,16 @@
   - `RUN/outputs/storyboards/`
   - `RUN/outputs/shot_asset_map.json`
   - `RUN/outputs/assets/`
+  - 可选 `reference_media`：用户额外提供的图片、音频、视频素材及其角色
 - Output:
   - `RUN/outputs/video_prompts.md`
+- Supported task types:
+  - `pipeline_shot_generation`: 默认分镜流水线生成。
+  - `multimodal_reference`: 多图片 / 音频 / 视频参考生成新视频。
+  - `video_edit`: 严格编辑已有视频对象。
+  - `video_extend`: 向前或向后延长已有视频对象。
+  - `combined_task`: 参考一个素材，同时编辑或延长另一个素材。
+  - `track_stitch`: 多段视频轨道衔接。
 - Merge rule: 相邻 shot 只有同时满足以下三项才允许合并为一个 `V###`：
   1. 同一 `scene_id`。
   2. 合并后时长之和 `<=15s`。
@@ -139,7 +147,15 @@
 - Anchor rule:
   - 同一场景内连续多镜头，每个视频提示词必须引入 `参考@上一分镜_站位，保持人物空间关系、朝向和相对位置不变`。
   - 场景切换时不引入上一分镜，避免错误约束。
+- Asset declaration rule:
+  - 每条 `V###` 必须包含 `【自检通过项】`、`【资产声明区】`、`【中文视频提示词】`。
+  - 所有素材先声明再引用。
+  - 图片、音频、视频素材必须标注角色：首帧、尾帧、关键帧、人物资产、场景资产、风格参考、声音参考、配乐参考、环境音参考、动作参考、整体参考、编辑对象或延长对象。
+- Operation object rule:
+  - 编辑对象正文必须写 `严格编辑 @资产名`，禁止写 `参考@资产名`。
+  - 延长对象正文必须写 `向前延长 @资产名` 或 `向后延长 @资产名`，禁止写 `参考@资产名`。
 - Prop rule: 道具资产不使用 `@PROP`，只写入视频提示词正文描述。
+- Risk rule: 若包含奔跑、跳跃、翻滚、剧烈打斗、快速追逐等高强度动作，必须在 `V###` 最前面输出 `【生成风险提示】`。
 
 ## Final Jimeng Canvas Handoff
 
