@@ -2,7 +2,7 @@
 
 路径约定：仓库根目录保存流程资产；真实创作在 `local_runs/YYYY-MM-DD/project_slug/` 中执行。下文的 `RUN` 代表这个 active run 目录。
 
-执行边界：本仓库负责剧本、风格圣经、导演分镜、资产清单、资产提示词、分镜生图提示词和最终视频提示词。图片与视频生成在即梦网页端人工执行；流程终点是进入即梦画布生产。
+执行边界：本仓库负责剧本、风格圣经、导演分镜、资产清单、资产提示词、分镜生图提示词和最终视频提示词。图片与视频生成可在即梦网页端、ChatGPT 网页端、Codex 或其他外部图像工具中执行；流程终点是进入即梦画布生产。
 
 ## 0. Initialize Local Run
 
@@ -129,7 +129,24 @@
   - 只有 `generation_required=true` 且 `handling_policy=generate_independent_prop` 时，输出 `RUN/outputs/assets/props/{道具资产名}.md`
 - Boundary: 普通道具不强行生成独立图片，后续写入视频提示词正文。
 
-用户随后在即梦生成资产图片，并回填到对应资产目录。
+## 5.5 Asset Image Generation
+
+- Skill: `image_generation_executor`
+- Input:
+  - `RUN/outputs/asset_manifest.json`
+  - `RUN/outputs/style_bible.md`
+  - `RUN/outputs/assets/**/*.md` 中的单资产提示词
+  - `generation_mode`: `jimeng_web_manual | chatgpt_web | codex_direct | external_manual`
+- Output:
+  - `RUN/outputs/image_generation_queue.json`
+  - `RUN/outputs/image_generation_queue.md`
+  - 生成后的单张资产图片，保存到 `RUN/outputs/assets/**`
+- Contract:
+  - 一个 `asset_image_task` 只生成一张图片。
+  - 禁止拼接图、四宫格、对比图、角色设定表、scene sheet、contact sheet。
+  - 人物的人脸大头特写和全身妆造是两个独立任务，不合成一张图。
+  - 场景参考图是单张空间参考图。
+  - 道具只有 `generation_required=true` 且 `handling_policy=generate_independent_prop` 时才生成独立图。
 
 ## 6. Storyboard Image Prompt Generation
 
@@ -143,7 +160,7 @@
   - `RUN/outputs/storyboard_prompts.md`
 - Responsibility: 把导演分镜的叙事语言转化为 AI 生图语言。导演分镜不是生图提示词，不得直接复制为图片提示词。
 
-用户随后在即梦生成分镜参考图，并回填到 `RUN/outputs/storyboards/S001.png`、`S002.png` 等。
+用户随后生成分镜参考图，并回填到 `RUN/outputs/storyboards/S001.png`、`S002.png` 等。
 
 ## 7. Video Prompt Generation
 
@@ -183,14 +200,14 @@
 - Prop rule: 道具资产不使用 `@PROP`，只写入视频提示词正文描述。
 - Risk rule: 若包含奔跑、跳跃、翻滚、剧烈打斗、快速追逐等高强度动作，必须在 `V###` 最前面输出 `【生成风险提示】`。
 
-## Final Jimeng Canvas Handoff
+## Final Canvas Handoff
 
 只交付以下内容：
 
 | 交付物 | 内容 | 说明 |
 |---|---|---|
-| `outputs/story.md` | 完整剧本 | 供导演在即梦画布理解叙事 |
-| `outputs/video_prompts.md` | 完整视频提示词 | 逐条复制到即梦使用 |
+| `outputs/story.md` | 完整剧本 | 供画布理解叙事 |
+| `outputs/video_prompts.md` | 完整视频提示词 | 逐条复制使用 |
 | `outputs/video_prompts.json` | 结构化视频计划 | 用于校验和后续自动化 |
 | `outputs/assets/characters/` | 全部有效角色资产 | 废弃/被替换的图片不包含 |
 | `outputs/assets/scenes/` | 全部有效场景资产 | 废弃/被替换的图片不包含 |
