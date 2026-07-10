@@ -40,8 +40,6 @@ outputs/
 ├── storyboard.json
 ├── asset_manifest.json
 ├── shot_asset_map.json
-├── image_generation_queue.json
-├── image_generation_queue.md
 ├── storyboard_prompts.md
 ├── video_prompts.md
 ├── video_prompts.json
@@ -66,6 +64,7 @@ outputs/
 
 ```bash
 python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase all
+python scripts/validate_seedance_video_prompts.py local_runs/YYYY-MM-DD/project_slug
 ```
 
 ## 仓库边界
