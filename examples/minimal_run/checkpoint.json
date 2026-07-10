@@ -1,6 +1,13 @@
 {
+  "project": {
+    "name": "short_video_creation_platform",
+    "slug": "minimal-run",
+    "title": "Minimal Run Example",
+    "created_at": "2026-07-04T00:00:00Z",
+    "run_dir": "./examples/minimal_run"
+  },
   "schema_version": "2.1",
-  "project_slug": "minimal_run",
+  "last_updated": "2026-07-04T00:00:00Z",
   "current_phase": "video_prompt_generator",
   "completed_phases": [
     "story_generation",
@@ -20,27 +27,49 @@
     "storyboard_prompt_generator",
     "video_prompt_generator"
   ],
+  "total_phases": 7,
   "artifacts": {
+    "idea_brief": "./inputs/idea_brief.md",
     "story_md": "./outputs/story.md",
     "style_bible": "./outputs/style_bible.md",
     "storyboard_json": "./outputs/storyboard.json",
     "asset_manifest": "./outputs/asset_manifest.json",
     "shot_asset_map": "./outputs/shot_asset_map.json",
+    "asset_dirs": {
+      "characters": "./outputs/assets/characters",
+      "scenes": "./outputs/assets/scenes",
+      "props": "./outputs/assets/props"
+    },
     "storyboard_prompts": "./outputs/storyboard_prompts.md",
+    "storyboards": "./outputs/storyboards",
     "video_prompts": "./outputs/video_prompts.md",
     "video_prompts_json": "./outputs/video_prompts.json"
   },
+  "generation_modes": {
+    "image_generation": "external_manual",
+    "video_generation": "jimeng_canvas_manual"
+  },
   "quality_gates": {
     "story_generation_markdown_only": true,
+    "style_bible_one_page": true,
     "style_bible_no_composition_section": true,
+    "storyboard_shot_duration_lte_15s": true,
     "director_owns_composition": true,
+    "director_does_not_define_assets": true,
+    "asset_executor_is_single_asset_source": true,
     "character_asset_name_includes_state": true,
     "scene_light_time_split_forbidden": true,
     "asset_prompt_generation_simple_input": true,
+    "key_props_only": true,
     "storyboard_prompt_frame_role_required": true,
     "storyboard_prompt_previous_anchor_decision_required": true,
     "video_prompt_merge_decision_required": true,
-    "video_prompt_frame_references_required": true
+    "video_prompt_frame_references_required": true,
+    "video_prompt_duration_matches_source_shots": true
+  },
+  "next_phase": {
+    "skill": "jimeng_canvas_manual",
+    "input_from": "./outputs/video_prompts.md"
   },
   "status": "ready_for_jimeng_canvas"
 }
