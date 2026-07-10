@@ -18,8 +18,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Compile validator
-        run: python -m py_compile scripts/validate_project.py
+      - name: Compile validators
+        run: |
+          python -m py_compile scripts/validate_project.py
+          python -m py_compile scripts/validate_seedance_video_prompts.py
 
       - name: Parse JSON contracts
         run: |
@@ -33,3 +35,6 @@ jobs:
 
       - name: Validate minimal example run
         run: python scripts/validate_project.py examples/minimal_run --phase all
+
+      - name: Validate minimal video prompts
+        run: python scripts/validate_seedance_video_prompts.py examples/minimal_run
