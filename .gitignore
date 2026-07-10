@@ -9,7 +9,9 @@ runs/
 
 # Generated production outputs
 outputs/*
+outputs/**/*
 !outputs/README.md
+!outputs/**/
 !outputs/**/.gitkeep
 
 # Legacy generated production output folders
