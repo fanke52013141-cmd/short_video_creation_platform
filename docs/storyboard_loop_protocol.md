@@ -1,138 +1,136 @@
-# Storyboard Loop Protocol
+# Storyboard Director Protocol
 
-分镜必须逐 shot 循环生成，不能只一次性生成总文件。
-
-## 输出结构
+本协议覆盖当前主流程的 `storyboard_director`。旧的 `outputs/03_storyboard/planning/`、`outputs/03_storyboard/shots/`、`SHOT_XXX_STORYBOARD.md` 和 `draft_asset_sheet.json` 结构已废弃；当前主流程只要求导演阶段输出：
 
 ```text
-outputs/03_storyboard/
-├── planning/
-│   ├── story_beats.json
-│   ├── shot_queue.json
-│   ├── SHOT_001_PLAN.md
-│   ├── SHOT_002_PLAN.md
-│   └── ...
-├── shots/
-│   ├── SHOT_001_STORYBOARD.md
-│   ├── SHOT_002_STORYBOARD.md
-│   └── ...
-├── storyboard.md
-├── storyboard.json
-└── draft_asset_sheet.json
+outputs/storyboard.json
 ```
 
-用户最终主要查看 `storyboard.md`，但生成过程必须留下 `planning/` 和 `shots/` 中的单 shot 文件，用于证明每条镜头已经独立构思、独立生成、独立自检、可单独返修。
+分镜参考图提示词由后续 `storyboard_prompt_generator` 负责，资产拆分由后续 `asset_executor` 负责。
 
-## 循环流程
+## 输入
 
-对 `shot_queue.json` 中每个 shot 依次执行：
-
-1. 读取当前 shot 绑定的 story beat。
-2. 读取当前 shot 涉及的人物、场景、道具、情绪节点和视觉风格圣经。
-3. 明确本 shot 的叙事功能、信息目标、情绪目标和观众心理距离。
-4. 选择景别，并写明：
-   - 推荐景别
-   - 景别选择理由
-   - 可替代景别
-   - 为什么不用替代景别
-5. 选择帧策略，并写明选择理由。
-6. 选择运镜，并写明运动路径和选择理由。
-7. 生成单 shot 分镜文件：`outputs/03_storyboard/shots/SHOT_XXX_STORYBOARD.md`。
-8. 对当前 shot 自检。
-9. 不合格则只重写当前 shot，不重写已通过 shot。
-10. 全部 shot 通过后，再按顺序汇总为 `storyboard.md` 和 `storyboard.json`。
-
-## Shot Planning 单文件结构
-
-每个 `SHOT_XXX_PLAN.md` 必须包含：
-
-```text
-# SHOT_XXX Plan
-
-- 绑定 story beat：
-- 本镜头观众需要获得的信息：
-- 本镜头观众应该产生的情绪：
-- 角色心理距离：疏离 / 观察 / 贴近 / 压迫
-- 推荐景别：
-- 景别选择理由：
-- 可替代景别：
-- 为什么不用替代景别：
-- 推荐帧策略：
-- 帧策略选择理由：
-- 推荐运镜：
-- 运镜路径：
-- 运镜选择理由：
-- 与前一镜头的节奏关系：
-- 与后一镜头的节奏关系：
+```json
+{
+  "story_markdown_path": "./outputs/story.md",
+  "style_bible_path": "./outputs/style_bible.md",
+  "max_shot_duration_seconds": 15
+}
 ```
 
-## Storyboard 单文件结构
+## 输出
 
-每个 `SHOT_XXX_STORYBOARD.md` 必须包含：
+`outputs/storyboard.json` 的每个 shot 只包含：
+
+```json
+{
+  "shot_id": "S001",
+  "scene_id": "SC001",
+  "duration_seconds": 5,
+  "framing": "中景",
+  "camera_move": "固定镜头",
+  "action_desc": "林小满坐在沙发边缘，手机屏幕在茶几上亮起。"
+}
+```
+
+## 字段规则
+
+### shot_id
+
+- 格式：`S###`。
+- 从 `S001` 开始。
+- 全片唯一。
+- 必须按顺序连续。
+
+### scene_id
+
+- 格式：`SC###`。
+- 表示连续场景 / 时空单元。
+- 同一连续场景内多个 shot 可以共用同一个 `scene_id`。
+- 场景、地点、时间或叙事空间发生切换时，创建新的 `scene_id`。
+
+### duration_seconds
+
+- 必须大于 0。
+- 必须小于或等于 15。
+- 后续 `video_prompt_generator` 会用它判断 `S### → V###` 合并总时长。
+
+### action_desc
+
+- 必须写可见、可拍、可执行的动作和画面变化。
+- 不要只写抽象情绪，例如“她很难过”。
+- 应落地为微表情、肢体动作、视线、空间距离、光影、声音或物体状态。
+
+## 明确禁止输出的字段
+
+`storyboard.json` 不得包含：
+
+- `characters_in_shot`
+- `location`
+- `character_ids`
+- `prop_ids`
+- `asset_ids`
+- `prompt_cn`
+- `frame_strategy`
+- `continuity_risk`
+- `boundary_reason`
+- `shot_function`
+- `montage_relation`
+- 任何资产清单或提示词字段
+
+这些内容分别交给后续阶段：
+
+- 人物、场景、道具和资产映射：`asset_executor`。
+- 分镜参考图提示词：`storyboard_prompt_generator`。
+- 视频提示词合并和引用：`video_prompt_generator`。
+
+## 导演方法
+
+导演阶段可以内部使用以下方法分析，但不要把这些分析字段写入 `storyboard.json`：
 
 ```text
-# SHOT_XXX Storyboard
+剧本 → 戏剧节拍 → 观看问题 → 视点策略 → 镜头功能 → 镜头参数 → 蒙太奇关系
+```
 
-## 基础信息
-- 时长：
-- 景别：
-- 引用资产：
-- 叙事功能：
-- 信息目标：
-- 情绪目标：
+每个镜头必须回答：观众此刻看见什么。  
+每个剪接必须回答：观众因此想到什么。
 
-## 镜头设计依据
-- 景别选择理由：
-- 帧策略选择理由：
-- 运镜选择理由：
+## 镜头边界
 
-## 帧策略
-- 类型：
-- 锚定帧描述：
+合法镜头边界包括：
 
-## 运镜
-- 摄影机运动：
-- 运动描述：
+- 景别变化。
+- 机位变化。
+- 视角变化。
+- 焦点变化。
+- 主体变化。
+- 空间变化。
+- 时间变化。
+- 反应镜头。
+- 插入镜头。
+- 信息揭示镜头。
+- 蒙太奇关系变化。
 
-## 转场与蒙太奇
-- 入场转场：
-- 蒙太奇类型：
-- 镜头间逻辑：
+不允许新建 shot 的情况：
 
-## 画面提示词
-中文 Prompt：
-
-## 音效/情绪提示
-- 环境音：
-- 情绪标注：
+- 同一机位、同一景别、同一空间、同一运动路径中，一个动作连续发生，只是因为时长长而被拆成两段。
+- 前后 shot 画面几乎相同，只是动作从“开始”变成“继续”。
+- 镜头边界没有新的叙事信息、观看角度、情绪层级、空间信息或蒙太奇意义。
 
 ## 自检
-- [ ] 绑定 story beat。
-- [ ] 有明确叙事功能。
-- [ ] 有信息目标和情绪目标。
-- [ ] 有景别选择理由。
-- [ ] 有帧策略选择理由。
-- [ ] 有运镜选择理由。
-- [ ] 引用资产 ID 稳定。
-- [ ] 与前后镜头存在节奏关系。
+
+分镜阶段完成后必须通过：
+
+```bash
+python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase storyboard
 ```
 
-## 自检规则
+检查重点：
 
-每个单 shot 文件必须检查：
-
-- 是否绑定 story beat。
-- 是否有明确叙事功能。
-- 是否有信息目标和情绪目标。
-- 是否有景别选择理由，而不是只填写景别名称。
-- 是否有帧策略选择理由。
-- 是否有运镜选择理由。
-- 是否引用已登记或将进入草表的资产 ID。
-- 是否与前后镜头存在节奏关系。
-- 是否继承 `style_bible.md`，没有重新发明全片风格。
-
-## 汇总规则
-
-- `storyboard.md` 必须由 `shots/SHOT_XXX_STORYBOARD.md` 按顺序汇总。
-- `storyboard.json` 必须与单 shot 文件字段一致。
-- `draft_asset_sheet.json` 只能从已通过的单 shot 文件中提取，不得凭空补资产。
+- `storyboard.json` 存在且是对象。
+- `shots` 非空。
+- `shot_id` 从 `S001` 连续递增。
+- `scene_id` 符合 `SC###`。
+- 每个 shot 时长大于 0 且不超过 15 秒。
+- 没有后置阶段字段。
+- 每个 `action_desc` 是具象可见画面，而不是裸抽象情绪。
