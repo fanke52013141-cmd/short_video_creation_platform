@@ -1,6 +1,6 @@
 project:
   name: "short_video_creation_platform"
-  version: "1.0.3"
+  version: "1.0.4"
   description: "短视频生产前置流程：剧本、风格、分镜、资产、分镜图和视频提示词"
 
 runtime:
@@ -133,6 +133,7 @@ video_prompt_policy:
     - "shot_id_contiguous"
     - "same_scene_id"
     - "duration_sum_lte_15s"
+    - "duration_seconds_equals_source_shot_sum"
     - "no_scene_time_or_story_space_jump"
   required_json_fields:
     - "merge_decision"
