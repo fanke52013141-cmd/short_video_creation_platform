@@ -1,84 +1,110 @@
 # Consistency Checklist
 
-## 能力守恒
-- [ ] Agent.md 中每个关键动作都有对应 Skill。
-- [ ] 每个 Skill 都在 Agent.md 的流程中被调用。
-- [ ] 原始提示词源文件已保存在 `skills/raw_prompts/`。
-- [ ] `config/config.yaml` 中的 Skill 版本与各 Skill 文件头一致。
-- [ ] 核心 JSON 产物在 `schemas/` 中有对应契约。
+本清单只覆盖当前 7 阶段扁平主流程：
 
-## 数据连续
-- [ ] `story_generation` 输出能被 `art_direction` 读取。
-- [ ] `art_direction` 输出能锁定 `storyboard_director` 的风格边界。
-- [ ] `storyboard_sequence_review` 在 `storyboard_director` 之后、`asset_manifest_builder` 之前执行。
-- [ ] `storyboard_director` 输出的资产 ID 能被 `asset_manifest_builder` 解析。
-- [ ] `asset_manifest.json` 中的所有资产都能生成资产提示词。
-- [ ] `asset_prompt_generation` 只有在角色、场景、道具所需提示词完成后才标记完成。
-- [ ] `image_generation_executor` 在音色和视频提示词阶段之前执行或明确记录为外部模式。
-- [ ] `shot_video_prompt_generator` 不引用不存在的资产 ID。
-- [ ] `shot_video_prompt_generator` 之后进入 `external_generation_handoff`，不直接跳到最终连续性审查。
-- [ ] `external_generation_handoff` 之后进入 `generated_media_review`。
-- [ ] `checkpoint.generation_modes.image_generation` 已明确为 `external_manual` 或 `internal_codex`，不是 `ask_user`。
-- [ ] `checkpoint.completed_phases` 与 `checkpoint.phase_order` 顺序一致。
+```text
+story_generation
+→ art_direction
+→ storyboard_director
+→ asset_executor
+→ asset_prompt_generation
+→ storyboard_prompt_generator
+→ video_prompt_generator
+```
 
-## 资产一致
-- [ ] 角色 ID 使用 `CHAR_001` 格式。
-- [ ] 场景 ID 使用 `ENV_001` 格式。
-- [ ] 道具 ID 使用 `PROP_001` 格式。
-- [ ] 状态变体按 A/B/C 标记。
-- [ ] 母题资产在叙事骨架、资产表、分镜中一致。
-- [ ] 人物不同年龄、服装、状态拆成独立资产图，不放进同一张最终资产图。
-- [ ] 主要人物每个状态变体具备三视图：正视图、侧视图、后视图。
-- [ ] 文字类道具仍有图片提示词或图片资产，不被跳过。
-- [ ] 图片结果记录在 `image_result_manifest.json`，没有模板中的伪资产占位。
+## 流程一致
 
-## 视频提示词一致
-- [ ] 每个 shot 都有建议时长。
-- [ ] 每个 shot 都有独立 `outputs/05_video_prompts/shots/SHOT_XXX.md`。
-- [ ] 总文件 `shot_video_prompts.md` 由单 shot 文件汇总。
-- [ ] 每个 shot 都声明对应 `@SHOT_XXX_STORYBOARD`。
-- [ ] `@SHOT_XXX_STORYBOARD` 被标注为首帧参考、尾帧参考或关键帧参考。
-- [ ] 视频提示词默认必须 `@` 分镜图和主要人物。
-- [ ] 有台词、旁白、录音留言或可听见人声的 shot 必须 `@AUDIO`。
-- [ ] 没有人声的 shot 不应 `@AUDIO`。
-- [ ] `@ENV` 只在镜头运动需要扩展分镜图外空间时出现，并有引用决策说明。
-- [ ] 视频提示词中默认没有 `@PROP`。
-- [ ] 视频提示词只输出中文，不包含 `【English Prompt】`。
-- [ ] 道具在正文中有清晰画面描述。
+- [ ] `README.md`、`config/config.yaml`、`checkpoint.template.json`、`docs/flow.md` 的阶段顺序一致。
+- [ ] `scripts/validate_project.py` 的 `PIPELINE` 与 `checkpoint.template.json.phase_order` 一致。
+- [ ] 当前主流程不要求 `outputs/01_story/` 到 `outputs/07_final_delivery/` 这类旧分层目录。
+- [ ] 当前主流程不要求 `SHOT_001`、`CHAR_001`、`ENV_001`、`PROP_001` 这类旧 ID 作为主名称。
+- [ ] 当前主流程不要求 `asset_manifest_builder`、`shot_video_prompt_generator` 或 `production_package_builder` 作为必经阶段。
 
-## 分镜序列连续
-- [ ] `outputs/03_storyboard/storyboard_sequence_review.md` 存在。
-- [ ] `outputs/03_storyboard/storyboard_sequence_review.json` 存在。
-- [ ] 每个 shot 都完成单镜头自洽检查。
-- [ ] 每组相邻 2-shot 窗口都完成检查。
-- [ ] 每组相邻 3-shot 窗口都完成检查。
-- [ ] 没有 P0 空间穿帮，例如道具凭空出现在上一个镜头未建立的位置。
-- [ ] 没有未处理 P1；P1 已修复或有用户明确接受记录。
-- [ ] 没有 P0 道具状态矛盾，例如已拿起的道具又无交代回到原位。
-- [ ] 没有 P0 人物状态断裂，例如年龄、服装、伤痕或位置无交代跳变。
-- [ ] 电话、门铃、电视、录像、旁白、台词等声音来源清楚，并标记给音色阶段。
-- [ ] 空椅子、警号、警帽等母题只在正确位置和正确状态出现。
+## 剧本阶段
 
-## 风格一致
-- [ ] 分镜没有覆盖 `style_bible.md` 的核心风格。
-- [ ] 角色、场景、道具提示词都引用视觉风格圣经。
-- [ ] 视频提示词继承分镜与资产，不重新发明风格。
+- [ ] `story_generation` 只输出 `outputs/story.md`。
+- [ ] 不输出 `story.json` 或 `story_index.json`。
+- [ ] 不在剧本阶段拆镜头、拆资产或写图片/视频提示词。
 
-## 外部生成结果
-- [ ] `image_result_manifest.json` 记录每个已生成图片资产的版本、状态和问题。
-- [ ] `shot_result_manifest.json` 记录每个已生成 shot 的 take、文件/链接、状态和最佳版本。
-- [ ] `generated_media_review.md` 与 `.json` 存在，或明确记录外部生成尚未执行。
-- [ ] 被选为最佳 take 的镜头没有未处理 P0。
-- [ ] 角色变脸、服装漂移、道具丢失、空间穿帮、音色错误已记录并给出返修建议。
+## 艺术方向阶段
 
-## 交付完整
-- [ ] `outputs/01_story/` 有故事产物。
-- [ ] `outputs/02_art_direction/` 有视觉风格产物。
-- [ ] `outputs/03_storyboard/` 有分镜产物。
-- [ ] `outputs/04_assets/` 有资产注册表和资产提示词。
-- [ ] `outputs/04_assets/audio/` 有音色参考清单或缺失说明。
-- [ ] `outputs/05_video_prompts/` 有逐镜头视频提示词。
-- [ ] `outputs/06_external_results/` 有图片/视频结果 manifest 和生成媒体审查。
-- [ ] `production_status.csv` 存在，用于记录外部生成或内部生成状态。
-- [ ] `outputs/07_final_delivery/` 有最终清单和审查报告。
-- [ ] 最终状态为 `completed` 时，`known_gaps` 和 `blocking_issues` 均为空。
+- [ ] `art_direction` 只输出 `outputs/style_bible.md`。
+- [ ] `style_bible.md` 包含 `画面风格`、`整体色调`、`光线风格`、`AI 视觉执行要求`。
+- [ ] `style_bible.md` 不包含硬字段 `## 构图倾向` 或 `## 禁止出现的视觉元素`。
+- [ ] 不输出 `art_direction.json` 作为主产物。
+
+## 分镜阶段
+
+- [ ] `storyboard_director` 输出 `outputs/storyboard.json`。
+- [ ] 每个 shot 的 `shot_id` 使用 `S###`，从 `S001` 连续递增。
+- [ ] 每个 shot 的 `scene_id` 使用 `SC###`。
+- [ ] 每个 shot 的 `duration_seconds` 大于 0 且不超过 15。
+- [ ] 每个 shot 只包含当前阶段字段：`shot_id`、`scene_id`、`duration_seconds`、`framing`、`camera_move`、`action_desc`。
+- [ ] `storyboard.json` 不包含 `characters_in_shot`、`location`、`character_ids`、`prop_ids`、`asset_ids` 或 `prompt_cn`。
+
+## 资产阶段
+
+- [ ] `asset_executor` 输出 `outputs/asset_manifest.json` 和 `outputs/shot_asset_map.json`。
+- [ ] 人物资产名使用 `人物稳定名_状态`。
+- [ ] 场景资产名使用稳定具象场景名，不因普通光线、时间、天气变化拆分。
+- [ ] 道具只保留核心剧情道具；普通背景物件不强行生成独立资产。
+- [ ] 资产主名称不使用 `CHAR_001`、`ENV_001`、`PROP_001` 或 `AUDIO_001`。
+- [ ] `generation_required` 使用 boolean，不使用字符串。
+- [ ] `generation_required=true` 的资产必须有单个 `output_prompt_path`。
+- [ ] 不使用旧字段 `prompt_outputs`、`task_id`、`asset_payload` 或 `asset_prompt_tasks.json`。
+- [ ] `shot_asset_map.json` 对每个 `S###` 有且仅有一条映射。
+- [ ] `shot_asset_map.json` 中引用的资产名都存在于 `asset_manifest.json`。
+
+## 资产提示词阶段
+
+- [ ] 人物、场景、道具提示词生成器每次只处理一个资产。
+- [ ] 输入只包含 `story.md`、`style_bible.md`、`asset_type`、`asset_name`、`output_prompt_path`。
+- [ ] 每个 `generation_required=true` 的资产提示词文件已生成到对应路径。
+- [ ] 人物资产图可以是一张 21:9 多视角单图，但仍只算一个资产输出。
+
+## 分镜提示词阶段
+
+- [ ] `storyboard_prompt_generator` 输出 `outputs/storyboard_prompts.md`。
+- [ ] 每个 `S###` 都有对应分镜图提示词段落。
+- [ ] 每个 `S###` 都写明 `recommended_frame_role: first_frame | last_frame | keyframe`。
+- [ ] 每个 `S###` 都写明 `uses_previous_storyboard_reference: true | false`。
+- [ ] 第一条分镜不引用上一分镜。
+- [ ] 引用上一分镜时，`source_shot_id` 必须是当前 shot 的前一条 shot。
+- [ ] 不跨 `scene_id` 引用上一分镜。
+- [ ] 引用上一分镜只用于站位、朝向、空间比例和连续性，不复制完整画面。
+
+## 分镜图片阶段
+
+- [ ] 分镜参考图按 `outputs/storyboards/S001.png`、`S002.png` 等路径回填。
+- [ ] 分镜参考图只作为后续视频提示词的首帧、尾帧或关键帧参考。
+- [ ] 生成图片、参考素材和真实项目产物不提交仓库。
+
+## 视频提示词阶段
+
+- [ ] `video_prompt_generator` 输出 `outputs/video_prompts.md` 和 `outputs/video_prompts.json`。
+- [ ] 每个 `V###` 的 `task_type` 是 `pipeline_shot_generation`。
+- [ ] 每个 `V###` 的 `source_shots` 是非空、连续、有序的 `S###` 列表。
+- [ ] 每个 `V###` 的所有 `source_shots` 属于同一 `scene_id`。
+- [ ] 每个 `V###` 的 `duration_seconds` 等于其 `source_shots` 时长总和。
+- [ ] 每个 `V###` 的总时长不超过 15 秒。
+- [ ] 合并多个 shot 时，`merge_decision.strategy` 使用 `merged_*`。
+- [ ] 单个 shot 不使用 `merged_*` 策略。
+- [ ] 每个 `V###` 的 `frame_references` 覆盖且只覆盖当前 `source_shots`。
+- [ ] 所有 storyboard shots 被且仅被一个 `V###` 覆盖。
+- [ ] `video_prompts.md` 包含 `【自检通过项】`、`【资产声明区】`、`【中文视频提示词】`。
+- [ ] 视频提示词不包含 `English Prompt`、`中英对照` 或 `@PROP`。
+- [ ] 视频提示词包含无字幕、无 Logo、无水印约束。
+
+## 校验与 CI
+
+- [ ] `python scripts/validate_project.py examples/minimal_run --phase all` 通过。
+- [ ] `python scripts/validate_seedance_video_prompts.py examples/minimal_run` 通过。
+- [ ] GitHub Actions 同时编译 `validate_project.py` 和 `validate_seedance_video_prompts.py`。
+- [ ] 新增或修改 schema 后，CI 能解析全部 `schemas/*.json`。
+
+## 仓库边界
+
+- [ ] 不提交 `local_runs/`、`creative_runs/`、`runs/`。
+- [ ] 不提交真实参考图片、视频、音频、生成图、生成视频、剪辑工程。
+- [ ] 不提交 `.env`、API key、cookie、token、本地账号信息。
+- [ ] 示例项目必须小体量、脱敏、可复现。
