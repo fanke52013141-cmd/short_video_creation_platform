@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-07-10 - v1.0.4
+
+### Changed
+- [script] 加强 `scripts/validate_project.py`：支持 `exclusiveMinimum`，补充空/未知/重复 `source_shots` 防御，校验视频段时长必须等于 source shots 总和，并区分单镜头与合并策略。
+- [script] 重写 `scripts/validate_seedance_video_prompts.py`，从旧 `outputs/05_video_prompts/shots/SHOT_XXX.md` 路径改为校验当前扁平产物 `outputs/video_prompts.md` 与 `outputs/video_prompts.json`。
+- [schema] `storyboard.schema.json` 将 `duration_seconds` 收紧为 `>0` 且 `<=15`。
+- [schema] `asset_manifest.schema.json` 将 `generation_required` 收紧为 boolean，避免字符串 `"true"` 造成假通过。
+- [schema] 删除未被当前主流程使用且与 Skill 契约冲突的 `art_direction.schema.json` 和旧 `shot_video_prompt.schema.json`。
+- [ci] GitHub Actions 同时编译两个校验器，并对 `examples/minimal_run` 执行主流程和视频提示词专项校验。
+- [docs] 清理 README、质量门、迭代协议、一致性清单、仓库策略、资产引用规则和旧 loop 协议中的旧目录、旧 ID、旧阶段残留。
+- [example] 对齐 `examples/minimal_run/checkpoint.json` 与 `checkpoint.template.json` 的结构。
+- [repo] `.gitignore` 增加当前扁平 `outputs/*` 忽略规则。
+
+### Reason
+- 旧 13 阶段流程、`SHOT_XXX` 命名、`CHAR/ENV/PROP` 抽象 ID、旧 numbered outputs 目录和未实现的 final 阶段与当前 7 阶段扁平流程混用，容易导致维护者按旧文档生成当前校验器不认可的产物。
+- 部分 schema 与校验器口径不一致，存在文件通过但内容不可生产的假通过风险。
+
+### Compatibility
+- 旧 `outputs/03_storyboard/`、`outputs/05_video_prompts/`、`SHOT_XXX` 和 `CHAR_001/ENV_001/PROP_001` 流程不再作为当前主流程维护。
+- 旧项目若使用字符串形式的 `generation_required`，需要迁移为 JSON boolean。
+
+### Validation
+- CI 配置已更新为运行：`python scripts/validate_project.py examples/minimal_run --phase all` 和 `python scripts/validate_seedance_video_prompts.py examples/minimal_run`。
+
 ## 2026-07-04 - v1.0.3
 
 ### Changed
