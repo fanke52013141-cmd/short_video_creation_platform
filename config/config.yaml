@@ -23,7 +23,7 @@ skill_versions:
   prop_prompt_generator: "2.3.0"
   image_generation_executor: "1.3.0"
   storyboard_prompt_generator: "1.1.0"
-  video_prompt_generator: "2.6.0"
+  video_prompt_generator: "2.7.0"
 
 phase_order:
   - story_generation
@@ -129,6 +129,34 @@ video_prompt_policy:
     - "outputs/storyboards/"
     - "shot_asset_map.json"
     - "outputs/assets/"
+  optional_inputs:
+    - "voice_reference"
+    - "music_reference"
+    - "ambience_reference"
+    - "dialogue_or_voiceover_notes"
+  declared_asset_roles:
+    - "first_frame"
+    - "last_frame"
+    - "keyframe"
+    - "character_asset"
+    - "scene_asset"
+    - "prop_asset"
+    - "voice_reference"
+    - "music_reference"
+    - "ambience_reference"
+    - "style_reference"
+  required_prompt_sections:
+    - "自检通过项"
+    - "资产声明区"
+    - "中文视频提示词"
+  prompt_body_must_cover:
+    - "visual_description"
+    - "camera_description"
+    - "character_action_expression"
+    - "scene_interaction"
+    - "prop_interaction"
+    - "sound_music_voice_or_silence"
+    - "dialogue_when_needed"
   merge_requirements:
     - "shot_id_contiguous"
     - "same_scene_id"
