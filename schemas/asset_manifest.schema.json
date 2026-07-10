@@ -42,7 +42,7 @@
           "angle_or_view": { "type": ["string", "null"] },
           "visual_anchors": { "type": ["array", "string", "null"], "items": { "type": "string" } },
           "appears_in_shots": { "type": "array", "items": { "type": "string" } },
-          "generation_required": { "type": ["boolean", "string"] },
+          "generation_required": { "type": "boolean" },
           "output_prompt_path": { "type": ["string", "null"] },
           "prompt_scope": { "type": ["string", "null"] },
           "handling_policy": { "type": ["string", "null"] },
