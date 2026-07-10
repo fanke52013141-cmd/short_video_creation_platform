@@ -8,6 +8,11 @@ creative_runs/
 runs/
 
 # Generated production outputs
+outputs/*
+!outputs/README.md
+!outputs/**/.gitkeep
+
+# Legacy generated production output folders
 outputs/01_story/
 outputs/02_art_direction/
 outputs/03_storyboard/
@@ -19,10 +24,6 @@ outputs/04_assets/final_images/
 outputs/05_video_prompts/
 outputs/06_external_results/
 outputs/07_final_delivery/
-
-# Keep tracked documentation placeholders if needed
-!outputs/README.md
-!outputs/**/.gitkeep
 
 # User inputs and private references
 inputs/*.md
