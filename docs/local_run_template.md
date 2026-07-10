@@ -70,7 +70,7 @@ local_runs/YYYY-MM-DD/project_slug/notes.md
 
 1. 按 `S###` 循环运行 `storyboard_prompt_generator`。
 2. 每条分镜提示词必须写：
-   - `recommended_frame_role: first_frame | last_frame | keyframe`
+   - `frame_role: first_frame | last_frame | keyframe`（来自视频段计划）
    - `uses_previous_storyboard_reference: true | false`
 3. 只有同一 `scene_id` 且站位关系连续时，才引用上一分镜图作为 `placement_anchor`。
 4. 生成分镜参考图并回填到 `outputs/storyboards/S001.png`、`S002.png` 等。

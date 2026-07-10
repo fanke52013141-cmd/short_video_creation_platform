@@ -20,8 +20,7 @@ jobs:
 
       - name: Compile validators
         run: |
-          python -m py_compile scripts/validate_project.py
-          python -m py_compile scripts/validate_seedance_video_prompts.py
+          python -m compileall -q scripts
 
       - name: Parse JSON contracts
         run: |
@@ -34,7 +33,14 @@ jobs:
           PY
 
       - name: Validate minimal example run
-        run: python scripts/validate_project.py examples/minimal_run --phase all
+        run: |
+          python scripts/validate_pipeline_contract.py
+          python scripts/validate_vertical_config.py
+          python scripts/validate_asset_semantics.py examples/minimal_run
+          python scripts/validate_project.py examples/minimal_run --level draft
 
       - name: Validate minimal video prompts
         run: python scripts/validate_seedance_video_prompts.py examples/minimal_run
+
+      - name: Enforce repository policy
+        run: python scripts/check_repository_policy.py

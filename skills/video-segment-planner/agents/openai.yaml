@@ -1,0 +1,4 @@
+interface:
+  display_name: "Video Segment Planner"
+  short_description: "Plan semantic shot merges and frame roles"
+  default_prompt: "Use $video-segment-planner to plan video segments from approved consecutive shots."

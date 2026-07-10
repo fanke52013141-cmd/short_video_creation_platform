@@ -3,7 +3,7 @@
 ## S001
 
 ## 分镜角色
-recommended_frame_role: first_frame
+frame_role: first_frame
 
 ## 上一分镜站位参考
 uses_previous_storyboard_reference: false
@@ -13,7 +13,7 @@ reference_purpose: none
 reason: 第一条分镜，建立雨夜客厅场景和林小满的初始站位。
 
 ## 资产声明区
-@林小满_雨夜接电话状态（人物资产）
+@林小满_雨夜居家装（人物资产）
 @雨夜客厅场景（场景资产）
 手机（关键道具，正文控制）
 
@@ -23,7 +23,7 @@ reason: 第一条分镜，建立雨夜客厅场景和林小满的初始站位。
 ## S002
 
 ## 分镜角色
-recommended_frame_role: last_frame
+frame_role: last_frame
 
 ## 上一分镜站位参考
 uses_previous_storyboard_reference: true
@@ -33,7 +33,7 @@ reference_purpose: placement_anchor
 reason: 同一 scene_id，人物、手机和沙发位置延续；当前分镜是同一情绪动作的近景落点。
 
 ## 资产声明区
-@林小满_雨夜接电话状态（人物资产）
+@林小满_雨夜居家装（人物资产）
 @雨夜客厅场景（场景资产）
 手机（关键道具，正文控制）
 

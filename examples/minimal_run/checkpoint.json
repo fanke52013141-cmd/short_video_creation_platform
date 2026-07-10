@@ -6,28 +6,41 @@
     "created_at": "2026-07-04T00:00:00Z",
     "run_dir": "./examples/minimal_run"
   },
-  "schema_version": "2.1",
-  "last_updated": "2026-07-04T00:00:00Z",
-  "current_phase": "video_prompt_generator",
+  "schema_version": "3.1",
+  "last_updated": "2026-07-10T15:39:35.884564+00:00",
+  "current_phase": "final_package",
   "completed_phases": [
     "story_generation",
     "art_direction",
     "storyboard_director",
+    "storyboard_sequence_review",
     "asset_executor",
     "asset_prompt_generation",
-    "storyboard_prompt_generator",
-    "video_prompt_generator"
+    "asset_image_generation",
+    "generated_asset_review",
+    "video_segment_planning",
+    "storyboard_prompt_generation",
+    "storyboard_image_generation",
+    "storyboard_visual_review",
+    "video_prompt_generation"
   ],
   "phase_order": [
     "story_generation",
     "art_direction",
     "storyboard_director",
+    "storyboard_sequence_review",
     "asset_executor",
     "asset_prompt_generation",
-    "storyboard_prompt_generator",
-    "video_prompt_generator"
+    "asset_image_generation",
+    "generated_asset_review",
+    "video_segment_planning",
+    "storyboard_prompt_generation",
+    "storyboard_image_generation",
+    "storyboard_visual_review",
+    "video_prompt_generation",
+    "final_package"
   ],
-  "total_phases": 7,
+  "total_phases": 14,
   "artifacts": {
     "idea_brief": "./inputs/idea_brief.md",
     "story_md": "./outputs/story.md",
@@ -71,5 +84,79 @@
     "skill": "jimeng_canvas_manual",
     "input_from": "./outputs/video_prompts.md"
   },
-  "status": "ready_for_jimeng_canvas"
+  "status": "ready_for_jimeng_canvas",
+  "stages": {
+    "story_generation": {
+      "status": "approved",
+      "version": 0,
+      "updated_at": null
+    },
+    "art_direction": {
+      "status": "approved",
+      "version": 0,
+      "updated_at": null
+    },
+    "storyboard_director": {
+      "status": "completed",
+      "version": 0,
+      "updated_at": null
+    },
+    "storyboard_sequence_review": {
+      "status": "approved",
+      "version": 0,
+      "updated_at": null
+    },
+    "asset_executor": {
+      "status": "completed",
+      "version": 0,
+      "updated_at": null
+    },
+    "asset_prompt_generation": {
+      "status": "completed",
+      "version": 0,
+      "updated_at": null
+    },
+    "asset_image_generation": {
+      "status": "completed",
+      "version": 0,
+      "updated_at": null
+    },
+    "generated_asset_review": {
+      "status": "approved",
+      "version": 0,
+      "updated_at": null
+    },
+    "video_segment_planning": {
+      "status": "completed",
+      "version": 0,
+      "updated_at": null
+    },
+    "storyboard_prompt_generation": {
+      "status": "completed",
+      "version": 0,
+      "updated_at": null
+    },
+    "storyboard_image_generation": {
+      "status": "completed",
+      "version": 0,
+      "updated_at": null
+    },
+    "storyboard_visual_review": {
+      "status": "approved",
+      "version": 0,
+      "updated_at": null
+    },
+    "video_prompt_generation": {
+      "status": "completed",
+      "version": 0,
+      "updated_at": null
+    },
+    "final_package": {
+      "status": "not_started",
+      "version": 0,
+      "updated_at": null
+    }
+  },
+  "blockers": [],
+  "artifact_versions": {}
 }

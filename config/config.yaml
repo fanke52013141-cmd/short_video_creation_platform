@@ -96,7 +96,7 @@ storyboard_policy:
     - prompt_cn
 
 asset_policy:
-  character_asset_name_pattern: "人物稳定名_状态"
+  character_asset_name_pattern: "人物稳定名或人物稳定名_持续变体"
   character_image_output: "single_21x9_multi_view_image"
   scene_split_only_for:
     - "spatial_structure_change"
@@ -112,7 +112,7 @@ asset_policy:
 
 storyboard_prompt_policy:
   required_per_shot_fields:
-    - "recommended_frame_role"
+    - "frame_role"
     - "uses_previous_storyboard_reference"
   frame_roles:
     - "first_frame"

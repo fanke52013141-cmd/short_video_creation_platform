@@ -31,7 +31,7 @@
 </PreviousStoryboardReferencePolicy>
 
 <FrameRolePolicy>
-每个 shot 必须输出 `recommended_frame_role`：
+每个 shot 必须从 `video_segment_plan.json` 读取 `frame_role`：
 
 - `first_frame`：适合新场景、新空间关系、站位首次建立、视频段起点。
 - `last_frame`：适合连续动作终点、情绪落点、姿态或道具位置需要准确抵达的画面。
@@ -46,7 +46,7 @@
 # {shot_id} 分镜参考图提示词
 
 ## 分镜角色
-recommended_frame_role: first_frame | last_frame | keyframe
+frame_role: first_frame | last_frame | keyframe
 
 ## 上一分镜站位参考
 uses_previous_storyboard_reference: true | false
@@ -64,7 +64,7 @@ reason: 简述判断理由。
 
 <SelfCheck>
 - 是否只处理一个 shot？
-- 是否明确 `recommended_frame_role`？
+- `frame_role` 是否存在且与视频段计划一致？
 - 是否明确是否引用上一分镜？
 - 引用上一分镜时是否只作为站位参考？
 - 是否没有跨 `scene_id` 引用上一分镜？

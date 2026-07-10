@@ -7,21 +7,21 @@ vertical_selection:
 
 strategy_slots:
   content_strategy:
-    default_skill: story-generation
+    default_skill: story_generation
     output: ./outputs/story.md
   art_direction:
-    default_skill: art-direction
+    default_skill: art_direction
     output: ./outputs/style_bible.md
   storyboard_strategy:
-    default_skill: storyboard-director
+    default_skill: storyboard_director
     output: ./outputs/storyboard.json
   prompt_strategy:
-    default_skill: cinematic-prompt-strategy
+    default_skill: storyboard_prompt_generator
   vertical_quality_gate:
-    default_skill: narrative-quality-gate
+    default_skill: storyboard_visual_review
 
 stages:
-  - id: content_strategy
+  - id: story_generation
     type: strategy
     slot: content_strategy
     approval_required: true
@@ -29,34 +29,45 @@ stages:
     type: strategy
     slot: art_direction
     approval_required: true
-  - id: storyboard_strategy
+  - id: storyboard_director
     type: strategy
     slot: storyboard_strategy
-  - id: asset_registry
+  - id: storyboard_sequence_review
+    type: quality_gate
+    skill: storyboard_sequence_review
+    blocks_on: [P0]
+  - id: asset_executor
     type: stable_core
-    skill: asset-executor
+    skill: asset_executor
   - id: asset_prompt_generation
     type: stable_core
-    skill: asset-prompt-generators
-  - id: image_queue
+    skill: asset_prompt_generators
+  - id: asset_image_generation
     type: stable_core
-    skill: build-image-queue
-  - id: image_execution_or_import
+    skill: image_generation_executor
+  - id: generated_asset_review
+    type: quality_gate
+    skill: generated_asset_review
+    blocks_on: [P0]
+  - id: video_segment_planning
     type: stable_core
-    skill: execute-or-import-images
+    skill: video_segment_planner
   - id: storyboard_prompt_generation
     type: strategy
     slot: prompt_strategy
-  - id: storyboard_image_execution_or_import
+  - id: storyboard_image_generation
     type: stable_core
-    skill: execute-or-import-images
+    skill: image_generation_executor
+  - id: storyboard_visual_review
+    type: quality_gate
+    skill: storyboard_visual_review
+    blocks_on: [P0]
   - id: video_prompt_generation
     type: stable_core
-    skill: video-prompt-generator
+    skill: video_prompt_generator
   - id: vertical_quality_gate
     type: strategy
     slot: vertical_quality_gate
   - id: final_package
     type: stable_core
-    skill: package-production
-
+    skill: package_production

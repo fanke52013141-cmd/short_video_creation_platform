@@ -1,0 +1,4 @@
+interface:
+  display_name: "Storyboard Visual Review"
+  short_description: "Review visual continuity across storyboard images"
+  default_prompt: "Use $storyboard-visual-review to review all storyboard images as an ordered sequence."

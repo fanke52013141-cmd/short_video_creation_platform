@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Storyboard Visual Review",
+  "type": "object",
+  "required": ["status", "issues", "checked_shots"],
+  "properties": {
+    "status": {"type": "string", "enum": ["pass", "revise_required"]},
+    "checked_shots": {"type": "array", "items": {"type": "string", "pattern": "^S[0-9]{3}$"}},
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "category", "shot_ids", "description", "fix_suggestion", "rerun_from"],
+        "properties": {
+          "severity": {"type": "string", "enum": ["P0", "P1", "P2"]},
+          "category": {"type": "string", "enum": ["character", "placement", "screen_direction", "eyeline", "scene", "prop", "lighting", "style", "action", "causality"]},
+          "shot_ids": {"type": "array", "items": {"type": "string", "pattern": "^S[0-9]{3}$"}},
+          "description": {"type": "string"},
+          "fix_suggestion": {"type": "string"},
+          "rerun_from": {"type": "string", "enum": ["asset_prompt_generation", "asset_image_generation", "storyboard_prompt_generation", "storyboard_image_generation"]}
+        }
+      }
+    }
+  }
+}

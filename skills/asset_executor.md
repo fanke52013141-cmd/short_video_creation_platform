@@ -1,8 +1,8 @@
 # Skill: asset_executor
-**Version**: 1.4.0
+**Version**: 2.0.0
 
 ## Purpose
-从 `story.md` 和 `storyboard.json` 中固定后续生产需要的稳定资产：人物状态、场景和必要核心道具。
+从 `story.md` 和 `storyboard.json` 中固定后续生产需要的稳定资产：人物身份与持续变体、场景空间与结构变体、必要核心道具。
 
 本 Skill 是资产命名、素材绑定和分镜资产映射的唯一来源。它不写图片提示词，不生成图片，不决定视频合并。
 
@@ -12,7 +12,7 @@
 asset_type + asset_name + output_prompt_path
 ```
 
-其中人物资产名必须包含状态。不要默认把同一个人物拆成“人脸大头特写”和“全身妆造”两个输出。
+人物资产只在身份可见特征发生持续变化时拆分。情绪、动作、景别、光线和机位不是人物资产变体理由。
 
 ## Inputs
 ```json
@@ -33,30 +33,32 @@ asset_type + asset_name + output_prompt_path
 
 ## Character Asset Naming
 
-人物资产名采用：
+人物基础资产采用稳定人物名；确有持续变体时采用：
 
 ```text
-人物稳定名_状态
+人物稳定名_变体名
 ```
 
 示例：
 
 ```text
-林小满_基础状态
-林小满_雨夜接电话状态
-林小满_崩溃哭泣状态
-警察_追捕状态
+林小满
+林小满_雨夜居家装
+林小满_受伤后
+林小满_十年后
 ```
 
 规则：
 
 - `林小满` 是稳定人物名。
-- `雨夜接电话状态` 是本次资产图要表现的状态。
-- 同一人物可以有多个状态资产，但不能把状态资产命名成不同人物。
+- 只有年龄、持续服装、持续发型、持续伤痕、身份转变或用户明确要求才拆变体。
+- 哭泣、愤怒、接电话、走路、坐下等临时表演写入分镜，不拆资产。
+- 中景、全景、俯视等镜头表达不拆资产。
+- 资产名禁止包含或以“状态”二字结尾。
 - 禁止默认输出 `林小满_人脸大头特写` 和 `林小满_全身妆造` 两个资产。
 - 禁止用 `CHAR_001`、`AssetA` 之类内部 ID 当人物名。
 
-人物状态不是“重新造一个人物”，而是同一人物在某个剧情状态下的一张资产参考图。
+同一人物变体仍共享稳定人物身份锚点，不得重新设计五官、骨相和基础体型。
 
 ## Scene Asset Naming
 
@@ -68,7 +70,7 @@ asset_type + asset_name + output_prompt_path
 悬崖竹林场景
 ```
 
-不因为普通光线、时间、天气变化拆新场景资产。只有空间结构、地点或叙事空间变化，才新建场景资产。
+不因为普通光线、时间、天气变化拆新场景资产。只有地点、空间结构或不可兼容的持续布景变化，才新建场景变体。
 
 ## Prop Handling
 
@@ -95,15 +97,20 @@ asset_type + asset_name + output_prompt_path
   "naming_policy": "asset_name_with_state_when_needed",
   "characters": [
     {
+      "asset_id": "character.lin-xiaoman.rainy-home",
       "asset_type": "character",
-      "asset_name": "林小满_雨夜接电话状态",
+      "canonical_name": "林小满",
+      "variant_name": "雨夜居家装",
+      "asset_name": "林小满_雨夜居家装",
       "seedance_label": "林小满",
-      "state": "雨夜接电话状态",
-      "appears_in_shots": ["S001", "S002"],
+      "variant_reasons": ["persistent_costume_change"],
       "generation_required": true,
       "handling_policy": "generate_character_state_reference",
-      "output_prompt_path": "./outputs/assets/characters/林小满_雨夜接电话状态.md",
-      "notes": "同一人物的状态资产，仍统一叫林小满"
+      "reference_layout": "character_identity_quad_v1",
+      "output_prompt_path": "./outputs/assets/characters/prompts/林小满_雨夜居家装.md",
+      "canonical_path": null,
+      "approval_status": "pending",
+      "notes": "同一人物变体，身份锚点继承林小满"
     }
   ],
   "scenes": [
@@ -111,7 +118,6 @@ asset_type + asset_name + output_prompt_path
       "asset_type": "scene",
       "asset_name": "雨夜客厅场景",
       "seedance_label": "雨夜客厅场景",
-      "appears_in_shots": ["S001", "S002"],
       "generation_required": true,
       "handling_policy": "generate_scene_reference",
       "output_prompt_path": "./outputs/assets/scenes/雨夜客厅场景.md"
@@ -122,7 +128,6 @@ asset_type + asset_name + output_prompt_path
       "asset_type": "prop",
       "asset_name": "手机",
       "seedance_label": "手机",
-      "appears_in_shots": ["S001", "S002"],
       "generation_required": false,
       "handling_policy": "text_prompt_control",
       "output_prompt_path": null,
@@ -141,8 +146,8 @@ asset_type + asset_name + output_prompt_path
   "story_markdown_path": "./outputs/story.md",
   "style_bible_path": "./outputs/style_bible.md",
   "asset_type": "character",
-  "asset_name": "林小满_雨夜接电话状态",
-  "output_prompt_path": "./outputs/assets/characters/林小满_雨夜接电话状态.md"
+  "asset_name": "林小满_雨夜居家装",
+  "output_prompt_path": "./outputs/assets/characters/prompts/林小满_雨夜居家装.md"
 }
 ```
 
@@ -162,7 +167,7 @@ asset_type + asset_name + output_prompt_path
   "shot_assets": [
     {
       "shot_id": "S001",
-      "characters": ["林小满_雨夜接电话状态"],
+      "characters": ["林小满_雨夜居家装"],
       "scenes": ["雨夜客厅场景"],
       "props": ["手机"]
     }
@@ -170,13 +175,13 @@ asset_type + asset_name + output_prompt_path
 }
 ```
 
-`shot_asset_map.json` 只映射稳定资产名，不写动作、不写提示词、不写素材分析。
+`shot_asset_map.json` 是资产与镜头关系的唯一事实源，只映射稳定资产名，不写动作、不写提示词、不写素材分析。`asset_manifest.json` 不重复保存 `appears_in_shots`。
 
 ## Procedure
 
 1. 读取 `story.md`，识别剧情中的人物、地点、关键道具和用户参考素材关系。
 2. 读取 `storyboard.json`，按 shot 判断实际出现的人物状态、场景和核心剧情道具。
-3. 为人物资产命名为 `人物稳定名_状态`。
+3. 只按持续可见变化拆人物变体，命名为 `人物稳定名_变体名`，禁止“状态”后缀。
 4. 不默认拆出人脸大头特写和全身妆造。
 5. 为场景选择稳定场景名，不因普通光影、时间、天气变化新建场景资产。
 6. 只保留核心剧情道具；普通背景小物件不进资产清单。
@@ -188,7 +193,9 @@ asset_type + asset_name + output_prompt_path
 
 ## Quality Gate
 
-- [ ] 人物资产名包含稳定人物名和状态，例如 `林小满_雨夜接电话状态`。
+- [ ] 人物资产只因持续身份可见变化而拆分。
+- [ ] 人物资产名不含“状态”后缀。
+- [ ] 临时动作、情绪、景别、光线和机位没有被拆成人物资产。
 - [ ] 没有默认输出 `人脸大头特写` 和 `全身妆造` 两个资产。
 - [ ] 未使用 `CHAR_001`、`ENV_001`、`PROP_001` 或抽象 Asset ID 作为主名称。
 - [ ] 场景没有因为普通光线、时间、天气变化被拆分。
@@ -211,7 +218,7 @@ asset_type + asset_name + output_prompt_path
 ## Failure Handling
 
 - 分镜动作太抽象导致无法判断人物状态：返回 `storyboard_director` 修正 `action_desc`。
-- 人物状态资产被命名成另一个人物：改回 `人物稳定名_状态`。
+- 人物变体被命名成另一个人物：改回 `人物稳定名_持续变体` 并继承身份锚点。
 - 默认拆成大头特写和全身妆造：合并为一个状态资产。
 - 场景因光线/时间变化被拆成多个资产：合并为同一个场景资产，光影交给提示词控制。
 - 普通道具被强行独立生成：改为 `text_prompt_control` 或从资产清单移除。

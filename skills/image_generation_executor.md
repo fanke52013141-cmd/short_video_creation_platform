@@ -11,10 +11,10 @@
 ```json
 {
   "asset_type": "character",
-  "asset_name": "林小满_雨夜接电话状态",
-  "prompt_path": "./outputs/assets/characters/林小满_雨夜接电话状态.md",
+  "asset_name": "林小满_雨夜居家装",
+  "prompt_path": "./outputs/assets/characters/prompts/林小满_雨夜居家装.md",
   "generation_mode": "jimeng_web_manual | chatgpt_web | codex_direct | external_manual",
-  "output_image_path": "./outputs/assets/characters/林小满_雨夜接电话状态.png"
+  "output_image_path": "./outputs/assets/characters/images/林小满_雨夜居家装.png"
 }
 ```
 
@@ -32,7 +32,7 @@
 核心输出只有一张图片文件：
 
 ```text
-./outputs/assets/characters/林小满_雨夜接电话状态.png
+./outputs/assets/characters/images/林小满_雨夜居家装.png
 ```
 
 如果需要记录状态，使用执行日志，不新增主流程 JSON 产物。

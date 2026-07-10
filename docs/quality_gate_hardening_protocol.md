@@ -49,7 +49,7 @@
 
 - `storyboard_prompts.md` 缺失。
 - 任一 `S###` 缺少提示词段落。
-- 任一 `S###` 缺少 `recommended_frame_role`，或值不是 `first_frame | last_frame | keyframe`。
+- 任一 `S###` 缺少来自视频段计划的 `frame_role`，或值不是 `first_frame | last_frame | keyframe`。
 - 任一 `S###` 缺少 `uses_previous_storyboard_reference: true | false`。
 - 第一条分镜引用上一分镜。
 - 跨 `scene_id` 引用上一分镜。

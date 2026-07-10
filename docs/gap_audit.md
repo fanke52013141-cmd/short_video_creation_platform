@@ -6,7 +6,7 @@
 - 故事到视觉风格系统：已有源提示词 `art_direction.source.md`。
 - 故事到分镜与资产草表：已有主分镜源提示词和静态帧变体。
 - 分镜相邻逻辑审查：已有 `storyboard_sequence_review`，在资产生成前检查 1-shot、2-shot、3-shot 窗口中的空间、道具、人物、时间、声音和母题连续性。
-- 角色提示词：已有源提示词 `character_prompt_generator.source.md`，支持主要人物三视图。
+- 角色提示词：已有源提示词 `character_prompt_generator.source.md`，支持主要人物身份四宫格。
 - 场景提示词：已有源提示词 `scene_prompt_generator.source.md`。
 - 道具提示词：已补 `prop_prompt_generator.source.md`，支持母题道具、文字类道具和状态变体。
 - Seedance 视频提示词：已有源提示词 `seedance_video_prompt.source.md`。
@@ -22,7 +22,7 @@
 
 ## 仍需持续完善的能力
 
-- `asset_manifest_builder` 的实际生成质量仍依赖 Agent 执行，后续可增加更严格的资产合并/拆分规则。
+- `asset_executor` 的语义拆分由 Agent 执行，确定性命名、引用和 Schema 由校验程序负责。
 - `image_generation_executor` 目前是流程包装层；真实内部图片生成仍依赖运行环境能力。
 - `generated_media_review` 目前以人工记录和 manifest 为主；后续可增强对截图/视频文件的视觉检查。
 - `production_package_builder` 已定义更严格状态，但后续可补自动汇总脚本。

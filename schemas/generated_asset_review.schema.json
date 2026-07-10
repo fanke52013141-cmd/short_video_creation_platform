@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Generated Asset Review",
+  "type": "object",
+  "required": ["status", "asset_id", "asset_version", "issues"],
+  "properties": {
+    "status": {"type": "string", "enum": ["pass", "revise_required"]},
+    "asset_id": {"type": "string"},
+    "asset_version": {"type": "integer", "minimum": 1},
+    "issues": {"type": "array", "items": {"type": "object", "required": ["severity", "category", "description"], "properties": {"severity": {"type": "string", "enum": ["P0", "P1", "P2"]}, "category": {"type": "string"}, "description": {"type": "string"}, "regeneration_instruction": {"type": ["string", "null"]}}}},
+    "reviewed_at": {"type": ["string", "null"]}
+  }
+}

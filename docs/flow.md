@@ -42,7 +42,7 @@
   - `RUN/outputs/asset_manifest.json`
   - `RUN/outputs/shot_asset_map.json`
 - Contract:
-  - 人物资产按 `人物稳定名_状态` 固定，例如 `林小满_雨夜接电话状态`。
+  - 人物资产使用稳定人物名；仅对持续可见变化使用 `人物稳定名_持续变体`，且不加“状态”二字。
   - 不默认拆成 `人脸大头特写` 和 `全身妆造` 两个资产。
   - 场景资产按稳定场景名固定；普通光线、时间、天气变化不拆场景。
   - 普通道具正文控制；只有核心复杂道具才独立生成。
@@ -64,7 +64,7 @@
 
 ### Character
 
-- `asset_name` 示例：`林小满_雨夜接电话状态`
+- `asset_name` 示例：`林小满_雨夜居家装`
 - 输出：一份 21:9 人物状态资产图提示词。
 - 同一张图中可包含人物特写、正面、侧面、后视图。
 
@@ -111,7 +111,7 @@
   ```
 - Output: 当前 `S###` 的分镜参考图提示词，也可汇总为 `RUN/outputs/storyboard_prompts.md`。
 - 必须输出：
-  - `recommended_frame_role: first_frame | last_frame | keyframe`
+  - `frame_role: first_frame | last_frame | keyframe`，必须来自 `video_segment_plan.json`
   - `uses_previous_storyboard_reference: true | false`
   - 如引用上一分镜，必须限定为 `placement_anchor`，只继承站位、朝向、空间比例和连续性。
 

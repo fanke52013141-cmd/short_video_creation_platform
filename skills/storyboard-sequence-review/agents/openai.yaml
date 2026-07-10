@@ -1,0 +1,4 @@
+interface:
+  display_name: "Storyboard Sequence Review"
+  short_description: "Review storyboard logic and continuity risks"
+  default_prompt: "Use $storyboard-sequence-review to review this complete storyboard before asset production."

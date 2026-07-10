@@ -31,6 +31,10 @@ outputs/07_final_delivery/
 inputs/*.md
 !inputs/idea_brief.template.md
 references/
+!skills/references/
+!skills/references/**
+!skills/**/references/
+!skills/**/references/**
 references/audio/
 media_references/
 

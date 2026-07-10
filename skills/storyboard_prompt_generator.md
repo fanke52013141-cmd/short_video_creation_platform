@@ -6,10 +6,10 @@
 
 本 Skill 按 `shot_id` 循环工作。每次只处理一个 `S###`，输出一份分镜参考图提示词。
 
-它还必须判断两件事：
+它还必须执行两件事：
 
 1. 当前分镜是否需要引用上一分镜图片作为站位参考。
-2. 当前分镜图在后续视频提示词中建议承担 `first_frame`、`last_frame` 还是 `keyframe`。
+2. 从已批准的 `video_segment_plan.json` 读取当前分镜的 `first_frame`、`last_frame` 或 `keyframe` 角色，不再自行猜测。
 
 ## Inputs
 
@@ -20,10 +20,11 @@
   "storyboard_json_path": "./outputs/storyboard.json",
   "style_bible_path": "./outputs/style_bible.md",
   "shot_asset_map_path": "./outputs/shot_asset_map.json",
+  "video_segment_plan_path": "./outputs/video_segment_plan.json",
   "asset_image_root": "./outputs/assets",
   "storyboard_image_root": "./outputs/storyboards",
   "shot_id": "S002",
-  "output_prompt_path": "./outputs/storyboard_prompts/S002.md"
+  "output_prompt_path": "./outputs/approved/storyboard_prompts/S002.md"
 }
 ```
 
@@ -42,8 +43,8 @@
 ```json
 {
   "shot_id": "S002",
-  "output_prompt_path": "./outputs/storyboard_prompts/S002.md",
-  "recommended_frame_role": "keyframe",
+  "output_prompt_path": "./outputs/approved/storyboard_prompts/S002.md",
+  "frame_role": "keyframe",
   "uses_previous_storyboard_reference": true,
   "previous_storyboard_reference": {
     "source_shot_id": "S001",
@@ -86,11 +87,13 @@
 
 ## Frame Role Policy
 
-每个分镜参考图必须给出 `recommended_frame_role`：
+每个分镜参考图必须从 `video_segment_plan.json` 读取 `frame_role`：
 
 ```text
 first_frame | last_frame | keyframe
 ```
+
+不得覆盖或重新推断已规划角色。若当前 shot 不在 plan 中，停止并返回 `video_segment_planner`。
 
 ### first_frame
 用于视频段落的起始画面。通常适合：
@@ -122,7 +125,7 @@ first_frame | last_frame | keyframe
 3. 读取 `shot_asset_map.json`，查询当前 shot 对应的人物、场景和必要道具。
 4. 查找 `asset_image_root` 中已生成的人物、场景、必要道具图。
 5. 判断是否引用上一分镜图片作为站位参考。
-6. 判断当前分镜图的 `recommended_frame_role`。
+6. 从视频段计划读取当前分镜图的 `frame_role`。
 7. 把导演分镜的 `framing`、`camera_move`、`action_desc` 改写为静态分镜参考图提示词。
 8. 不生成视频动作时长，不合并镜头，不决定最终视频提示词。
 
@@ -132,7 +135,7 @@ first_frame | last_frame | keyframe
 # S002 分镜参考图提示词
 
 ## 分镜角色
-recommended_frame_role: keyframe
+frame_role: keyframe
 
 ## 上一分镜站位参考
 uses_previous_storyboard_reference: true
@@ -142,7 +145,7 @@ reference_purpose: placement_anchor
 reason: 同一 scene_id，人物与手机位置延续，当前为同一动作的近景反应。
 
 ## 资产声明区
-@林小满_雨夜接电话状态（人物资产）
+@林小满_雨夜居家装（人物资产）
 @雨夜客厅场景（场景资产）
 手机（正文控制道具）
 
@@ -153,8 +156,7 @@ reason: 同一 scene_id，人物与手机位置延续，当前为同一动作的
 ## Quality Gate
 
 - [ ] 每个 `storyboard.json` 中的 shot 都有对应提示词。
-- [ ] 每个 shot 都明确 `recommended_frame_role`。
-- [ ] `recommended_frame_role` 只能是 `first_frame`、`last_frame`、`keyframe`。
+- [ ] 每个 shot 都明确 `frame_role`，且与视频段计划一致。
 - [ ] 每个 shot 都明确是否引用上一分镜。
 - [ ] 引用上一分镜时，必须说明只用于站位、朝向、空间比例和连续性。
 - [ ] 不跨 `scene_id` 引用上一分镜。

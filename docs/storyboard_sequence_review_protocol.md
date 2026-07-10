@@ -6,14 +6,14 @@
 
 ## 触发时机
 
-必须在 `storyboard_director` 之后、`asset_manifest_builder` 之前执行。
+必须在 `storyboard_director` 之后、`asset_executor` 之前执行。
 
 推荐顺序：
 
 ```text
 storyboard_director
 storyboard_sequence_review
-asset_manifest_builder
+asset_executor
 asset_prompt_generation
 ```
 
@@ -224,6 +224,6 @@ JSON 必须包含：
 
 ## 质量门
 
-- 有任何 `P0` 时，不能进入 `asset_manifest_builder`。
+- 有任何 `P0` 时，不能进入 `asset_executor`。
 - 有任何未处理 `P1` 时，必须由用户确认是否接受。
 - 只有 `duration_check_passed=true`、`shot_boundary_check_passed=true`、`concretization_check_passed=true` 且 `status=pass`，或用户明确接受 P1 风险，才能继续。

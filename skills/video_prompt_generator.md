@@ -1,22 +1,26 @@
 # Skill: video_prompt_generator
-**Version**: 2.6.0
+**Version**: 3.0.0
 
 ## Source Prompt
 `skills/raw_prompts/seedance_video_prompt.source.md`
 
 ## Purpose
-在所有分镜参考图生成完成后，把连续分镜组织成最终可复制到即梦 / Seedance 的中文视频提示词，并同步输出结构化 `video_prompts.json`。
+在所有分镜参考图通过视觉审核后，按已批准的 `video_segment_plan.json` 循环生成视频提示词。每次只处理一个 `V###`。
 
 本 Skill 只服务当前流水线生产，不处理视频编辑、视频延长、音频参考、多模态实验任务或轨道拼接。
 
 ## Inputs
 ```json
 {
+  "video_segment_plan_path": "./outputs/video_segment_plan.json",
+  "video_id": "V001",
   "storyboard_json_path": "./outputs/storyboard.json",
-  "storyboard_prompts_path": "./outputs/storyboard_prompts.md",
-  "storyboard_reference_dir": "./outputs/storyboards",
   "shot_asset_map_path": "./outputs/shot_asset_map.json",
-  "asset_reference_dir": "./outputs/assets"
+  "storyboard_prompt_paths": [],
+  "storyboard_image_paths": [],
+  "asset_reference_paths": [],
+  "output_prompt_path": "./outputs/approved/video_generation/V001/prompt.txt",
+  "output_manifest_path": "./outputs/approved/video_generation/V001/manifest.json"
 }
 ```
 
@@ -25,8 +29,8 @@
 ## Outputs
 ```json
 {
-  "video_prompts_path": "./outputs/video_prompts.md",
-  "video_prompts_json_path": "./outputs/video_prompts.json"
+  "video_prompt_path": "./outputs/approved/video_generation/V001/prompt.txt",
+  "video_manifest_path": "./outputs/approved/video_generation/V001/manifest.json"
 }
 ```
 
@@ -46,7 +50,7 @@
 
 ## Merge Policy
 
-合并对象是连续 `S###`，不是 `SC###`。`SC###` 只是合并边界。
+合并结果由 `video_segment_plan.json` 锁定。本 Skill 不重新合并、拆分或更改帧角色。
 
 相邻分镜只有同时满足以下条件，才允许合并为一个 `V###`：
 

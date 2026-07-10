@@ -14,9 +14,16 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["asset_name", "asset_type", "appears_in_shots", "generation_required"],
+        "required": ["asset_id", "asset_name", "canonical_name", "asset_type", "generation_required", "approval_status"],
         "properties": {
+          "asset_id": { "type": "string", "pattern": "^(character|scene|prop)\\.[a-z0-9-]+(\\.[a-z0-9-]+)?$" },
           "asset_name": { "type": "string" },
+          "canonical_name": { "type": "string" },
+          "variant_name": { "type": ["string", "null"] },
+          "variant_reasons": {
+            "type": ["array", "null"],
+            "items": {"type": "string", "enum": ["base_identity", "age_change", "persistent_costume_change", "persistent_hair_change", "persistent_injury", "identity_transformation", "structural_change", "prop_state_change", "user_required"]}
+          },
           "asset_type": { "type": "string", "enum": ["character", "scene", "prop"] },
           "naming_strategy": {
             "type": ["string", "null"],
@@ -41,8 +48,13 @@
           "state": { "type": ["string", "null"] },
           "angle_or_view": { "type": ["string", "null"] },
           "visual_anchors": { "type": ["array", "string", "null"], "items": { "type": "string" } },
-          "appears_in_shots": { "type": "array", "items": { "type": "string" } },
           "generation_required": { "type": "boolean" },
+          "reference_layout": { "type": ["string", "null"], "enum": ["character_identity_quad_v1", "scene_spatial_quad_v1", "prop_reference_quad_v1", "single_reference", null] },
+          "canonical_path": { "type": ["string", "null"] },
+          "source_path": { "type": ["string", "null"] },
+          "content_hash": { "type": ["string", "null"] },
+          "version": { "type": ["integer", "null"], "minimum": 1 },
+          "approval_status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
           "output_prompt_path": { "type": ["string", "null"] },
           "prompt_scope": { "type": ["string", "null"] },
           "handling_policy": { "type": ["string", "null"] },

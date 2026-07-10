@@ -1,0 +1,9 @@
+{
+  "status": "pass",
+  "max_shot_duration_seconds": 5,
+  "duration_check_passed": true,
+  "shot_boundary_check_passed": true,
+  "concretization_check_passed": true,
+  "storytelling_quality_check_passed": true,
+  "issues": []
+}

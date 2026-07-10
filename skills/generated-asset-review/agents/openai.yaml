@@ -1,0 +1,4 @@
+interface:
+  display_name: "Generated Asset Review"
+  short_description: "Approve generated character scene and prop assets"
+  default_prompt: "Use $generated-asset-review to review one generated asset against its manifest and style bible."

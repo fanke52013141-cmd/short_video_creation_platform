@@ -1,5 +1,13 @@
 # Repository Policy
 
+提交前必须运行：
+
+```text
+python scripts/check_repository_policy.py
+```
+
+该检查阻止 `local_runs/`、根级 `outputs/`、非示例媒体文件和疑似硬编码密钥进入仓库。真实剧本、品牌素材、生成图片、生成视频、日志和 checkpoint 只属于本地 run。
+
 ## 核心边界
 
 仓库只保存可复用、可迁移、可迭代的流程资产。每天创作沉淀下来的故事、分镜、图片、视频、参考素材、日志和运行状态属于本地资源，不上传仓库。
