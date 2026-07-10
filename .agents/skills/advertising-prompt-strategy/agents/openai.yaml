@@ -1,0 +1,7 @@
+interface:
+  display_name: "Advertising Prompt Strategy"
+  short_description: "生成强调商品、品牌与广告功能的分镜图片提示词"
+  default_prompt: "Use $advertising-prompt-strategy to create brand- and product-faithful storyboard image prompts for the approved advertising shots."
+policy:
+  allow_implicit_invocation: true
+

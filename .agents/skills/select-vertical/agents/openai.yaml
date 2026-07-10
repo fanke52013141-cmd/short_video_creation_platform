@@ -1,0 +1,7 @@
+interface:
+  display_name: "Select Video Vertical"
+  short_description: "选择垂类包并解析共享流程中的策略 Skill"
+  default_prompt: "Use $select-vertical to select a video vertical and resolve its strategy Skills without changing the stable production pipeline."
+policy:
+  allow_implicit_invocation: true
+

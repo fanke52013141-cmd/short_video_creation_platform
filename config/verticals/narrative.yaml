@@ -1,0 +1,25 @@
+schema_version: "1.0"
+id: narrative
+name: 剧情短视频
+description: 保留当前项目的故事驱动型短视频生产方向。
+
+skill_overrides: {}
+
+content_contract:
+  required_sidecar: false
+
+production:
+  aspect_ratios: ["9:16"]
+  duration_presets_seconds: [15, 30, 60]
+  max_generated_clip_seconds: 15
+
+required_asset_roles:
+  - character_turnaround
+  - scene_key_plate
+
+quality_gates:
+  - story_coherence
+  - character_motivation
+  - visual_continuity
+  - shot_duration
+

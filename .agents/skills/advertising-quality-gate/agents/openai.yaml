@@ -1,0 +1,7 @@
+interface:
+  display_name: "Advertising Quality Gate"
+  short_description: "在广告视频交付前检查卖点、证据、品牌和 CTA"
+  default_prompt: "Use $advertising-quality-gate to review this advertising video package before final handoff."
+policy:
+  allow_implicit_invocation: true
+

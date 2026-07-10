@@ -1,0 +1,62 @@
+schema_version: "1.0"
+
+vertical_selection:
+  default: narrative
+  profiles_dir: ./config/verticals
+  checkpoint_field: vertical.id
+
+strategy_slots:
+  content_strategy:
+    default_skill: story-generation
+    output: ./outputs/story.md
+  art_direction:
+    default_skill: art-direction
+    output: ./outputs/style_bible.md
+  storyboard_strategy:
+    default_skill: storyboard-director
+    output: ./outputs/storyboard.json
+  prompt_strategy:
+    default_skill: cinematic-prompt-strategy
+  vertical_quality_gate:
+    default_skill: narrative-quality-gate
+
+stages:
+  - id: content_strategy
+    type: strategy
+    slot: content_strategy
+    approval_required: true
+  - id: art_direction
+    type: strategy
+    slot: art_direction
+    approval_required: true
+  - id: storyboard_strategy
+    type: strategy
+    slot: storyboard_strategy
+  - id: asset_registry
+    type: stable_core
+    skill: asset-executor
+  - id: asset_prompt_generation
+    type: stable_core
+    skill: asset-prompt-generators
+  - id: image_queue
+    type: stable_core
+    skill: build-image-queue
+  - id: image_execution_or_import
+    type: stable_core
+    skill: execute-or-import-images
+  - id: storyboard_prompt_generation
+    type: strategy
+    slot: prompt_strategy
+  - id: storyboard_image_execution_or_import
+    type: stable_core
+    skill: execute-or-import-images
+  - id: video_prompt_generation
+    type: stable_core
+    skill: video-prompt-generator
+  - id: vertical_quality_gate
+    type: strategy
+    slot: vertical_quality_gate
+  - id: final_package
+    type: stable_core
+    skill: package-production
+

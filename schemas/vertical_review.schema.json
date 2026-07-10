@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Vertical Review",
+  "type": "object",
+  "required": ["schema_version", "vertical", "status", "gate_results", "issues"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "vertical": {"type": "string"},
+    "status": {"enum": ["approved", "revise_required", "completed_with_known_gaps"]},
+    "gate_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gate", "passed"],
+        "properties": {
+          "gate": {"type": "string"},
+          "passed": {"type": "boolean"},
+          "notes": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "issues": {"type": "array", "items": {"type": "object", "required": ["severity", "message", "fix_stage"], "properties": {"severity": {"enum": ["blocking", "warning", "note"]}, "message": {"type": "string"}, "artifact": {"type": ["string", "null"]}, "fix_stage": {"type": "string"}}}}
+  }
+}
