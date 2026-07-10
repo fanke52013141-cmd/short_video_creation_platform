@@ -1,200 +1,153 @@
-# Video Prompt Loop Protocol
+# Video Prompt Generation Protocol
 
-逐镜头视频提示词必须循环生成，不能只一次性生成总文件。
-
-从 `shot_video_prompt_generator` 1.4.0 起，本协议要求每条 shot 先判断 Seedance 任务类型，再生成对应中文提示词。
-
-## 输出结构
+本协议覆盖当前主流程的 `video_prompt_generator`。旧的 `outputs/05_video_prompts/shots/SHOT_XXX.md` 逐 shot 文件结构已废弃；当前主流程只要求输出：
 
 ```text
-outputs/05_video_prompts/
-├── shots/
-│   ├── SHOT_001.md
-│   ├── SHOT_002.md
-│   └── ...
-├── shot_video_prompt_index.md
-├── shot_video_prompts.md
-└── video_prompt_asset_reference.md
+outputs/video_prompts.md
+outputs/video_prompts.json
 ```
 
-用户最终主要查看 `shot_video_prompts.md`，但生成过程必须留下 `shots/SHOT_XXX.md`，用于证明每条镜头已独立生成、独立自检、可单独返修。
+## 输入
 
-## Seedance 任务类型
+```json
+{
+  "storyboard_json_path": "./outputs/storyboard.json",
+  "storyboard_prompts_path": "./outputs/storyboard_prompts.md",
+  "storyboard_reference_dir": "./outputs/storyboards",
+  "shot_asset_map_path": "./outputs/shot_asset_map.json",
+  "asset_reference_dir": "./outputs/assets"
+}
+```
 
-每条 shot 必须先判断任务类型：
+## 输出
 
-| task_type | 用途 | 必须使用的句式 |
-|---|---|---|
-| `pipeline_shot_generation` | 项目流水线默认逐 shot 生成 | 声明 `@SHOT_XXX_STORYBOARD`，按项目资产生成 |
-| `multimodal_reference` | 参考图片、视频、音频的指定维度生成新视频 | `参考 @图片N...` / `参考 @视频N...` / `参考 @音频N...` |
-| `video_edit` | 严格编辑已有视频 | `严格编辑 @视频N...` |
-| `video_extend` | 向前或向后延长已有视频 | `向前延长 @视频N...` / `向后延长 @视频N...` |
-| `combined_task` | 参考某素材，同时编辑或延长另一素材 | `参考 @图片N...，严格编辑 @视频X...` 或同类组合句式 |
+### Markdown
 
-硬规则：
+`outputs/video_prompts.md` 是给即梦 / Seedance 复制使用的中文提示词文档。每个 `V###` 必须包含：
 
-- 编辑任务不得写成 `参考 @视频N`。
-- 延长任务不得写成 `参考 @视频N`。
-- 参考任务必须明确参考的是人物、动作、运镜、风格、音色、配乐还是环境音。
-- 组合任务必须明确“参考哪个素材的哪个维度”以及“编辑/延长哪个素材”。
+```markdown
+## V001
+- 来源分镜：S001-S002
+- 时长：10s
+- 任务类型：pipeline_shot_generation
+- 分镜角色：S001=首帧，S002=尾帧
+- 合并判断：...
 
-## 循环流程
-
-对 `storyboard.json.shots` 中每个镜头依次执行：
-
-1. 读取当前 shot 的叙事功能、时长、景别、镜头运动、台词和资产 ID。
-2. 判断当前 shot 的 Seedance 任务类型，默认 `pipeline_shot_generation`。
-3. 读取当前 shot 对应分镜图，判断其角色：首帧参考、尾帧参考或关键帧参考。
-4. 读取 `image_result_manifest.json`，只允许状态为 `generated` 或 `approved` 且 `used_as_video_reference=true` 的图片声明为视频参考图。
-5. 读取当前 shot 的主要人物资产；人物必须使用三视图资产、三视图映射或可用图片参考。
-6. 判断是否有台词、旁白、录音留言或可听见的人声。
-7. 有人声时，检查对应 `@AUDIO` 音色参考；缺失则停止该 shot 并向用户索要音频，或写入 `missing` 占位并标记不可最终生产。
-8. 根据镜头运动判断是否需要 `@ENV` 场景参考。
-9. 判断是否有外部图片、视频或音频素材；若未命名，按上传顺序命名为 `@图片1`、`@视频1`、`@音频1`。
-10. 若外部素材存在多个主体，先用 2-3 个稳定静态特征定义主体名。
-11. 生成单条中文视频提示词，保存到 `outputs/05_video_prompts/shots/SHOT_XXX.md`。
-12. 对单条提示词自检，不合格则重写该 shot。
-13. 全部 shot 通过后，按镜头顺序汇总到 `shot_video_prompts.md`。
-
-## 单 shot 文件结构
-
-每条 `SHOT_XXX.md` 必须包含：
-
-```text
-## SHOT_XXX
-建议时长：N 秒
-
-【引用决策】
-- 任务类型：pipeline_shot_generation | multimodal_reference | video_edit | video_extend | combined_task
-- 分镜图：@SHOT_XXX_STORYBOARD，首帧参考 / 尾帧参考 / 关键帧参考
-- 人物：@CHAR_...
-- 场景：使用 / 不使用；说明原因
-- 音色：使用 / 不使用；说明原因
-- 道具：不 @，写入正文
-- 图片结果：可用 / 不可用；说明是否来自 image_result_manifest
-- 外部素材：使用 / 不使用；说明素材角色
-
-【资产声明区】
+一、【自检通过项】
 ...
 
-【中文视频提示词】
-...
+二、【资产声明区】
+@S001_分镜参考图（首帧）
+@S002_分镜参考图（尾帧）
+@林小满_雨夜接电话状态（人物资产）
+@雨夜客厅场景（场景资产）
 
-【自检通过项】
+三、【中文视频提示词】
 ...
 ```
 
-## 资产声明决策
+### JSON
 
-每条 `SHOT_XXX.md` 必须完成以下声明：
+`outputs/video_prompts.json` 是机器可校验的生产计划。每个 `V###` 必须包含：
 
-```text
-【资产声明区】
-@SHOT_XXX_STORYBOARD（首帧参考 / 尾帧参考 / 关键帧参考）
-@CHAR_...（人物资产 / 角色状态变体）
-@ENV_...（场景资产，仅条件使用）
-@AUDIO_...（声音参考，仅有人声时使用）
-@图片1（人物资产 / 场景资产 / 首帧 / 尾帧 / 关键帧 / 风格参考）
-@视频1（动作参考 / 运镜参考 / 整体参考 / 待编辑视频 / 待延长视频）
-@音频1（声音参考 / 配乐参考 / 环境音参考）
+```json
+{
+  "video_id": "V001",
+  "task_type": "pipeline_shot_generation",
+  "source_shots": ["S001", "S002"],
+  "duration_seconds": 10,
+  "scene_id": "SC001",
+  "merge_decision": {
+    "strategy": "merged_strong_action_continuity",
+    "reason": "同一场景内动作与站位连续，合并可减少漂移。",
+    "continuity_risk": "high"
+  },
+  "frame_references": [
+    {
+      "shot_id": "S001",
+      "asset_name": "S001_分镜参考图",
+      "role": "first_frame",
+      "path": "outputs/storyboards/S001.png"
+    }
+  ],
+  "declared_assets": [],
+  "uses_previous_storyboard_anchor": true,
+  "risk_notice_required": false,
+  "prompt_cn": "..."
+}
 ```
 
-正文中引用的资产名必须与资产声明区完全一致。
+## 合并规则
 
-如果外部素材中有多个主体，必须先定义主体：
+合并对象是连续 `S###`，不是 `SC###`。`SC###` 只是合并边界。
 
-```text
-将 @图片1 中穿红色外套、短发、站在左侧的人定义为 @女主。
-```
+相邻分镜只有同时满足以下条件，才允许合并为一个 `V###`：
 
-## 场景 @ENV 条件
+1. `shot_id` 连续且顺序一致。
+2. `scene_id` 相同。
+3. 合并后 `duration_seconds` 总和 `<=15`。
+4. 没有场景切换、时间跳跃或叙事空间切换。
+5. 动作、情绪、站位或镜头推进可以自然连续。
 
-`@ENV` 不是默认必选。分镜图通常已经包含场景信息。
+必须拆分：
 
-需要 `@ENV` 的情况：
+- `scene_id` 不同。
+- 合并后超过 15 秒。
+- 时间或叙事空间跳跃。
+- 动作不连续，合并后提示词含混。
 
-- 分镜图是近景，但镜头要后拉到中景或全景。
-- 镜头有横移、摇镜、跟拍、升降或明显空间拓展。
-- 人物从一个空间位置移动到另一个位置。
-- 镜头要展示分镜图之外的门口、楼道、街巷、礼堂、教室全貌。
-- 分镜图只锁人物关系，无法提供足够空间连续性。
+## 分镜图角色
 
-不需要 `@ENV` 的情况：
+视频阶段根据最终合并结果确定每张分镜图的实际角色：
 
-- 固定镜头。
-- 只在分镜图构图内轻微推近。
-- 特写脸部、手部或道具，背景不拓展。
-- 分镜图本身已经覆盖完整空间。
+- 单个 `S###` 生成一个 `V###`：该分镜图作为 `first_frame`。
+- 多个 `S###` 合并为一个 `V###`：第一个 source shot 是 `first_frame`。
+- 多个 `S###` 合并为一个 `V###`：最后一个 source shot 是 `last_frame`。
+- 中间 source shots 是 `keyframe`。
 
-无论是否 `@ENV`，都必须在引用决策中解释。
+每条 `V###` 必须在 `video_prompts.json.frame_references` 中记录这些角色。
 
-## 音色 @AUDIO 条件
+## 资产引用规则
 
-有台词、旁白、录音留言或可听见人声时，必须 `@AUDIO`。
+- 分镜图使用 `@S001_分镜参考图` 这类具体名称。
+- 人物使用 `asset_manifest.json` 中固定的人物状态资产名，例如 `@林小满_雨夜接电话状态`。
+- 场景使用 `asset_manifest.json` 中固定的场景资产名，例如 `@雨夜客厅场景`。
+- 道具默认不使用 `@PROP`，而是在正文中自然描述。
+- 正文引用名必须与资产声明区完全一致。
 
-没有人声的镜头不 `@AUDIO`。
+## 上一分镜站位锚点
 
-如果缺少音色参考，不允许假装完成最终版；必须：
-
-- 向用户索要音频；或
-- 使用文字音色占位并标记 `audio_reference_status=missing`。
-
-## Seedance 声音符号
-
-视频提示词中声音写法必须统一：
-
-- 背景音乐：`（背景中播放着……）`
-- 环境音效：`<远处传来……>`
-- 人物台词：`{台词内容}`
-- 标题或章节字幕：`【字幕内容】`
-
-有声音参考时，台词处必须再次调用同一个音频资产，并写清语速、音量、停顿、句尾走向和伴随动作。
-
-## 道具规则
-
-视频提示词默认不 `@PROP`。
-
-道具必须写入正文，例如：
+如果 `storyboard_prompts.md` 中某个 source shot 标记：
 
 ```text
-桌上三副碗筷中有一副完全没人动。
-空椅子上放着父亲的警帽。
-警号 539527 在胸前短暂反光。
+uses_previous_storyboard_reference: true
+reference_purpose: placement_anchor
 ```
 
-如果某个道具图片在 `image_result_manifest.json` 中已经生成并通过，也只作为人工参考，不默认写成 `@PROP`。
+且没有跨 `scene_id`，视频提示词可以保留：
 
-## 动作稳定性
+```text
+参考@上一分镜_站位，保持人物空间关系、朝向和相对位置不变
+```
 
-- 单个镜头只保留一种主要运镜。
-- 动作要具体到手、头、肩、背、眼神、呼吸等身体部位。
-- 写清速度、幅度、力度。
-- 优先使用平缓连续的小动作。
-- 复杂大动作必须拆成多个短镜头，不强求一镜到底。
-- 动作之间要有惯性和承接。
-
-## 文字生成规则
-
-默认不要生成字幕、文字、Logo 或水印。
-
-只有当用户明确要求视频内嵌文字、标题、广告语、字幕或对话气泡时，才写文字生成指令。
-
-如果用户要求文字，不要再写“无字幕 / 无文字 / 不生成 Logo”这类相冲突的约束。
+该锚点只用于站位、朝向、空间比例和连续性，不用于复制表情、动作、服装或完整画面。
 
 ## 自检
 
-每条单 shot 文件必须检查：
+视频提示词生成完成后必须通过：
 
-- 是否只有中文提示词。
-- 是否有建议时长。
-- 是否声明 `@SHOT_XXX_STORYBOARD`。
-- 是否声明主要人物。
-- 是否有任务类型判断。
-- 编辑任务是否使用 `严格编辑 @视频N`。
-- 延长任务是否使用 `向前延长 @视频N` 或 `向后延长 @视频N`。
-- 是否对 `@ENV` 使用或不使用给出理由。
-- 有人声时是否声明 `@AUDIO`。
-- 是否没有默认 `@PROP`。
-- 是否写了镜头运动和时间节奏，而不只是静态画面描述。
-- 是否使用 Seedance 声音符号。
-- 是否避免了英文提示词和中英对照。
+```bash
+python scripts/validate_project.py local_runs/YYYY-MM-DD/project_slug --phase video
+python scripts/validate_seedance_video_prompts.py local_runs/YYYY-MM-DD/project_slug
+```
+
+检查重点：
+
+- 每个 storyboard shot 被且仅被一个 `V###` 覆盖。
+- 合并的 source shots 连续、有序、同一 `scene_id`。
+- `duration_seconds` 等于 source shots 时长总和，且不超过 15 秒。
+- 每条 `V###` 有 `merge_decision` 和 `frame_references`。
+- Markdown 包含 `【自检通过项】`、`【资产声明区】`、`【中文视频提示词】`。
+- 不输出英文 Prompt 或中英对照。
+- 默认不出现 `@PROP`。
+- 写入无字幕、无 Logo、无水印约束。
