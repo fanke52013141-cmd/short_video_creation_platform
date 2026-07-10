@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 from pathlib import Path
 from typing import Any
@@ -116,6 +117,8 @@ def validate_schema_subset(data: Any, schema: dict[str, Any], label: str) -> Non
         if isinstance(value, (int, float)) and not isinstance(value, bool):
             if "minimum" in node and value < node["minimum"]:
                 fail(f"{label}: {path} below minimum {node['minimum']}")
+            if "exclusiveMinimum" in node and value <= node["exclusiveMinimum"]:
+                fail(f"{label}: {path} must be greater than {node['exclusiveMinimum']}")
             if "maximum" in node and value > node["maximum"]:
                 fail(f"{label}: {path} above maximum {node['maximum']}")
         if isinstance(value, dict):
@@ -187,7 +190,7 @@ def validate_storyboard(run_dir: Path) -> dict[str, Any]:
         if not re.fullmatch(r"SC[0-9]{3}", str(shot.get("scene_id"))):
             fail(f"{expected} scene_id must match SC###")
         duration = shot.get("duration_seconds")
-        if not isinstance(duration, (int, float)) or duration <= 0 or duration > MAX_DURATION:
+        if not isinstance(duration, (int, float)) or isinstance(duration, bool) or duration <= 0 or duration > MAX_DURATION:
             fail(f"{expected} duration_seconds must be >0 and <= {MAX_DURATION}")
         forbidden = sorted(FORBIDDEN_STORYBOARD_FIELDS.intersection(shot.keys()))
         if forbidden:
@@ -210,8 +213,10 @@ def validate_assets(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
             if item.get("generation_required") is True and not item.get("output_prompt_path"):
                 fail(f"{item.get('asset_name')} missing output_prompt_path")
     valid_shots = {shot["shot_id"] for shot in storyboard["shots"]}
-    mapped_shots = {row.get("shot_id") for row in shot_map.get("shot_assets", [])}
-    if valid_shots != mapped_shots:
+    mapped_shots = [row.get("shot_id") for row in shot_map.get("shot_assets", [])]
+    if len(mapped_shots) != len(set(mapped_shots)):
+        fail("shot_asset_map contains duplicate shot_id entries")
+    if valid_shots != set(mapped_shots):
         fail("shot_asset_map must cover every storyboard shot exactly once")
     for row in shot_map.get("shot_assets", []) or []:
         for group in ("characters", "scenes", "props"):
@@ -279,26 +284,43 @@ def validate_video_prompt_plan(run_dir: Path, storyboard: dict[str, Any]) -> Non
     shots = storyboard["shots"]
     shot_by_id = {shot["shot_id"]: shot for shot in shots}
     shot_index = {shot["shot_id"]: i for i, shot in enumerate(shots)}
+    videos = plan.get("videos", [])
+    if not videos:
+        fail("video_prompts.json has no videos")
     covered: list[str] = []
-    for i, video in enumerate(plan.get("videos", []), start=1):
+    for i, video in enumerate(videos, start=1):
         video_id = f"V{i:03d}"
         if video.get("video_id") != video_id:
             fail(f"expected {video_id}, got {video.get('video_id')}")
         if video.get("task_type") != "pipeline_shot_generation":
             fail(f"{video_id} must be pipeline_shot_generation")
         source_shots = video.get("source_shots", [])
+        if not isinstance(source_shots, list) or not source_shots:
+            fail(f"{video_id} source_shots must be a non-empty list")
+        if len(source_shots) != len(set(source_shots)):
+            fail(f"{video_id} source_shots contains duplicates")
+        unknown = [sid for sid in source_shots if sid not in shot_index]
+        if unknown:
+            fail(f"{video_id} source_shots references unknown shots: {', '.join(unknown)}")
         indexes = [shot_index[sid] for sid in source_shots]
         if indexes != list(range(min(indexes), max(indexes) + 1)):
-            fail(f"{video_id} source_shots must be contiguous")
+            fail(f"{video_id} source_shots must be contiguous and ordered")
         scenes = {shot_by_id[sid]["scene_id"] for sid in source_shots}
         if scenes != {video.get("scene_id")}:
             fail(f"{video_id} scene_id must match all source_shots")
         duration_sum = sum(shot_by_id[sid]["duration_seconds"] for sid in source_shots)
         if duration_sum > MAX_DURATION:
             fail(f"{video_id} merged duration exceeds {MAX_DURATION}s")
+        declared_duration = video.get("duration_seconds")
+        if not isinstance(declared_duration, (int, float)) or isinstance(declared_duration, bool):
+            fail(f"{video_id} duration_seconds must be numeric")
+        if not math.isclose(float(declared_duration), float(duration_sum), rel_tol=0, abs_tol=1e-6):
+            fail(f"{video_id} duration_seconds must equal source_shots sum ({duration_sum})")
         strategy = video["merge_decision"]["strategy"]
         if len(source_shots) > 1 and not strategy.startswith("merged_"):
             fail(f"{video_id} merged shots require merged_* strategy")
+        if len(source_shots) == 1 and strategy.startswith("merged_"):
+            fail(f"{video_id} single shot must not use merged_* strategy")
         frame_shots = {frame["shot_id"] for frame in video.get("frame_references", [])}
         if frame_shots != set(source_shots):
             fail(f"{video_id} frame_references must match source_shots")
