@@ -1,37 +1,16 @@
 #!/usr/bin/env python3
-"""Validate Seedance 2.0 shot video prompt files.
-
-This validator is intentionally focused on prompt-surface rules that are hard to
-express in JSON schema:
-- per-shot markdown files exist,
-- required output sections exist,
-- Seedance task type is declared,
-- strict edit / extend wording is not confused with reference wording,
-- @PROP is not used by default,
-- Chinese-only prompt contract is respected.
-
-Usage:
-  python scripts/validate_seedance_video_prompts.py local_runs/YYYY-MM-DD/project_slug
-"""
+"""Validate current pipeline video prompt outputs."""
 
 from __future__ import annotations
 
 import argparse
 import json
-import re
 from pathlib import Path
+from typing import Any
 
-
-TASK_TYPES = {
-    "pipeline_shot_generation",
-    "multimodal_reference",
-    "video_edit",
-    "video_extend",
-    "combined_task",
-}
-
-REQUIRED_SECTIONS = ["【引用决策】", "【资产声明区】", "【中文视频提示词】", "【自检通过项】"]
-ENGLISH_BLOCK_PATTERNS = ["【English Prompt】", "English Prompt", "英文提示词", "中英对照"]
+REQUIRED_SECTIONS = ["【自检通过项】", "【资产声明区】", "【中文视频提示词】"]
+DISALLOWED_TEXT = ["English Prompt", "英文提示词", "中英对照", "@PROP", "@PROP_"]
+TASK_TYPE = "pipeline_shot_generation"
 
 
 def fail(message: str) -> None:
@@ -39,140 +18,120 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
-def warn(message: str) -> None:
-    print(f"WARN: {message}")
-
-
 def ok(message: str) -> None:
     print(f"OK: {message}")
 
 
-def read_json(path: Path) -> dict:
+def read_json(path: Path) -> dict[str, Any]:
     try:
-        return json.loads(path.read_text(encoding="utf-8-sig"))
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError as exc:
         fail(f"Invalid JSON: {path} ({exc})")
+    if not isinstance(data, dict):
+        fail(f"JSON root must be object: {path}")
+    return data
 
 
-def extract_cn_prompt(text: str) -> str:
-    marker = "【中文视频提示词】"
-    if marker not in text:
-        return ""
-    after = text.split(marker, 1)[1]
-    if "【自检通过项】" in after:
-        after = after.split("【自检通过项】", 1)[0]
-    return after.strip()
+def require_file(path: Path) -> None:
+    if not path.is_file():
+        fail(f"Missing required file: {path}")
 
 
-def declared_task_type(text: str) -> str | None:
-    for task_type in TASK_TYPES:
-        if task_type in text:
-            return task_type
-    match = re.search(r"任务类型[：:]\s*([a-z_]+)", text)
-    if match and match.group(1) in TASK_TYPES:
-        return match.group(1)
-    return None
+def load_expected_shots(storyboard_path: Path) -> list[str]:
+    storyboard = read_json(storyboard_path)
+    shots = storyboard.get("shots", [])
+    if not isinstance(shots, list) or not shots:
+        fail("storyboard.json contains no shots")
+    shot_ids: list[str] = []
+    for index, shot in enumerate(shots, start=1):
+        if not isinstance(shot, dict):
+            fail(f"storyboard.shots[{index - 1}] must be object")
+        expected = f"S{index:03d}"
+        if shot.get("shot_id") != expected:
+            fail(f"expected {expected}, got {shot.get('shot_id')!r}")
+        shot_ids.append(expected)
+    return shot_ids
 
 
-def validate_seedance_sentence_type(shot_id: str, task_type: str, text: str, cn_prompt: str) -> None:
-    if task_type == "video_edit":
-        if not re.search(r"严格编辑\s*@视频\d+", cn_prompt):
-            fail(f"{shot_id} video_edit must use '严格编辑 @视频N' in 中文视频提示词")
-        if re.search(r"参考\s*@视频\d+", cn_prompt) and "严格编辑" not in cn_prompt:
-            fail(f"{shot_id} video_edit is written as a reference task")
-
-    if task_type == "video_extend":
-        if not re.search(r"向前延长\s*@视频\d+|向后延长\s*@视频\d+", cn_prompt):
-            fail(f"{shot_id} video_extend must use '向前延长 @视频N' or '向后延长 @视频N'")
-        first_sentence = cn_prompt.split("。", 1)[0]
-        if re.search(r"参考\s*@视频\d+", first_sentence):
-            fail(f"{shot_id} video_extend first sentence must not be a reference task")
-
-    if task_type == "combined_task":
-        has_reference = re.search(r"参考\s*@(?:图片|视频|音频)\d+", cn_prompt)
-        has_operation = re.search(r"严格编辑\s*@视频\d+|向前延长\s*@视频\d+|向后延长\s*@视频\d+", cn_prompt)
-        if not has_reference or not has_operation:
-            fail(f"{shot_id} combined_task must include both a reference source and an edit/extend operation")
-
-
-def validate_sound_symbols(shot_id: str, text: str, cn_prompt: str) -> None:
-    has_audio_ref = "@AUDIO_" in text or re.search(r"@音频\d+", text)
-    has_dialogue = "{" in cn_prompt or "说道" in cn_prompt or "台词" in text
-    if has_audio_ref and has_dialogue and "{" not in cn_prompt:
-        fail(f"{shot_id} dialogue should use Seedance braces like {{台词内容}}")
-    if "背景音乐" in cn_prompt and "（背景中播放着" not in cn_prompt:
-        warn(f"{shot_id} mentions background music without Seedance music parentheses")
-    if "环境音" in cn_prompt and "<" not in cn_prompt:
-        warn(f"{shot_id} mentions environment sound without Seedance angle brackets")
-
-
-def validate_shot_file(path: Path) -> None:
+def validate_markdown(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    shot_id = path.stem
-
     for section in REQUIRED_SECTIONS:
         if section not in text:
-            fail(f"{shot_id} missing required section: {section}")
+            fail(f"video_prompts.md missing section: {section}")
+    for token in DISALLOWED_TEXT:
+        if token in text:
+            fail(f"video_prompts.md contains disallowed text: {token}")
+    if TASK_TYPE not in text:
+        fail(f"video_prompts.md missing task type: {TASK_TYPE}")
+    if "画面保持无字幕" not in text or "Logo" not in text or "水印" not in text:
+        fail("video_prompts.md missing no-subtitle/no-logo/no-watermark constraint")
+    ok("video_prompts.md")
 
-    for pattern in ENGLISH_BLOCK_PATTERNS:
-        if pattern in text:
-            fail(f"{shot_id} contains forbidden English/bilingual block: {pattern}")
 
-    if "@PROP_" in text:
-        fail(f"{shot_id} contains @PROP reference; props must be described in prompt body by default")
+def validate_plan(path: Path, expected_shots: list[str]) -> None:
+    plan = read_json(path)
+    videos = plan.get("videos", [])
+    if not isinstance(videos, list) or not videos:
+        fail("video_prompts.json contains no videos")
 
-    if f"@{shot_id}_STORYBOARD" not in text:
-        fail(f"{shot_id} missing @{shot_id}_STORYBOARD reference")
+    expected_set = set(expected_shots)
+    covered: list[str] = []
+    for index, video in enumerate(videos, start=1):
+        if not isinstance(video, dict):
+            fail(f"videos[{index - 1}] must be object")
+        video_id = f"V{index:03d}"
+        if video.get("video_id") != video_id:
+            fail(f"expected {video_id}, got {video.get('video_id')!r}")
+        if video.get("task_type") != TASK_TYPE:
+            fail(f"{video_id} must use task_type={TASK_TYPE}")
+        source_shots = video.get("source_shots", [])
+        if not isinstance(source_shots, list) or not source_shots:
+            fail(f"{video_id} source_shots must be a non-empty list")
+        unknown = sorted(set(source_shots) - expected_set)
+        if unknown:
+            fail(f"{video_id} references unknown source_shots: {', '.join(unknown)}")
+        if len(source_shots) != len(set(source_shots)):
+            fail(f"{video_id} source_shots contains duplicates")
+        frame_references = video.get("frame_references", [])
+        if not isinstance(frame_references, list) or not frame_references:
+            fail(f"{video_id} missing frame_references")
+        frame_shots = {frame.get("shot_id") for frame in frame_references if isinstance(frame, dict)}
+        if frame_shots != set(source_shots):
+            fail(f"{video_id} frame_references must match source_shots")
+        prompt_cn = video.get("prompt_cn", "")
+        if not isinstance(prompt_cn, str) or not prompt_cn.strip():
+            fail(f"{video_id} has empty prompt_cn")
+        for section in REQUIRED_SECTIONS:
+            if section not in prompt_cn:
+                fail(f"{video_id} prompt_cn missing section: {section}")
+        for token in DISALLOWED_TEXT:
+            if token in prompt_cn:
+                fail(f"{video_id} prompt_cn contains disallowed text: {token}")
+        covered.extend(source_shots)
 
-    task_type = declared_task_type(text)
-    if not task_type:
-        fail(f"{shot_id} missing Seedance task type declaration")
-
-    cn_prompt = extract_cn_prompt(text)
-    if not cn_prompt:
-        fail(f"{shot_id} has empty 中文视频提示词 section")
-
-    validate_seedance_sentence_type(shot_id, task_type, text, cn_prompt)
-    validate_sound_symbols(shot_id, text, cn_prompt)
-
-    if "无字幕" in cn_prompt and "【" in cn_prompt and "【中文视频提示词】" not in cn_prompt:
-        warn(f"{shot_id} may contain conflicting subtitle instructions")
-
-    ok(f"{shot_id} Seedance prompt")
+    if sorted(covered) != sorted(expected_shots):
+        fail("video_prompts.json must cover every storyboard shot exactly once")
+    ok(f"video_prompts.json covers {len(expected_shots)} shots")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Validate Seedance shot video prompt markdown files.")
+    parser = argparse.ArgumentParser(description="Validate current pipeline video prompt outputs.")
     parser.add_argument("run_dir", help="Local run directory")
     args = parser.parse_args()
 
     run_dir = Path(args.run_dir).resolve()
-    storyboard_path = run_dir / "outputs" / "03_storyboard" / "storyboard.json"
-    shot_dir = run_dir / "outputs" / "05_video_prompts" / "shots"
-    summary_path = run_dir / "outputs" / "05_video_prompts" / "shot_video_prompts.md"
+    storyboard_path = run_dir / "outputs" / "storyboard.json"
+    video_markdown_path = run_dir / "outputs" / "video_prompts.md"
+    video_json_path = run_dir / "outputs" / "video_prompts.json"
 
-    if not storyboard_path.exists():
-        fail(f"Missing storyboard.json: {storyboard_path}")
-    if not shot_dir.is_dir():
-        fail(f"Missing shot prompt directory: {shot_dir}")
-    if not summary_path.exists():
-        fail(f"Missing summary prompt file: {summary_path}")
+    require_file(storyboard_path)
+    require_file(video_markdown_path)
+    require_file(video_json_path)
 
-    storyboard = read_json(storyboard_path)
-    shot_ids = [shot.get("id") for shot in storyboard.get("shots", []) if shot.get("id")]
-    if not shot_ids:
-        fail("storyboard.json contains no shot ids")
-
-    for shot_id in shot_ids:
-        validate_shot_file(shot_dir / f"{shot_id}.md")
-
-    summary_text = summary_path.read_text(encoding="utf-8")
-    for shot_id in shot_ids:
-        if f"## {shot_id}" not in summary_text:
-            fail(f"summary file missing heading for {shot_id}")
-
-    ok(f"validated Seedance prompts: {len(shot_ids)}")
-    print("SEEDANCE VIDEO PROMPT VALIDATION PASSED")
+    expected_shots = load_expected_shots(storyboard_path)
+    validate_markdown(video_markdown_path)
+    validate_plan(video_json_path, expected_shots)
+    print("VIDEO PROMPT VALIDATION PASSED")
 
 
 if __name__ == "__main__":
